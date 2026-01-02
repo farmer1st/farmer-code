@@ -1,19 +1,22 @@
 <!--
 Sync Impact Report:
-- Version change: 1.2.0 → 1.2.1
-- Modified principles: Principle VIII (Technology Stack Standards) - added deployment guidance
+- Version change: 1.2.1 → 1.3.0
+- Modified principles: Principle VIII (Technology Stack Standards) - added Database Management
 - Added sections:
-  * Deployment Strategy section added
-  * Local-first, cloud-ready architecture requirements
+  * Principle X: Security-First Development (new principle)
+  * Error Handling Standards in Quality Standards
+  * Logging Standards in Quality Standards
+  * Database Management in Technology Stack Standards
 - Removed sections: None
 - Templates requiring updates:
-  ✅ plan-template.md - Architecture must consider deployment flexibility
-  ✅ spec-template.md - No changes needed
-  ✅ tasks-template.md - No changes needed
+  ✅ plan-template.md - Must verify security, error handling, DB migration compliance
+  ✅ spec-template.md - Security requirements must be explicit
+  ✅ tasks-template.md - Migration tasks must follow Alembic standards
   ✅ All command files reviewed - no updates needed
 - Follow-up TODOs: None
-- Rationale for PATCH bump: Clarification of deployment strategy (local-first with AWS/K8s option)
+- Rationale for MINOR bump: Added new principle (Security-First) and material new standards
 Previous changes:
+- 1.2.0 → 1.2.1: Added deployment strategy (local-first with AWS/K8s option)
 - 1.1.3 → 1.2.0: Added Principle IX (Thin Client Architecture)
 - 1.1.2 → 1.1.3: Changed to Vite + React for SPA architecture
 - 1.1.1 → 1.1.2: Added Pydantic v2 for backend data validation
@@ -133,6 +136,31 @@ Previous changes:
 - **Type Checking**: mypy for static type analysis
 - **Framework**: FastAPI (API services) or similar based on requirements
 - **Data Validation**: Pydantic v2 for data models, validation, and settings management
+- **Database**: SQLAlchemy 2.0+ ORM with async support
+- **Migrations**: Alembic for database schema versioning
+
+**Database Management**:
+- **Local Development**: SQLite for simplicity and zero-config
+- **Cloud Deployment**: PostgreSQL on RDS (when moving to AWS)
+- **ORM**: SQLAlchemy async with declarative models
+- **Migrations**:
+  - Alembic for all schema changes
+  - Sequential numbering: 001_initial.py, 002_add_users.py, etc.
+  - Never edit existing migrations (create new ones)
+  - Migration script MUST include upgrade() and downgrade()
+  - Test migrations: run upgrade, then downgrade before committing
+- **Schema Standards**:
+  - All tables MUST have: `id` (UUID/int primary key), `created_at`, `updated_at`
+  - Use database constraints: NOT NULL, UNIQUE, FOREIGN KEY
+  - Indexes on frequently queried columns
+  - Soft deletes via `deleted_at` column (preserve data)
+- **Transactions**:
+  - Multi-step operations MUST use database transactions
+  - Use SQLAlchemy session.begin() context manager
+  - Rollback on exceptions
+- **Backup Strategy**:
+  - Local: SQLite file copied before migrations (automatic)
+  - Cloud: RDS automated backups (daily, 7-day retention)
 
 **Frontend Stack** (TypeScript):
 - **Language**: TypeScript 5.0+
@@ -217,6 +245,57 @@ Previous changes:
 - Backend testing MUST NOT assume specific client type
 
 **Rationale**: Thin client architecture enables multiple client implementations, simplifies testing, centralizes security and business logic, prevents logic duplication, and makes the system easier to maintain and evolve. When adding a TUI or mobile client later, no backend changes should be needed.
+
+### X. Security-First Development
+
+**Rule**: Security is a habit, not a feature. Follow secure coding practices from day one.
+
+**Implementation**:
+- **Secrets Management**:
+  - API keys, credentials MUST use environment variables (.env files)
+  - .env files MUST be in .gitignore (never committed)
+  - Use python-dotenv or similar for loading secrets
+  - Template file (.env.example) with dummy values for documentation
+
+- **Authentication** (for future Google OAuth):
+  - Local development: Optional authentication (single-user mode)
+  - Cloud deployment: Google OAuth required
+  - JWT tokens with expiration (1 hour access, 7 day refresh)
+  - Refresh token rotation on use
+
+- **Input Validation**:
+  - All user inputs validated with Pydantic models (backend)
+  - SQL injection prevented via SQLAlchemy ORM (no raw SQL)
+  - Type checking with mypy ensures type safety
+
+- **HTTPS/TLS**:
+  - Local development: HTTP acceptable (localhost only)
+  - Cloud deployment: HTTPS required (CloudFront handles TLS)
+
+- **CORS Configuration**:
+  - Local: Allow localhost origins
+  - Cloud: Restrict to specific domain(s)
+  - Never use CORS "*" wildcard in production
+
+**Prohibited**:
+- ❌ Secrets in version control (API keys, passwords, tokens)
+- ❌ Raw SQL queries (use ORM)
+- ❌ Eval() or exec() functions
+- ❌ Unvalidated user input directly in queries
+- ❌ Storing passwords in plain text (even for testing)
+
+**Allowed Simplifications** (small internal tool):
+- ✅ HTTP on localhost during development
+- ✅ Simple auth or no auth for local single-user mode
+- ✅ Self-signed certs for local HTTPS testing
+- ✅ Basic error messages (no sensitive data exposure)
+
+**Dependency Security**:
+- GitHub Dependabot enabled for vulnerability alerts
+- Regular dependency updates (monthly review)
+- Pin major versions, allow patch updates
+
+**Rationale**: Security habits prevent future vulnerabilities. Even internal tools benefit from secure defaults. Preparing for Google OAuth now (environment-based config) makes cloud deployment smooth. Small tool = practical security, not enterprise paranoia.
 
 ## Monorepo Structure
 
@@ -309,6 +388,71 @@ farmcode/
 - Build time: Incremental builds < 10s with Turborepo caching
 - Bundle size: Frontend < 200KB initial load (gzipped)
 
+**Error Handling Standards**:
+- **Backend Error Handling**:
+  - All exceptions MUST be caught at endpoint level
+  - Use FastAPI exception handlers for consistent responses
+  - Never expose internal errors to clients (stack traces, file paths)
+  - Return appropriate HTTP status codes (400, 404, 500, etc.)
+  - Include helpful error messages for users
+  - Log full error details server-side (with stack trace)
+
+- **Frontend Error Handling**:
+  - API errors MUST be caught and displayed to user
+  - Use toast notifications or error boundaries for display
+  - Provide actionable error messages ("Try again" button)
+  - Log errors to console for debugging (development only)
+
+- **Error Response Format**:
+  ```json
+  {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Invalid input provided",
+      "details": ["Field 'email' is required", "Field 'age' must be positive"]
+    }
+  }
+  ```
+
+**Logging Standards**:
+- **Log Format**: Structured JSON logs for backend
+  ```json
+  {
+    "timestamp": "2026-01-02T10:30:00Z",
+    "level": "INFO",
+    "message": "User action completed",
+    "context": {
+      "user_id": "123",
+      "action": "create_item",
+      "duration_ms": 45
+    }
+  }
+  ```
+
+- **Log Levels**:
+  - **DEBUG**: Development only (verbose internal state)
+  - **INFO**: Normal operations (user actions, API calls)
+  - **WARNING**: Recoverable issues (deprecated API usage, slow queries)
+  - **ERROR**: Failures that need attention (failed operations, exceptions)
+  - **CRITICAL**: System-level failures (database unavailable, startup failures)
+
+- **What to Log**:
+  - ✅ API requests (method, path, status, duration)
+  - ✅ User actions (what happened, who did it, when)
+  - ✅ Errors and exceptions (full stack trace at ERROR level)
+  - ✅ Performance metrics (slow queries, long operations)
+  - ✅ Authentication events (login, logout, token refresh)
+  - ❌ Passwords or tokens (never log credentials)
+  - ❌ Full request/response bodies (may contain sensitive data)
+
+- **Logging Tools**:
+  - Backend: Python logging module with JSON formatter
+  - Local development: Console output with pretty formatting
+  - Cloud deployment: CloudWatch Logs (when on AWS)
+  - Log rotation: Daily rotation, keep 7 days locally
+
+**Rationale**: Consistent error handling improves user experience and debuggability. Structured logging enables easy searching and filtering. For a small internal tool, keep logging simple but useful for troubleshooting.
+
 ## Governance
 
 **Amendment Process**:
@@ -334,4 +478,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.2.1 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
+**Version**: 1.3.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
