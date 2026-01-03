@@ -1,17 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: 1.4.0 → 1.5.0
-- Modified principles: None
+- Version change: 1.5.0 → 1.5.1
+- Modified principles: XII (Continuous Integration and Delivery)
 - Added sections:
-  * Principle XII: Continuous Integration and Delivery (new principle)
+  * E2E Test Requirements (NON-NEGOTIABLE) - E2E tests mandatory in CI
 - Removed sections: None
 - Templates requiring updates:
-  ✅ All templates reviewed - no updates needed (CI/CD is infrastructure)
+  ✅ All templates reviewed - no updates needed
 - Follow-up TODOs:
-  * Ensure .github/workflows/ exists in all repos
-  * Enable branch protection rules requiring CI to pass
-- Rationale for MINOR bump: Added new principle (CI/CD) with automation requirements
+  * Ensure GH_APP_PRIVATE_KEY secret is configured in all repos
+- Rationale for PATCH bump: Clarified E2E tests are mandatory (not optional)
 Previous changes:
+- 1.4.0 → 1.5.0: Added Principle XII (Continuous Integration and Delivery)
 - 1.3.0 → 1.4.0: Added Principle XI (Documentation and User Journeys)
 - 1.2.1 → 1.3.0: Added Principle X (Security-First Development)
 - 1.2.0 → 1.2.1: Added deployment strategy (local-first with AWS/K8s option)
@@ -454,11 +454,18 @@ Feature 001: GitHub Integration Core
 - **Required Checks** (all must pass):
   - Linting (ruff for Python, ESLint for TypeScript)
   - Type checking (mypy --strict for Python, tsc for TypeScript)
-  - Unit tests with coverage threshold (minimum 80%)
-  - Contract/integration tests (mocked external dependencies)
+  - Unit tests with coverage threshold
+  - Integration tests (mocked external dependencies)
+  - E2E tests (contract + e2e tests against real APIs)
 - **Optional Checks**:
-  - E2E tests (may require secrets, can be skipped in CI)
   - Performance benchmarks (for critical paths)
+
+**E2E Test Requirements** (NON-NEGOTIABLE):
+- E2E tests MUST run in CI and MUST pass
+- If credentials are missing, CI MUST fail (not skip)
+- Store API credentials as GitHub Secrets (e.g., GH_APP_PRIVATE_KEY)
+- E2E job creates credential files from secrets with correct permissions
+- No graceful degradation - missing credentials = failed build
 
 **Security Scanning**:
 - **CodeQL**: Enabled for all repositories
@@ -700,4 +707,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.5.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
+**Version**: 1.5.1 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
