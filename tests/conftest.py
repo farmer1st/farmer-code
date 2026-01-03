@@ -3,12 +3,11 @@ Shared pytest fixtures for GitHub Integration tests.
 """
 
 import os
-from datetime import datetime, timezone
-from typing import Any, Optional
 from collections import defaultdict
+from datetime import UTC, datetime
+from typing import Any
 
 import pytest
-
 
 # GitHub App Configuration Fixtures
 
@@ -48,8 +47,8 @@ def sample_issue_data() -> dict[str, Any]:
         "state": "open",
         "labels": ["status:new", "priority:p1"],
         "assignees": ["duc"],
-        "created_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=timezone.utc),
-        "updated_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=timezone.utc),
+        "created_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=UTC),
+        "updated_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=UTC),
         "repository": "farmer1st/farmcode-tests",
         "url": "https://github.com/farmer1st/farmcode-tests/issues/42",
     }
@@ -63,7 +62,7 @@ def sample_comment_data() -> dict[str, Any]:
         "issue_number": 42,
         "author": "dede",
         "body": "✅ Backend plan complete. @baron",
-        "created_at": datetime(2026, 1, 2, 11, 15, 0, tzinfo=timezone.utc),
+        "created_at": datetime(2026, 1, 2, 11, 15, 0, tzinfo=UTC),
         "url": "https://github.com/farmer1st/farmcode-tests/issues/42#issuecomment-987654321",
     }
 
@@ -169,7 +168,7 @@ def wait_for_issue_in_list(
     service,
     issue_number: int,
     state: str = "open",
-    labels: Optional[list[str]] = None,
+    labels: list[str] | None = None,
     timeout: float = 10.0,
 ) -> bool:
     """
@@ -254,8 +253,9 @@ def cleanup_issues():
     # Cleanup runs after test completes (even if test failed)
     if issues_to_cleanup:
         # Import here to avoid circular dependency
-        from github_integration import GitHubService
         import os
+
+        from github_integration import GitHubService
 
         # Create service for cleanup
         service = GitHubService(
@@ -301,9 +301,9 @@ def auto_cleanup_issue(service):
 
     def create_issue_with_cleanup(
         title: str,
-        body: Optional[str] = None,
-        labels: Optional[list[str]] = None,
-        assignees: Optional[list[str]] = None,
+        body: str | None = None,
+        labels: list[str] | None = None,
+        assignees: list[str] | None = None,
     ):
         """Create issue with automatic test:automated label and cleanup"""
         # Add test:automated label
@@ -401,10 +401,8 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
         coverage_pct = (passed / total * 100) if total > 0 else 0
 
-        terminalreporter.write_line(
-            f"{journey_id}: {status} ({passed}/{total} tests passing, {coverage_pct:.0f}% coverage)",
-            **{color: True}
-        )
+        msg = f"{journey_id}: {status} ({passed}/{total} tests, {coverage_pct:.0f}%)"
+        terminalreporter.write_line(msg, **{color: True})
 
         # Show failed tests
         if failed > 0:

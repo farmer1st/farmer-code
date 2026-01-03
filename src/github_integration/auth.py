@@ -6,9 +6,8 @@ Handles JWT generation and installation access token management with caching.
 
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 import jwt
 import requests
@@ -33,7 +32,7 @@ class InstallationToken:
     def is_expired(self) -> bool:
         """Check if token is expired (with 5-minute buffer for safety)"""
         buffer_seconds = 300  # 5 minutes
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expires_with_buffer = self.expires_at.timestamp() - buffer_seconds
         return now.timestamp() >= expires_with_buffer
 
@@ -86,7 +85,7 @@ class GitHubAppAuth:
             raise AuthenticationError(f"Failed to read private key: {e}") from e
 
         # Token cache
-        self._cached_token: Optional[InstallationToken] = None
+        self._cached_token: InstallationToken | None = None
 
     def _generate_jwt(self) -> str:
         """

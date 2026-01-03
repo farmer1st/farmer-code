@@ -6,7 +6,7 @@ These operations are needed for test cleanup and issue lifecycle management.
 
 import pytest
 
-from github_integration import GitHubService, Issue, ValidationError, ResourceNotFoundError
+from github_integration import GitHubService, ResourceNotFoundError, ValidationError
 
 
 @pytest.fixture

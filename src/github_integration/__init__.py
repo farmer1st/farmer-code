@@ -7,17 +7,13 @@ for the FarmCode AI agent orchestration system.
 Public API:
 - GitHubService: Main service interface
 - Models: Issue, Comment, Label, PullRequest
-- Exceptions: GitHubAPIError, AuthenticationError, ResourceNotFoundError, ValidationError, RateLimitExceeded, ServerError
+- Exceptions: GitHubAPIError, AuthenticationError, ResourceNotFoundError,
+              ValidationError, RateLimitExceeded, ServerError
 """
 
 __version__ = "0.1.0"
 
 # Public API - Service
-from .service import GitHubService
-
-# Public API - Models
-from .models import Comment, Issue, Label, PullRequest
-
 # Public API - Exceptions
 from .errors import (
     AuthenticationError,
@@ -27,6 +23,10 @@ from .errors import (
     ServerError,
     ValidationError,
 )
+
+# Public API - Models
+from .models import Comment, Issue, Label, PullRequest
+from .service import GitHubService
 
 __all__ = [
     # Service

@@ -7,9 +7,9 @@ without making real API calls. HTTP responses are mocked for predictable, fast t
 **No eventual consistency issues** - these tests are fast and deterministic.
 """
 
-import pytest
-from datetime import datetime, timezone
 from unittest.mock import Mock, patch
+
+import pytest
 
 from github_integration import GitHubService, Issue, ValidationError
 
@@ -46,7 +46,9 @@ def service(github_app_id, github_installation_id, github_private_key_path, gith
 class TestServiceWithMockedAPI:
     """Integration tests for GitHubService with mocked GitHub API"""
 
-    def test_create_issue_calls_api_correctly(self, service, mock_requests, mock_github_issue_response):
+    def test_create_issue_calls_api_correctly(
+        self, service, mock_requests, mock_github_issue_response
+    ):
         """
         Verify create_issue calls GitHub API with correct parameters
 
@@ -88,7 +90,9 @@ class TestServiceWithMockedAPI:
         assert issue.number == 42
         assert issue.title == "Add user authentication"  # From mock_github_issue_response fixture
 
-    def test_get_issue_calls_api_correctly(self, service, mock_requests, mock_github_issue_response):
+    def test_get_issue_calls_api_correctly(
+        self, service, mock_requests, mock_github_issue_response
+    ):
         """
         Verify get_issue calls GitHub API with correct parameters
 
@@ -118,7 +122,9 @@ class TestServiceWithMockedAPI:
         assert isinstance(issue, Issue)
         assert issue.number == 42
 
-    def test_list_issues_calls_api_with_filters(self, service, mock_requests, mock_github_issue_response):
+    def test_list_issues_calls_api_with_filters(
+        self, service, mock_requests, mock_github_issue_response
+    ):
         """
         Verify list_issues calls GitHub API with correct query parameters
 

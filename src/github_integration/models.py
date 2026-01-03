@@ -7,7 +7,6 @@ All models are immutable (frozen=True) and validated at runtime.
 
 import re
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -19,7 +18,7 @@ class Issue(BaseModel):
 
     number: int = Field(..., description="Issue number (unique within repo)", gt=0)
     title: str = Field(..., description="Issue title", min_length=1, max_length=256)
-    body: Optional[str] = Field(None, description="Issue description (markdown)")
+    body: str | None = Field(None, description="Issue description (markdown)")
     state: str = Field(..., description="Issue state", pattern="^(open|closed)$")
     labels: list[str] = Field(default_factory=list, description="Label names")
     assignees: list[str] = Field(default_factory=list, description="Assigned usernames")
@@ -63,7 +62,7 @@ class Label(BaseModel):
     color: str = Field(
         ..., description="Hex color code (without #)", pattern="^[0-9A-Fa-f]{6}$"
     )
-    description: Optional[str] = Field(None, description="Label description")
+    description: str | None = Field(None, description="Label description")
 
     @property
     def hex_color(self) -> str:
@@ -78,7 +77,7 @@ class PullRequest(BaseModel):
 
     number: int = Field(..., description="PR number (unique within repo)", gt=0)
     title: str = Field(..., description="PR title", min_length=1, max_length=256)
-    body: Optional[str] = Field(None, description="PR description (markdown)")
+    body: str | None = Field(None, description="PR description (markdown)")
     state: str = Field(..., description="PR state", pattern="^(open|closed)$")
     merged: bool = Field(..., description="Whether PR is merged")
     base_branch: str = Field(..., description="Base branch name (e.g., main)")
@@ -99,7 +98,7 @@ class CreateIssueRequest(BaseModel):
     """Request to create a new issue"""
 
     title: str = Field(..., description="Issue title", min_length=1, max_length=256)
-    body: Optional[str] = Field(None, description="Issue description")
+    body: str | None = Field(None, description="Issue description")
     labels: list[str] = Field(default_factory=list, description="Initial labels")
     assignees: list[str] = Field(default_factory=list, description="Assignees")
 
@@ -114,6 +113,6 @@ class CreatePullRequestRequest(BaseModel):
     """Request to create a pull request"""
 
     title: str = Field(..., description="PR title", min_length=1, max_length=256)
-    body: Optional[str] = Field(None, description="PR description")
+    body: str | None = Field(None, description="PR description")
     base: str = Field(..., description="Base branch", pattern="^[a-zA-Z0-9/_-]+$")
     head: str = Field(..., description="Head branch", pattern="^[a-zA-Z0-9/_-]+$")

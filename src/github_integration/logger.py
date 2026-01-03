@@ -7,7 +7,7 @@ JSON logging to stdout/stderr for GitHub operations following 12-factor app patt
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -32,14 +32,14 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON"""
         log_data: dict[str, Any] = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "level": record.levelname,
             "message": record.getMessage(),
         }
 
         # Add context from extra fields
         if hasattr(record, "context"):
-            log_data["context"] = record.context  # type: ignore
+            log_data["context"] = getattr(record, "context")
 
         # Add exception info if present
         if record.exc_info:

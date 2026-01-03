@@ -12,11 +12,12 @@ Tests focus on:
 - Helper methods
 """
 
+from datetime import datetime
+
 import pytest
-from datetime import datetime, timezone
 from pydantic import ValidationError as PydanticValidationError
 
-from github_integration import Issue, Comment, Label, PullRequest
+from github_integration import Comment, Issue, Label, PullRequest
 
 
 class TestIssueModel:
@@ -104,7 +105,8 @@ class TestIssueModel:
         """Test Issue is immutable (frozen=True)"""
         issue = Issue(**sample_issue_data)
 
-        with pytest.raises(Exception):  # Pydantic raises ValidationError for frozen models
+        # Pydantic raises ValidationError for frozen models
+        with pytest.raises(PydanticValidationError):
             issue.title = "New title"
 
     def test_issue_has_label_helper(self, sample_issue_data):

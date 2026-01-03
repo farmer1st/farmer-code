@@ -6,7 +6,7 @@ and rate limit detection.
 """
 
 import time
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -87,9 +87,9 @@ class GitHubAPIClient:
         self,
         method: str,
         path: str,
-        json: Optional[dict[str, Any]] = None,
-        params: Optional[dict[str, Any]] = None,
-    ) -> dict[str, Any]:
+        json: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+    ) -> Any:
         """
         Make HTTP request to GitHub API with retry logic.
 
@@ -230,18 +230,18 @@ class GitHubAPIClient:
 
     # Convenience methods for HTTP verbs
 
-    def get(self, path: str, params: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    def get(self, path: str, params: dict[str, Any] | None = None) -> Any:
         """GET request"""
         return self._request("GET", path, params=params)
 
-    def post(self, path: str, json: dict[str, Any]) -> dict[str, Any]:
+    def post(self, path: str, json: dict[str, Any]) -> Any:
         """POST request"""
         return self._request("POST", path, json=json)
 
-    def patch(self, path: str, json: dict[str, Any]) -> dict[str, Any]:
+    def patch(self, path: str, json: dict[str, Any]) -> Any:
         """PATCH request"""
         return self._request("PATCH", path, json=json)
 
-    def delete(self, path: str) -> dict[str, Any]:
+    def delete(self, path: str) -> Any:
         """DELETE request"""
         return self._request("DELETE", path)
