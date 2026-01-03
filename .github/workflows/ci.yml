@@ -79,12 +79,61 @@ jobs:
       - name: Run integration tests
         run: uv run pytest tests/integration/ -v --tb=short
 
-      # Note: Contract tests require real GitHub App credentials
-      # Run locally with: pytest tests/contract/
-
       - name: Generate coverage report
         run: |
           uv run pytest tests/unit/ tests/integration/ \
             --cov=src/github_integration \
             --cov-report=term-missing \
             --cov-fail-under=55
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    # Only run if the secret is available (not available on forks)
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for credentials
+        id: check-creds
+        run: |
+          if [ -n "${{ secrets.GITHUB_APP_PRIVATE_KEY }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install uv
+        if: steps.check-creds.outputs.has_creds == 'true'
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        if: steps.check-creds.outputs.has_creds == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.check-creds.outputs.has_creds == 'true'
+        run: uv sync --extra dev
+
+      - name: Create private key file
+        if: steps.check-creds.outputs.has_creds == 'true'
+        run: |
+          mkdir -p .keys
+          echo "${{ secrets.GITHUB_APP_PRIVATE_KEY }}" > .keys/orchestrator.pem
+          chmod 600 .keys/orchestrator.pem
+
+      - name: Run contract tests
+        if: steps.check-creds.outputs.has_creds == 'true'
+        run: uv run pytest tests/contract/ -v --tb=short
+
+      - name: Run e2e tests
+        if: steps.check-creds.outputs.has_creds == 'true'
+        run: uv run pytest tests/e2e/ -v --tb=short
+
+      - name: Skip notice
+        if: steps.check-creds.outputs.has_creds == 'false'
+        run: echo "⚠️ E2E tests skipped - GITHUB_APP_PRIVATE_KEY secret not configured"
