@@ -1,15 +1,18 @@
 <!--
 Sync Impact Report:
-- Version change: 1.6.0 → 1.6.1
-- Modified principles: XII (Continuous Integration and Delivery)
-- Added sections: None
-- Removed sections:
-  * release-please references (org permissions blocked it)
+- Version change: 1.6.2 → 1.6.3
+- Modified principles: None
+- Added sections: Comprehensive API Documentation Standards in Quality Standards
+- Removed sections: None
 - Templates requiring updates:
-  ✅ All templates reviewed - no updates needed
-- Follow-up TODOs: None
-- Rationale for PATCH bump: Reverted to manual tagging (release-please blocked by org)
+  - None (documentation standards, not template changes)
+- Follow-up TODOs:
+  - Add docs/api/ directory structure to repos
+  - Ensure FastAPI apps have /docs and /redoc enabled
+- Rationale for PATCH bump: Consolidated and expanded API documentation requirements (clarification)
 Previous changes:
+- 1.6.1 → 1.6.2: Added Service Interface requirement in Documentation Requirements
+- 1.6.0 → 1.6.1: Reverted to manual tagging (release-please blocked by org)
 - 1.5.2 → 1.6.0: Added conventional commits requirement
 - 1.5.1 → 1.5.2: Added release-please (later removed)
 - 1.5.0 → 1.5.1: Made E2E tests mandatory in CI
@@ -373,9 +376,9 @@ Previous changes:
   - Usage examples
   - API reference links
 
-- **API Documentation**:
-  - Backend: OpenAPI/Swagger specs auto-generated from FastAPI
-  - Python: Docstrings following Google style
+- **API Documentation** (see detailed requirements in Quality Standards below):
+  - REST APIs: OpenAPI spec with Swagger UI and ReDoc
+  - Python libraries: Google-style docstrings with module README
   - TypeScript: JSDoc/TSDoc comments
   - All public interfaces documented
 
@@ -627,6 +630,10 @@ farmcode/
 **Documentation Requirements**:
 - All features have spec.md, plan.md, and tasks.md
 - User journeys documented per Principle XI (Documentation and User Journeys)
+- **Service Interface** section in spec.md when feature exposes an API:
+  - Backend services: Method signatures, inputs, outputs, error conditions
+  - REST APIs: Endpoints, request/response formats
+  - Summary table in spec.md, detailed contracts in contracts/ directory
 - Contracts documented in contracts/ directory
 - Data models documented in data-model.md
 - Feature README.md in each module directory
@@ -707,6 +714,87 @@ farmcode/
 
 **Rationale**: Consistent error handling improves user experience and debuggability. Structured logging enables easy searching and filtering. For a small internal tool, keep logging simple but useful for troubleshooting.
 
+**API Documentation Standards**:
+
+All APIs and public interfaces MUST be documented for discoverability and usability.
+
+- **REST APIs (FastAPI)**:
+  - OpenAPI spec auto-generated via FastAPI
+  - Swagger UI available at `/docs` endpoint
+  - ReDoc available at `/redoc` endpoint (preferred for reading)
+  - Export OpenAPI spec to `docs/api/openapi.yaml` on each release
+  - All endpoints MUST have:
+    - Description (what it does)
+    - Request/response schemas (Pydantic models)
+    - Example values
+    - Error response documentation
+    - Authentication requirements noted
+
+- **Python Libraries** (non-REST services):
+  - **Google-style docstrings** for all public functions, classes, methods:
+    ```python
+    def create_worktree(self, request: CreateWorktreeRequest) -> OperationResult:
+        """Create a new git worktree for isolated feature development.
+
+        Args:
+            request: Configuration for the new worktree including
+                branch name and optional source branch.
+
+        Returns:
+            OperationResult with status and created worktree details.
+
+        Raises:
+            BranchExistsError: If branch already exists locally.
+            WorktreeExistsError: If worktree path already exists.
+            GitCommandError: If git command fails unexpectedly.
+
+        Example:
+            >>> service = WorktreeService("/path/to/repo")
+            >>> result = service.create_worktree(
+            ...     CreateWorktreeRequest(branch_name="feature-123")
+            ... )
+            >>> print(result.status)
+            OperationStatus.SUCCESS
+        """
+    ```
+  - **Module README.md** (`src/[module]/README.md`):
+    - Purpose and scope
+    - Installation/setup
+    - Quick start example
+    - Public API summary table
+    - Error handling guidance
+    - Links to contracts/ for detailed specs
+  - **Contracts directory** (`specs/[feature]/contracts/`):
+    - Detailed interface specifications
+    - Input/output schemas
+    - Error conditions
+    - Integration examples
+
+- **TypeScript/Frontend**:
+  - JSDoc/TSDoc comments for exported functions and components
+  - Props documented with TypeScript interfaces
+  - Storybook stories for UI components (when applicable)
+
+- **Documentation File Structure**:
+  ```
+  docs/
+  └── api/
+      ├── openapi.yaml          # Exported OpenAPI spec
+      └── README.md             # API overview and quick links
+  src/[module]/
+  └── README.md                 # Module documentation
+  specs/[feature]/
+  └── contracts/                # Detailed interface specs
+  ```
+
+- **Documentation Maintenance**:
+  - Update docstrings when function signatures change
+  - Regenerate OpenAPI export before each release
+  - Module README updated at feature completion
+  - Broken documentation links are blocking issues
+
+**Rationale**: Well-documented APIs reduce onboarding time, prevent misuse, and enable multiple clients to integrate correctly. OpenAPI with ReDoc provides interactive, searchable documentation. Google-style docstrings are IDE-friendly and generate good docs.
+
 ## Governance
 
 **Amendment Process**:
@@ -732,4 +820,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.6.1 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
+**Version**: 1.6.3 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
