@@ -1,16 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: 1.5.0 → 1.5.1
+- Version change: 1.5.1 → 1.5.2
 - Modified principles: XII (Continuous Integration and Delivery)
 - Added sections:
-  * E2E Test Requirements (NON-NEGOTIABLE) - E2E tests mandatory in CI
+  * Updated Release Workflow to use release-please (auto Release PRs)
 - Removed sections: None
 - Templates requiring updates:
   ✅ All templates reviewed - no updates needed
 - Follow-up TODOs:
-  * Ensure GH_APP_PRIVATE_KEY secret is configured in all repos
-- Rationale for PATCH bump: Clarified E2E tests are mandatory (not optional)
+  * Use conventional commits (feat:, fix:, etc.) for proper versioning
+- Rationale for PATCH bump: Changed release mechanism (manual tags → release-please)
 Previous changes:
+- 1.5.0 → 1.5.1: Made E2E tests mandatory in CI
 - 1.4.0 → 1.5.0: Added Principle XII (Continuous Integration and Delivery)
 - 1.3.0 → 1.4.0: Added Principle XI (Documentation and User Journeys)
 - 1.2.1 → 1.3.0: Added Principle X (Security-First Development)
@@ -483,16 +484,20 @@ Feature 001: GitHub Integration Core
 - Dismiss stale reviews on new commits
 - Require branches to be up-to-date before merge
 
-**Release Workflow**:
+**Release Workflow** (release-please):
 - **Versioning**: Semantic versioning (vMAJOR.MINOR.PATCH)
-  - MAJOR: Breaking changes (API incompatibility)
-  - MINOR: New features (backward compatible)
-  - PATCH: Bug fixes (backward compatible)
-- **Trigger**: Push of version tag (v*)
-- **Actions**:
-  - Generate changelog from commits since last tag
-  - Create GitHub Release with changelog
-  - Mark pre-release for -alpha, -beta, -rc tags
+  - MAJOR: Breaking changes (commit with `BREAKING CHANGE:` or `!` suffix)
+  - MINOR: New features (`feat:` commits)
+  - PATCH: Bug fixes (`fix:` commits)
+- **How it works**:
+  - On merge to main, release-please creates/updates a Release PR
+  - Release PR accumulates changes with auto-generated changelog
+  - Merge the Release PR to cut a release (creates tag + GitHub Release)
+- **Conventional Commits required**:
+  - `feat: add new feature` → bumps minor version
+  - `fix: resolve bug` → bumps patch version
+  - `feat!: breaking change` → bumps major version
+  - `docs:`, `chore:`, `refactor:` → no version bump
 
 **Tagging Convention**:
 ```
@@ -507,9 +512,9 @@ v2.0.0-rc.1   # Release candidate
 **Workflow Files**:
 ```
 .github/workflows/
-├── ci.yml        # Lint, typecheck, test on PR/push
-├── codeql.yml    # Security scanning
-└── release.yml   # Automated releases on tag
+├── ci.yml             # Lint, typecheck, test on PR/push
+├── codeql.yml         # Security scanning
+└── release-please.yml # Auto-creates Release PRs on merge to main
 ```
 
 **CI Best Practices**:
@@ -707,4 +712,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.5.1 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
+**Version**: 1.5.2 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
