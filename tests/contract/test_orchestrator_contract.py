@@ -4,14 +4,12 @@ Tests cover:
 - T077: Contract test for OrchestratorService
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
 
 from orchestrator import (
     Phase1Request,
-    WorkflowState,
 )
 
 

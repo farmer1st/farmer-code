@@ -5,8 +5,7 @@ Tests cover:
 - T059: Integration test for execute_phase_2()
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

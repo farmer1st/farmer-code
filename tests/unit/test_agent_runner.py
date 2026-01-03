@@ -7,15 +7,14 @@ Tests cover:
 - T046: get_runner() factory
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from orchestrator import (
     AgentConfig,
-    AgentProvider,
     AgentNotAvailableError,
+    AgentProvider,
     ExecutionMode,
 )
 
@@ -34,7 +33,7 @@ class TestAgentRunnerProtocol:
 
     def test_claude_cli_runner_implements_protocol(self):
         """ClaudeCLIRunner should implement AgentRunner protocol."""
-        from orchestrator.agent_runner import AgentRunner, ClaudeCLIRunner
+        from orchestrator.agent_runner import ClaudeCLIRunner
 
         runner = ClaudeCLIRunner()
         # Should have all protocol methods

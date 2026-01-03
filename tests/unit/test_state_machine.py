@@ -14,7 +14,6 @@ import pytest
 
 from orchestrator import (
     InvalidStateTransition,
-    OrchestratorState,
     StateFileCorruptedError,
     WorkflowNotFoundError,
     WorkflowState,
@@ -236,7 +235,9 @@ class TestStateHistoryTracking:
         state = state_machine.get_state(123)
         transition = state.history[0]
 
-        with pytest.raises(Exception):  # ValidationError for frozen models
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):  # Frozen models raise ValidationError on mutation
             transition.trigger = "modified"
 
 

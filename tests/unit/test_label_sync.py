@@ -128,7 +128,7 @@ class TestLabelSyncErrorHandling:
         mock_github.get_issue_labels.return_value = [mock_label]
         mock_github.remove_label.side_effect = Exception("API error")
 
-        result = label_sync.sync_labels(
+        label_sync.sync_labels(
             issue_number=123,
             current_state=WorkflowState.PHASE_2,
         )
@@ -140,7 +140,7 @@ class TestLabelSyncErrorHandling:
         """Should handle error when getting labels fails."""
         mock_github.get_issue_labels.side_effect = Exception("API error")
 
-        result = label_sync.sync_labels(
+        label_sync.sync_labels(
             issue_number=123,
             current_state=WorkflowState.PHASE_2,
         )
