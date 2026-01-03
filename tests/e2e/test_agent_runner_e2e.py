@@ -23,8 +23,7 @@ from orchestrator.agent_runner import ClaudeCLIRunner, get_runner
 # Skip on CI unless explicitly enabled
 SKIP_REASON = "Requires local Claude CLI with Pro Max subscription"
 skip_on_ci = pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTIONS") == "true"
-    and os.environ.get("RUN_CLAUDE_E2E") != "1",
+    os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("RUN_CLAUDE_E2E") != "1",
     reason=SKIP_REASON,
 )
 
@@ -187,9 +186,7 @@ class TestClaudeCLIErrorHandling:
     """E2E tests for error handling with real Claude CLI."""
 
     @skip_on_ci
-    def test_dispatch_with_invalid_model_fails_gracefully(
-        self, claude_runner, temp_workdir
-    ):
+    def test_dispatch_with_invalid_model_fails_gracefully(self, claude_runner, temp_workdir):
         """Verify invalid model name is handled gracefully."""
         if not claude_runner.is_available():
             pytest.skip("Claude CLI not installed")

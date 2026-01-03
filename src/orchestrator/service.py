@@ -162,9 +162,7 @@ class OrchestratorService:
                         issue_number = int(artifact.replace("issue#", ""))
                         state = self.get_state(issue_number)
                         if state:
-                            self._label_sync.sync_labels(
-                                issue_number, state.current_state
-                            )
+                            self._label_sync.sync_labels(issue_number, state.current_state)
                     except (ValueError, Exception) as e:
                         logger.warning(
                             f"Label sync failed after phase 1: {e}",

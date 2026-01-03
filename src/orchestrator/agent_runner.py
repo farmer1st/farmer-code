@@ -181,9 +181,7 @@ class ClaudeCLIRunner:
             )
 
         except FileNotFoundError as e:
-            raise AgentDispatchError(
-                f"Claude CLI not found at '{self._claude_path}': {e}"
-            ) from e
+            raise AgentDispatchError(f"Claude CLI not found at '{self._claude_path}': {e}") from e
 
         except Exception as e:
             duration = time.time() - start_time
@@ -249,18 +247,10 @@ def get_runner(config: AgentConfig) -> AgentRunner:
                 )
             return runner
         else:
-            raise AgentNotAvailableError(
-                "Claude SDK mode not yet implemented"
-            )
+            raise AgentNotAvailableError("Claude SDK mode not yet implemented")
     elif config.provider == AgentProvider.GEMINI:
-        raise AgentNotAvailableError(
-            "Provider gemini not yet implemented"
-        )
+        raise AgentNotAvailableError("Provider gemini not yet implemented")
     elif config.provider == AgentProvider.CODEX:
-        raise AgentNotAvailableError(
-            "Provider codex not yet implemented"
-        )
+        raise AgentNotAvailableError("Provider codex not yet implemented")
     else:
-        raise AgentNotAvailableError(
-            f"Unknown provider: {config.provider}"
-        )
+        raise AgentNotAvailableError(f"Unknown provider: {config.provider}")

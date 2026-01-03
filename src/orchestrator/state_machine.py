@@ -162,9 +162,7 @@ class StateMachine:
         """
         state = self.get_state(issue_number)
         if state is None:
-            raise WorkflowNotFoundError(
-                f"No workflow found for issue {issue_number}"
-            )
+            raise WorkflowNotFoundError(f"No workflow found for issue {issue_number}")
 
         current_state = state.current_state
         transition_key = (current_state, event)
