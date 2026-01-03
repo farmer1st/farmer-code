@@ -15,15 +15,30 @@ from github_integration import GitHubService, Issue, ValidationError
 
 
 @pytest.fixture
-def mock_requests():
+def mock_pem_file():
+    """Mock PEM file validation so tests don't need real credentials"""
+    mock_stat = Mock()
+    mock_stat.st_mode = 0o100600  # File with 600 permissions
+
+    with (
+        patch("github_integration.auth.Path.exists", return_value=True),
+        patch("github_integration.auth.Path.stat", return_value=mock_stat),
+        patch("github_integration.auth.Path.read_text", return_value="fake-key-content"),
+    ):
+        yield
+
+
+@pytest.fixture
+def mock_requests(mock_pem_file):
     """Mock requests library for HTTP calls"""
     with (
         patch("github_integration.client.requests") as mock_client,
         patch("github_integration.auth.requests") as mock_auth,
+        patch("github_integration.auth.jwt.encode", return_value="mock-jwt-token"),
     ):
         # Mock auth token fetch
         mock_auth_response = Mock()
-        mock_auth_response.status_code = 200
+        mock_auth_response.status_code = 201
         mock_auth_response.json.return_value = {
             "token": "ghs_test_token",
             "expires_at": "2026-01-02T14:00:00Z",
@@ -34,7 +49,9 @@ def mock_requests():
 
 
 @pytest.fixture
-def service(github_app_id, github_installation_id, github_private_key_path, github_repository):
+def service(
+    mock_pem_file, github_app_id, github_installation_id, github_private_key_path, github_repository
+):
     """Create GitHubService instance for integration testing"""
     return GitHubService(
         app_id=github_app_id,

@@ -76,12 +76,15 @@ jobs:
       - name: Run unit tests
         run: uv run pytest tests/unit/ -v --tb=short
 
-      # Note: Contract and integration tests require GitHub App credentials
-      # Run locally with: pytest tests/contract/ tests/integration/
+      - name: Run integration tests
+        run: uv run pytest tests/integration/ -v --tb=short
+
+      # Note: Contract tests require real GitHub App credentials
+      # Run locally with: pytest tests/contract/
 
       - name: Generate coverage report
         run: |
-          uv run pytest tests/unit/ \
+          uv run pytest tests/unit/ tests/integration/ \
             --cov=src/github_integration \
             --cov-report=term-missing \
             --cov-fail-under=55
