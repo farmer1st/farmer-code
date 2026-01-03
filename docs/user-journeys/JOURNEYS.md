@@ -7,6 +7,7 @@ Complete list of all user journeys for FarmCode orchestrator.
 | Domain | Description |
 |--------|-------------|
 | **ORC** | Orchestrator - AI agent workflow orchestration and SDLC management |
+| **WT**  | Worktree - Git worktree and branch management for isolated development |
 | **GH**  | GitHub - Direct GitHub integration operations (future) |
 | **UI**  | User Interface - Web/TUI user interactions (future) |
 
@@ -19,6 +20,10 @@ Complete list of all user journeys for FarmCode orchestrator.
 | [ORC-003](./ORC-003-workflow-progression.md) | Progress Issue Through Workflow Phases | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | [ORC-004](./ORC-004-link-pull-request.md) | Link Pull Request to Feature Issue | P3 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | [ORC-005](./ORC-005-full-sdlc-workflow.md) | Complete 8-Phase SDLC Workflow | P1 | ✅ Implemented | ✅ 100% | 1/1 passing |
+| [WT-001](./WT-001-create-worktree.md) | Create Worktree for Feature Development | P1 | ✅ Implemented | ✅ 100% | 1/1 passing |
+| [WT-002](./WT-002-init-plans.md) | Initialize Plans Folder Structure | P1 | ✅ Implemented | ✅ 100% | 1/1 passing |
+| [WT-003](./WT-003-commit-push.md) | Commit and Push Feature Changes | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
+| [WT-004](./WT-004-cleanup-worktree.md) | Cleanup Worktree After Feature Completion | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
 
 ## Status Legend
 
@@ -35,16 +40,20 @@ Complete list of all user journeys for FarmCode orchestrator.
 |----|------|--------|----------|
 | ORC-001 | Create Issue for New Feature Request | ✅ Implemented | 100% |
 | ORC-005 | Complete 8-Phase SDLC Workflow | ✅ Implemented | 100% (partial) |
+| WT-001 | Create Worktree for Feature Development | ✅ Implemented | 100% |
+| WT-002 | Initialize Plans Folder Structure | ✅ Implemented | 100% |
 
-**P1 Coverage**: 2/2 implemented (100%)
+**P1 Coverage**: 4/4 implemented (100%)
 
 ### P2 Journeys (Important - Post-MVP)
 | ID | Name | Status | Coverage |
 |----|------|--------|----------|
 | ORC-002 | Agent Provides Feedback via Comment | 📋 Planned | 0% |
 | ORC-003 | Progress Issue Through Workflow Phases | 📋 Planned | 0% |
+| WT-003 | Commit and Push Feature Changes | ✅ Implemented | 100% |
+| WT-004 | Cleanup Worktree After Feature Completion | ✅ Implemented | 100% |
 
-**P2 Coverage**: 0/2 implemented (0%)
+**P2 Coverage**: 2/4 implemented (50%)
 
 ### P3 Journeys (Nice to Have)
 | ID | Name | Status | Coverage |
@@ -62,9 +71,14 @@ ORC-002: ░░░░░░░░░░░░░░░░░░░░   0% (not 
 ORC-003: ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 ORC-004: ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 ORC-005: ████████████████████ 100% (1/1 E2E tests passing)
+WT-001:  ████████████████████ 100% (1/1 E2E tests passing)
+WT-002:  ████████████████████ 100% (1/1 E2E tests passing)
+WT-003:  ████████████████████ 100% (1/1 E2E tests passing)
+WT-004:  ████████████████████ 100% (1/1 E2E tests passing)
 
-Total: 2/5 journeys implemented (40%)
-P1 Journeys: 2/2 implemented (100%) ✅
+Total: 6/9 journeys implemented (67%)
+P1 Journeys: 4/4 implemented (100%) ✅
+P2 Journeys: 2/4 implemented (50%)
 ```
 
 ## Journeys by Feature
@@ -79,13 +93,22 @@ P1 Journeys: 2/2 implemented (100%) ✅
 | US4: Link PRs to Issues | ORC-004 | 📋 Planned |
 | All Stories Combined | ORC-005 | ✅ Partial |
 
+### Feature 002: Git Worktree Manager
+
+| User Story | Journeys | Status |
+|------------|----------|--------|
+| US1: Create Worktree | WT-001 | ✅ Implemented |
+| US2: Manage Plans Folder | WT-002 | ✅ Implemented |
+| US3: Commit and Push Changes | WT-003 | ✅ Implemented |
+| US4: Cleanup Worktree | WT-004 | ✅ Implemented |
+
 ### Future Features
 
 | Feature | Journeys | Status |
 |---------|----------|--------|
-| Feature 002: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
-| Feature 003: Orchestrator Logic | ORC-006 to ORC-015 | 🔮 Not yet planned |
-| Feature 004: Advanced GitHub | GH-001 to GH-005 | 🔮 Not yet planned |
+| Feature 003: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
+| Feature 004: Orchestrator Logic | ORC-006 to ORC-015 | 🔮 Not yet planned |
+| Feature 005: Advanced GitHub | GH-001 to GH-005 | 🔮 Not yet planned |
 
 ## Running Journey Tests
 
@@ -122,6 +145,6 @@ pytest --co -m journey
 
 ## Last Updated
 
-**Date**: 2026-01-02
-**By**: GitHub Integration Core implementation
-**Next Review**: After implementing User Story 2 (Comments)
+**Date**: 2026-01-03
+**By**: Git Worktree Manager implementation (Feature 002)
+**Next Review**: After implementing Feature 003 (TUI Interface)

@@ -62,9 +62,7 @@ class TestCreateWorktreeContract:
     and worktree in sibling directory.
     """
 
-    def test_create_worktree_creates_branch_from_main(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_creates_branch_from_main(self, temp_git_repo: Path) -> None:
         """create_worktree should create branch from main."""
         from worktree_manager.service import WorktreeService
 
@@ -80,9 +78,7 @@ class TestCreateWorktreeContract:
         assert branch_check.returncode == 0
         assert result.branch_name == "123-add-auth"
 
-    def test_create_worktree_creates_sibling_directory(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_creates_sibling_directory(self, temp_git_repo: Path) -> None:
         """create_worktree should create worktree in sibling directory."""
         from worktree_manager.service import WorktreeService
 
@@ -95,9 +91,7 @@ class TestCreateWorktreeContract:
         assert expected_path.exists()
         assert (expected_path / ".git").exists()
 
-    def test_create_worktree_returns_worktree_model(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_returns_worktree_model(self, temp_git_repo: Path) -> None:
         """create_worktree should return Worktree model with correct data."""
         from worktree_manager.models import Worktree
         from worktree_manager.service import WorktreeService
@@ -112,9 +106,7 @@ class TestCreateWorktreeContract:
         assert result.main_repo_path == temp_git_repo
         assert result.is_clean is True
 
-    def test_create_worktree_directory_exists_raises_error(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_directory_exists_raises_error(self, temp_git_repo: Path) -> None:
         """create_worktree should raise WorktreeExistsError if directory exists."""
         from worktree_manager.errors import WorktreeExistsError
         from worktree_manager.service import WorktreeService
@@ -129,9 +121,7 @@ class TestCreateWorktreeContract:
 
         assert "123-add-auth" in str(exc_info.value)
 
-    def test_create_worktree_main_branch_not_found_raises_error(
-        self, tmp_path: Path
-    ) -> None:
+    def test_create_worktree_main_branch_not_found_raises_error(self, tmp_path: Path) -> None:
         """create_worktree should raise MainBranchNotFoundError if no main."""
         from worktree_manager.errors import MainBranchNotFoundError
         from worktree_manager.service import WorktreeService
@@ -181,9 +171,7 @@ class TestCreateWorktreeFromExistingContract:
     Contract: Given existing remote branch, creates worktree checking out that branch.
     """
 
-    def test_create_worktree_from_existing_checks_out_branch(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_from_existing_checks_out_branch(self, temp_git_repo: Path) -> None:
         """create_worktree_from_existing should checkout existing branch."""
         from worktree_manager.service import WorktreeService
 
@@ -197,9 +185,7 @@ class TestCreateWorktreeFromExistingContract:
         # Add a commit to this branch
         test_file = temp_git_repo / "feature.txt"
         test_file.write_text("feature content\n")
-        subprocess.run(
-            ["git", "add", "."], cwd=temp_git_repo, check=True, capture_output=True
-        )
+        subprocess.run(["git", "add", "."], cwd=temp_git_repo, check=True, capture_output=True)
         subprocess.run(
             ["git", "commit", "-m", "Feature commit"],
             cwd=temp_git_repo,
@@ -226,9 +212,7 @@ class TestCreateWorktreeFromExistingContract:
         # Should have the feature file from that branch
         assert (expected_path / "feature.txt").exists()
 
-    def test_create_worktree_from_existing_returns_worktree(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_create_worktree_from_existing_returns_worktree(self, temp_git_repo: Path) -> None:
         """create_worktree_from_existing should return Worktree model."""
         from worktree_manager.models import Worktree
         from worktree_manager.service import WorktreeService
@@ -287,9 +271,7 @@ class TestInitPlansContract:
     Contract: Given issue_number, creates .plans/{issue}/ structure.
     """
 
-    def test_init_plans_creates_directory_structure(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_init_plans_creates_directory_structure(self, temp_git_repo: Path) -> None:
         """init_plans should create .plans/{issue}/ with subdirectories."""
         from worktree_manager.service import WorktreeService
 
@@ -309,9 +291,7 @@ class TestInitPlansContract:
         assert (plans_path / "reviews").is_dir()
         assert (plans_path / "README.md").is_file()
 
-    def test_init_plans_creates_readme_with_metadata(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_init_plans_creates_readme_with_metadata(self, temp_git_repo: Path) -> None:
         """init_plans should create README.md with feature metadata."""
         from worktree_manager.service import WorktreeService
 
@@ -325,9 +305,7 @@ class TestInitPlansContract:
         assert "456" in readme_content
         assert "Fix Login Bug" in readme_content
 
-    def test_init_plans_returns_plans_folder_model(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_init_plans_returns_plans_folder_model(self, temp_git_repo: Path) -> None:
         """init_plans should return PlansFolder model."""
         from worktree_manager.models import PlansFolder
         from worktree_manager.service import WorktreeService
@@ -368,9 +346,7 @@ class TestGetPlansContract:
     Contract: Given issue_number, returns PlansFolder if exists, None otherwise.
     """
 
-    def test_get_plans_returns_plans_folder_if_exists(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_get_plans_returns_plans_folder_if_exists(self, temp_git_repo: Path) -> None:
         """get_plans should return PlansFolder if .plans/{issue}/ exists."""
         from worktree_manager.models import PlansFolder
         from worktree_manager.service import WorktreeService
@@ -385,9 +361,7 @@ class TestGetPlansContract:
         assert result.issue_number == 123
         assert result.is_complete is True
 
-    def test_get_plans_returns_none_if_not_exists(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_get_plans_returns_none_if_not_exists(self, temp_git_repo: Path) -> None:
         """get_plans should return None if .plans/{issue}/ doesn't exist."""
         from worktree_manager.service import WorktreeService
 
@@ -399,9 +373,7 @@ class TestGetPlansContract:
 
         assert result is None
 
-    def test_get_plans_returns_partial_if_incomplete(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_get_plans_returns_partial_if_incomplete(self, temp_git_repo: Path) -> None:
         """get_plans should return PlansFolder with incomplete status if partial."""
         from worktree_manager.service import WorktreeService
 
@@ -578,9 +550,7 @@ class TestRemoveWorktreeContract:
         )
         assert branch_check.returncode != 0  # Branch doesn't exist
 
-    def test_remove_worktree_uncommitted_changes_fails(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_remove_worktree_uncommitted_changes_fails(self, temp_git_repo: Path) -> None:
         """remove_worktree should fail with uncommitted changes."""
         from worktree_manager.errors import UncommittedChangesError
         from worktree_manager.service import WorktreeService
@@ -613,9 +583,7 @@ class TestRemoveWorktreeContract:
         assert result.status == OperationStatus.SUCCESS
         assert not wt.path.exists()
 
-    def test_remove_worktree_not_found_raises_error(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_remove_worktree_not_found_raises_error(self, temp_git_repo: Path) -> None:
         """remove_worktree should raise error if worktree doesn't exist."""
         from worktree_manager.errors import WorktreeNotFoundError
         from worktree_manager.service import WorktreeService

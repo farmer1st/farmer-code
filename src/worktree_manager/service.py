@@ -74,9 +74,7 @@ class WorktreeService:
             MainBranchNotFoundError: If main branch doesn't exist
         """
         if not self.git.branch_exists("main"):
-            raise MainBranchNotFoundError(
-                "Main branch not found. Cannot create feature branches."
-            )
+            raise MainBranchNotFoundError("Main branch not found. Cannot create feature branches.")
 
     def create_worktree(self, issue_number: int, feature_name: str) -> Worktree:
         """
@@ -189,9 +187,7 @@ class WorktreeService:
                 raise BranchNotFoundError(branch_name)
             # Fetch and create local tracking branch
             self.git.run_command(["fetch", "origin", branch_name])
-            self.git.run_command(
-                ["checkout", "-b", branch_name, f"origin/{branch_name}"]
-            )
+            self.git.run_command(["checkout", "-b", branch_name, f"origin/{branch_name}"])
             # Go back to main
             self.git.run_command(["checkout", "main"])
 
@@ -910,10 +906,7 @@ class WorktreeService:
             check=False,
         )
         merged_branches = result.stdout.strip().split("\n")
-        return any(
-            branch_name == b.strip().lstrip("* ")
-            for b in merged_branches
-        )
+        return any(branch_name == b.strip().lstrip("* ") for b in merged_branches)
 
     def get_branch(self, branch_name: str) -> Branch | None:
         """

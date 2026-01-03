@@ -57,9 +57,7 @@ def temp_git_repo(tmp_path: Path) -> Path:
 class TestWorktreeLifecycle:
     """Integration tests for full worktree lifecycle."""
 
-    def test_full_lifecycle_create_init_commit_remove(
-        self, temp_git_repo: Path
-    ) -> None:
+    def test_full_lifecycle_create_init_commit_remove(self, temp_git_repo: Path) -> None:
         """Test complete worktree lifecycle: create → init plans → commit → remove."""
         from worktree_manager import OperationStatus, WorktreeService
 
@@ -93,9 +91,7 @@ class TestWorktreeLifecycle:
         assert worktrees[0].issue_number == 123
 
         # 5. Remove worktree with branch
-        removal = service.remove_worktree(
-            123, delete_branch=True, delete_remote_branch=False
-        )
+        removal = service.remove_worktree(123, delete_branch=True, delete_remote_branch=False)
         assert removal.status == OperationStatus.SUCCESS
         assert not worktree.path.exists()
 

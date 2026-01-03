@@ -20,6 +20,7 @@ import pytest
 # Marker for E2E tests - skip unless --run-e2e flag is provided
 def pytest_configure(config):
     config.addinivalue_line("markers", "e2e: mark test as end-to-end test")
+    config.addinivalue_line("markers", "journey(id): mark test as covering specific user journey")
 
 
 # Skip E2E tests unless explicitly requested
@@ -91,6 +92,8 @@ def test_repo_path(tmp_path: Path) -> Path | None:
 # =============================================================================
 
 
+@pytest.mark.e2e
+@pytest.mark.journey("WT-001")
 class TestCreateWorktreeE2E:
     """E2E tests for create_worktree()."""
 
@@ -133,6 +136,8 @@ class TestCreateWorktreeE2E:
 # =============================================================================
 
 
+@pytest.mark.e2e
+@pytest.mark.journey("WT-002")
 class TestInitPlansE2E:
     """E2E tests for init_plans()."""
 
@@ -177,6 +182,8 @@ class TestInitPlansE2E:
 # =============================================================================
 
 
+@pytest.mark.e2e
+@pytest.mark.journey("WT-003")
 class TestCommitAndPushE2E:
     """E2E tests for commit_and_push()."""
 
@@ -226,6 +233,8 @@ class TestCommitAndPushE2E:
 # =============================================================================
 
 
+@pytest.mark.e2e
+@pytest.mark.journey("WT-004")
 class TestRemoveWorktreeE2E:
     """E2E tests for remove_worktree()."""
 

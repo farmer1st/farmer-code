@@ -31,9 +31,7 @@ class Worktree(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # Identity
-    issue_number: int = Field(
-        ..., description="Associated issue number", gt=0
-    )
+    issue_number: int = Field(..., description="Associated issue number", gt=0)
     feature_name: str = Field(
         ..., description="Feature short name (slug)", min_length=1, max_length=100
     )
@@ -65,15 +63,11 @@ class Branch(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # Identity
-    name: str = Field(
-        ..., description="Branch name", min_length=1, max_length=256
-    )
+    name: str = Field(..., description="Branch name", min_length=1, max_length=256)
 
     # Tracking
     remote: str | None = Field(None, description="Remote name (e.g., 'origin')")
-    remote_branch: str | None = Field(
-        None, description="Remote branch name if tracking"
-    )
+    remote_branch: str | None = Field(None, description="Remote branch name if tracking")
 
     # Status
     is_local: bool = Field(True, description="True if branch exists locally")
@@ -130,9 +124,7 @@ class PlansFolder(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     # Identity
-    issue_number: int = Field(
-        ..., description="Associated issue number", gt=0
-    )
+    issue_number: int = Field(..., description="Associated issue number", gt=0)
     worktree_path: Path = Field(..., description="Path to parent worktree")
 
     # Contents
@@ -164,9 +156,7 @@ class CommitRequest(BaseModel):
     Used for staging, committing, and optionally pushing changes.
     """
 
-    message: str = Field(
-        ..., description="Commit message", min_length=1, max_length=500
-    )
+    message: str = Field(..., description="Commit message", min_length=1, max_length=500)
     push: bool = Field(True, description="Whether to push after commit")
 
 
@@ -181,12 +171,8 @@ class CommitResult(BaseModel):
 
     commit_sha: str | None = Field(None, description="SHA of created commit")
     pushed: bool = Field(False, description="True if push succeeded")
-    nothing_to_commit: bool = Field(
-        False, description="True if working tree was clean"
-    )
-    push_error: str | None = Field(
-        None, description="Push error message if push failed"
-    )
+    nothing_to_commit: bool = Field(False, description="True if working tree was clean")
+    push_error: str | None = Field(None, description="Push error message if push failed")
 
 
 # =============================================================================
@@ -216,9 +202,7 @@ class OperationResult(BaseModel):
     worktree: "Worktree | None" = Field(
         None, description="Worktree if operation created/affected one"
     )
-    retry_possible: bool = Field(
-        False, description="True if failed operation can be retried"
-    )
+    retry_possible: bool = Field(False, description="True if failed operation can be retried")
 
 
 class RemoveWorktreeRequest(BaseModel):
@@ -229,15 +213,9 @@ class RemoveWorktreeRequest(BaseModel):
     """
 
     issue_number: int = Field(..., description="Issue number", gt=0)
-    delete_branch: bool = Field(
-        False, description="Delete local branch after removal"
-    )
-    delete_remote_branch: bool = Field(
-        False, description="Delete remote branch after removal"
-    )
-    force: bool = Field(
-        False, description="Force removal even with uncommitted changes"
-    )
+    delete_branch: bool = Field(False, description="Delete local branch after removal")
+    delete_remote_branch: bool = Field(False, description="Delete remote branch after removal")
+    force: bool = Field(False, description="Force removal even with uncommitted changes")
 
 
 # Rebuild forward references

@@ -231,8 +231,7 @@ class TestGetBranch:
         with patch.object(WorktreeService, "_run_git_command") as mock_git:
             # Simulate tracking branch output
             tracking_output = (
-                "* 123-feature abc1234 [origin/123-feature: ahead 2, behind 1] "
-                "Latest commit\n"
+                "* 123-feature abc1234 [origin/123-feature: ahead 2, behind 1] Latest commit\n"
             )
             mock_git.return_value = tracking_output
 

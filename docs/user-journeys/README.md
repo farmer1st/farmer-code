@@ -141,11 +141,15 @@ This helps track which user journeys are fully tested and working.
 
 - **[JOURNEYS.md](./JOURNEYS.md)** - Complete list of all journeys with status
 - **README.md** - This file (journey documentation guide)
-- **ORC-001-create-issue.md** - Individual journey documentation
-- **ORC-002-agent-feedback.md** - Individual journey documentation
-- **ORC-003-workflow-progression.md** - Individual journey documentation
-- **ORC-004-link-pull-request.md** - Individual journey documentation
-- **ORC-005-full-sdlc-workflow.md** - Individual journey documentation
+- **ORC-001-create-issue.md** - Create issue for new feature request
+- **ORC-002-agent-feedback.md** - Agent provides feedback via comment
+- **ORC-003-workflow-progression.md** - Progress issue through workflow phases
+- **ORC-004-link-pull-request.md** - Link pull request to feature issue
+- **ORC-005-full-sdlc-workflow.md** - Complete 8-phase SDLC workflow
+- **WT-001-create-worktree.md** - Create worktree for feature development
+- **WT-002-init-plans.md** - Initialize plans folder structure
+- **WT-003-commit-push.md** - Commit and push feature changes
+- **WT-004-cleanup-worktree.md** - Cleanup worktree after feature completion
 
 ## Related Documentation
 

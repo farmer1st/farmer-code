@@ -5,7 +5,6 @@ Tests the custom exception hierarchy and error messages.
 """
 
 
-
 class TestWorkTreeError:
     """Tests for base WorktreeError exception."""
 
