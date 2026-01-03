@@ -1,16 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: 1.5.1 → 1.5.2
-- Modified principles: XII (Continuous Integration and Delivery)
+- Version change: 1.5.2 → 1.6.0
+- Modified principles: VII (Versioning and Change Control)
 - Added sections:
-  * Updated Release Workflow to use release-please (auto Release PRs)
+  * Conventional Commits (REQUIRED) - format, types, examples
 - Removed sections: None
 - Templates requiring updates:
   ✅ All templates reviewed - no updates needed
 - Follow-up TODOs:
-  * Use conventional commits (feat:, fix:, etc.) for proper versioning
-- Rationale for PATCH bump: Changed release mechanism (manual tags → release-please)
+  * Consider adding commitlint to enforce conventional commits
+- Rationale for MINOR bump: Added new requirement (conventional commits)
 Previous changes:
+- 1.5.1 → 1.5.2: Added release-please for automated releases
 - 1.5.0 → 1.5.1: Made E2E tests mandatory in CI
 - 1.4.0 → 1.5.0: Added Principle XII (Continuous Integration and Delivery)
 - 1.3.0 → 1.4.0: Added Principle XI (Documentation and User Journeys)
@@ -107,15 +108,37 @@ Previous changes:
 
 ### VII. Versioning and Change Control
 
-**Rule**: All artifacts MUST be versioned using semantic versioning.
+**Rule**: All artifacts MUST be versioned using semantic versioning. All commits MUST use conventional commit format.
 
 **Implementation**:
 - Constitution: MAJOR.MINOR.PATCH (backward compatibility semantics)
 - Specifications: Linked to feature branches and issue numbers
-- All changes tracked through Git with meaningful commit messages
+- All changes tracked through Git with conventional commit messages
 - Breaking changes require MAJOR version bump and migration plan
 
-**Rationale**: Versioning enables traceability, rollback capability, change impact analysis, and coordination across distributed teams.
+**Conventional Commits** (REQUIRED):
+- Format: `<type>(<scope>): <description>`
+- **Types** (required prefix):
+  - `feat:` - New feature (bumps MINOR version)
+  - `fix:` - Bug fix (bumps PATCH version)
+  - `docs:` - Documentation only
+  - `style:` - Formatting, no code change
+  - `refactor:` - Code restructuring, no behavior change
+  - `test:` - Adding/updating tests
+  - `chore:` - Maintenance, dependencies, CI
+- **Breaking changes**: Add `!` after type or include `BREAKING CHANGE:` in body
+  - Example: `feat!: remove deprecated API` (bumps MAJOR version)
+- **Scope** (optional): Component affected, e.g., `feat(auth): add OAuth`
+- **Examples**:
+  ```
+  feat: add user authentication
+  fix(api): handle null response from GitHub
+  docs: update README with setup instructions
+  feat!: change API response format
+  chore: update dependencies
+  ```
+
+**Rationale**: Versioning enables traceability, rollback capability, change impact analysis, and coordination across distributed teams. Conventional commits enable automated changelog generation and semantic versioning via release-please.
 
 ### VIII. Technology Stack Standards
 
@@ -486,18 +509,11 @@ Feature 001: GitHub Integration Core
 
 **Release Workflow** (release-please):
 - **Versioning**: Semantic versioning (vMAJOR.MINOR.PATCH)
-  - MAJOR: Breaking changes (commit with `BREAKING CHANGE:` or `!` suffix)
-  - MINOR: New features (`feat:` commits)
-  - PATCH: Bug fixes (`fix:` commits)
 - **How it works**:
   - On merge to main, release-please creates/updates a Release PR
   - Release PR accumulates changes with auto-generated changelog
   - Merge the Release PR to cut a release (creates tag + GitHub Release)
-- **Conventional Commits required**:
-  - `feat: add new feature` → bumps minor version
-  - `fix: resolve bug` → bumps patch version
-  - `feat!: breaking change` → bumps major version
-  - `docs:`, `chore:`, `refactor:` → no version bump
+- **Version bumps**: Determined by conventional commits (see Principle VII)
 
 **Tagging Convention**:
 ```
@@ -712,4 +728,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.5.2 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
+**Version**: 1.6.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
