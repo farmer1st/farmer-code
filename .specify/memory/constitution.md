@@ -1,21 +1,22 @@
 <!--
 Sync Impact Report:
-- Version change: 1.2.1 → 1.3.0
-- Modified principles: Principle VIII (Technology Stack Standards) - added Database Management
+- Version change: 1.3.0 → 1.4.0
+- Modified principles: None
 - Added sections:
-  * Principle X: Security-First Development (new principle)
-  * Error Handling Standards in Quality Standards
-  * Logging Standards in Quality Standards
-  * Database Management in Technology Stack Standards
+  * Principle XI: Documentation and User Journeys (new principle)
 - Removed sections: None
 - Templates requiring updates:
-  ✅ plan-template.md - Must verify security, error handling, DB migration compliance
-  ✅ spec-template.md - Security requirements must be explicit
-  ✅ tasks-template.md - Migration tasks must follow Alembic standards
+  ✅ plan-template.md - Must include user journey identification
+  ✅ spec-template.md - Must document user journeys with unique IDs
+  ✅ tasks-template.md - E2E test tasks must reference journey IDs
   ✅ All command files reviewed - no updates needed
-- Follow-up TODOs: None
-- Rationale for MINOR bump: Added new principle (Security-First) and material new standards
+- Follow-up TODOs:
+  * Create docs/user-journeys/ directory structure
+  * Add pytest journey markers to pyproject.toml
+  * Document existing user journeys for GitHub Integration Core (ORC-001 through ORC-005)
+- Rationale for MINOR bump: Added new principle (Documentation and User Journeys) with journey tracking requirements
 Previous changes:
+- 1.2.1 → 1.3.0: Added Principle X (Security-First Development)
 - 1.2.0 → 1.2.1: Added deployment strategy (local-first with AWS/K8s option)
 - 1.1.3 → 1.2.0: Added Principle IX (Thin Client Architecture)
 - 1.1.2 → 1.1.3: Changed to Vite + React for SPA architecture
@@ -297,6 +298,156 @@ Previous changes:
 
 **Rationale**: Security habits prevent future vulnerabilities. Even internal tools benefit from secure defaults. Preparing for Google OAuth now (environment-based config) makes cloud deployment smooth. Small tool = practical security, not enterprise paranoia.
 
+### XI. Documentation and User Journeys
+
+**Rule**: Every feature MUST have comprehensive documentation and user journeys mapped to tests.
+
+**User Journey Requirements**:
+- **Unique Journey IDs**: Format `[DOMAIN]-[NNN]` where:
+  - DOMAIN = 2-4 letter code for domain (e.g., ORC=Orchestrator, GH=GitHub, UI=User Interface)
+  - NNN = 3-digit sequential number (001, 002, 003, etc.)
+  - Examples: `ORC-001`, `GH-023`, `UI-007`
+
+- **Journey Documentation** (in `docs/user-journeys/[DOMAIN]-[NNN]-[name].md`):
+  ```markdown
+  # [DOMAIN-NNN]: [Journey Name]
+
+  **Actor**: [Who performs this journey]
+  **Goal**: [What they want to accomplish]
+  **Preconditions**: [What must be true before starting]
+  **Priority**: [P1/P2/P3]
+
+  ## Steps:
+  1. [Action description]
+     - Expected outcome: [What should happen]
+     - System behavior: [How system responds]
+
+  2. [Next action]
+     ...
+
+  ## Success Criteria:
+  - [Measurable outcome 1]
+  - [Measurable outcome 2]
+
+  ## E2E Test Coverage:
+  - Test file: `tests/e2e/test_[journey_name].py`
+  - Journey marker: `@pytest.mark.journey("[DOMAIN]-[NNN]")`
+  - Covered steps: [List which steps are covered]
+  - Test status: [Link to latest test results]
+
+  ## Related Journeys:
+  - [DOMAIN-XXX]: [Related journey name]
+  ```
+
+- **Journey Registry** (in `docs/user-journeys/README.md`):
+  - Table of all journeys with ID, name, priority, status, test coverage
+  - Shows which journeys are implemented, tested, passing
+  - Links to journey documentation files
+
+**Documentation Requirements**:
+- **Feature README** (`src/[module]/README.md`):
+  - Purpose and scope
+  - Quick start guide
+  - Installation/setup instructions
+  - Usage examples
+  - API reference links
+
+- **API Documentation**:
+  - Backend: OpenAPI/Swagger specs auto-generated from FastAPI
+  - Python: Docstrings following Google style
+  - TypeScript: JSDoc/TSDoc comments
+  - All public interfaces documented
+
+- **Architecture Documentation**:
+  - System architecture diagrams (draw.io or Mermaid)
+  - Data flow diagrams
+  - Component relationships
+  - Integration points
+
+- **User-Facing Documentation** (when applicable):
+  - Troubleshooting guides
+  - Configuration options
+  - Common use cases
+  - FAQ section
+
+**Test-to-Journey Mapping**:
+- **E2E Tests MUST be tagged** with journey markers:
+  ```python
+  @pytest.mark.e2e
+  @pytest.mark.journey("ORC-001")
+  def test_create_issue_for_new_feature():
+      """Test ORC-001: Create Issue for New Feature Request"""
+      # Test implementation
+  ```
+
+- **Test Reports MUST show journey coverage**:
+  - Which journeys are covered by tests
+  - Pass/fail status per journey
+  - Coverage percentage per journey
+  - Uncovered journeys highlighted
+
+- **Pytest Configuration**:
+  ```toml
+  [tool.pytest.ini_options]
+  markers = [
+      "journey(id): Mark test as covering specific user journey (e.g., ORC-001)",
+      # ... other markers
+  ]
+  ```
+
+**Journey Development Workflow**:
+1. **During Specification**: Identify user journeys and assign IDs
+2. **During Planning**: Map journeys to implementation tasks
+3. **During Test Design**: Design E2E tests for each journey
+4. **During Implementation**: Tag E2E tests with journey markers
+5. **During Review**: Verify journey coverage in test reports
+6. **Ongoing**: Update journey docs when behavior changes
+
+**Documentation Updates**:
+- Documentation MUST be updated with every feature change
+- Outdated documentation is a blocking issue (same as failing tests)
+- PR checklist MUST include documentation verification
+- Journey coverage MUST NOT decrease between releases
+
+**Documentation Update Frequency**:
+
+Understanding the hierarchy:
+```
+Roadmap (strategic plan, quarters/months)
+  └── Feature (large deliverable, 2-8 weeks, has spec.md/plan.md/tasks.md)
+       └── User Story (user-facing functionality, 2-5 days, P1/P2/P3)
+            └── Task (single unit of work, 15min-2 hours, T001, T002...)
+```
+
+**Update docs at FEATURE level** (primary documentation point):
+- After completing feature OR after each major user story
+- Update: Module README.md, user journeys, API docs, architecture diagrams
+- Mark journeys as implemented in registry
+- Example: After completing "GitHub Integration Core" feature
+
+**Sometimes update docs at USER STORY level** (if story is substantial):
+- When user story introduces new component or major functionality
+- Update: README API reference section, related journey docs
+- Example: User Story 2 (Comments) adds significant new methods
+
+**Never update docs at TASK level** (too granular):
+- Tasks are implementation details
+- Code comments and docstrings are sufficient
+- No separate documentation needed
+
+**Practical Example**:
+```
+Feature 001: GitHub Integration Core
+├── US1 (Issues): ✅ Implemented
+│   └── Docs updated: README.md + ORC-001 journey
+├── US2 (Comments): 📋 Planned
+│   └── Will update: README.md (add comment methods) + ORC-002 journey
+├── US3 (Labels): 📋 Planned
+└── US4 (PRs): 📋 Planned
+```
+
+**Rationale**: User journeys provide end-to-end validation that the system works as users expect. Mapping tests to journeys ensures comprehensive coverage and makes test reports meaningful to stakeholders. Documentation prevents knowledge silos and enables new contributors to onboard quickly. For FarmCode orchestrator, user journeys represent the 8-phase SDLC workflow that is the core value proposition. Documenting at the feature/story level (not task level) ensures docs stay current without creating update burden for every small change.
+
 ## Monorepo Structure
 
 **Repository Layout**:
@@ -375,12 +526,15 @@ farmcode/
 
 **Documentation Requirements**:
 - All features have spec.md, plan.md, and tasks.md
+- User journeys documented per Principle XI (Documentation and User Journeys)
 - Contracts documented in contracts/ directory
 - Data models documented in data-model.md
+- Feature README.md in each module directory
 - Quickstart.md provides end-to-end validation
 - NEEDS CLARIFICATION markers require resolution before implementation
 - API endpoints documented with OpenAPI/Swagger
 - Components documented with JSDoc/TSDoc
+- E2E tests MUST be tagged with journey markers
 
 **Performance Standards**:
 - API response time: p95 < 200ms for CRUD operations
@@ -478,4 +632,4 @@ farmcode/
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.3.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
+**Version**: 1.4.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-02
