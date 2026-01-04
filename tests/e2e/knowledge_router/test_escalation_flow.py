@@ -1,7 +1,6 @@
 """End-to-end tests for escalation flow (KR-003)."""
 
 import uuid
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -23,7 +22,6 @@ class TestEscalationFlowE2E:
     def test_low_confidence_triggers_escalation_e2e(self) -> None:
         """Test end-to-end: low confidence answer triggers escalation."""
         from knowledge_router.escalation import EscalationHandler
-        from knowledge_router.router import KnowledgeRouterService
         from knowledge_router.validator import ConfidenceValidator
 
         config = ConfigLoader.load_from_dict({
@@ -36,7 +34,6 @@ class TestEscalationFlowE2E:
             },
         })
 
-        router = KnowledgeRouterService(config)
         validator = ConfidenceValidator(config)
         escalation_handler = EscalationHandler(config)
 
@@ -75,8 +72,6 @@ class TestEscalationFlowE2E:
         """Test end-to-end: human confirms a low-confidence answer."""
         from knowledge_router.escalation import EscalationHandler
         from knowledge_router.models import EscalationRequest
-        from knowledge_router.router import KnowledgeRouterService
-        from knowledge_router.validator import ConfidenceValidator
 
         config = ConfigLoader.load_from_dict({
             "defaults": {"confidence_threshold": 80},
@@ -176,7 +171,10 @@ class TestEscalationFlowE2E:
         human_response = HumanResponse(
             escalation_id=escalation.id,
             action=HumanAction.CORRECT,
-            corrected_answer="Use Alembic for database migrations with version control and rollback support.",
+            corrected_answer=(
+                "Use Alembic for database migrations with version control "
+                "and rollback support."
+            ),
             responder="farmer1st",
             github_comment_id=12346,
         )
@@ -235,7 +233,10 @@ class TestEscalationFlowE2E:
         human_response = HumanResponse(
             escalation_id=escalation.id,
             action=HumanAction.ADD_CONTEXT,
-            additional_context="We expect 10K concurrent users. Cache needs to handle session data and user preferences. Must survive pod restarts.",
+            additional_context=(
+                "We expect 10K concurrent users. Cache needs to handle "
+                "session data and user preferences. Must survive pod restarts."
+            ),
             responder="farmer1st",
             github_comment_id=12347,
         )

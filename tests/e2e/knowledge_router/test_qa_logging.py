@@ -23,7 +23,7 @@ class TestQALoggingE2E:
     def test_complete_qa_exchange_is_logged_e2e(self) -> None:
         """Test end-to-end: a complete Q&A exchange is logged."""
         from knowledge_router.logger import QALogger
-        from knowledge_router.models import AnswerValidationResult, QALogEntry
+        from knowledge_router.models import QALogEntry
         from knowledge_router.validator import ConfidenceValidator
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -89,8 +89,6 @@ class TestQALoggingE2E:
         from knowledge_router.escalation import EscalationHandler
         from knowledge_router.logger import QALogger
         from knowledge_router.models import (
-            AnswerValidationResult,
-            EscalationRequest,
             QALogEntry,
         )
         from knowledge_router.validator import ConfidenceValidator
@@ -178,8 +176,6 @@ class TestQALoggingE2E:
         from knowledge_router.escalation import EscalationHandler
         from knowledge_router.logger import QALogger
         from knowledge_router.models import (
-            AnswerValidationResult,
-            EscalationRequest,
             QALogEntry,
         )
         from knowledge_router.validator import ConfidenceValidator
@@ -230,7 +226,10 @@ class TestQALoggingE2E:
             human_response1 = HumanResponse(
                 escalation_id=escalation.id,
                 action=HumanAction.ADD_CONTEXT,
-                additional_context="We expect 10K concurrent users with sub-100ms latency requirements.",
+                additional_context=(
+                    "We expect 10K concurrent users with sub-100ms "
+                    "latency requirements."
+                ),
                 responder="farmer1st",
                 github_comment_id=12345,
             )
@@ -298,7 +297,7 @@ class TestQALoggingE2E:
     def test_multiple_features_logged_separately_e2e(self) -> None:
         """Test end-to-end: different features have separate log files."""
         from knowledge_router.logger import QALogger
-        from knowledge_router.models import AnswerValidationResult, QALogEntry
+        from knowledge_router.models import QALogEntry
         from knowledge_router.validator import ConfidenceValidator
 
         with tempfile.TemporaryDirectory() as tmpdir:

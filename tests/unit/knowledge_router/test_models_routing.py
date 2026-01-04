@@ -3,8 +3,8 @@
 import pytest
 from pydantic import ValidationError
 
-from knowledge_router.models import AgentDefinition, AgentType, RoutingRule
 from knowledge_router.config import RoutingConfig
+from knowledge_router.models import AgentDefinition, AgentType, RoutingRule
 
 
 class TestRoutingRule:

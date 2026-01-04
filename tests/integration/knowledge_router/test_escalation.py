@@ -1,17 +1,12 @@
 """Integration tests for escalation (KR-003)."""
 
 import uuid
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 from knowledge_router.config import RoutingConfig
 from knowledge_router.models import (
     Answer,
-    AnswerValidationResult,
     Question,
     QuestionTarget,
-    ValidationOutcome,
 )
 
 

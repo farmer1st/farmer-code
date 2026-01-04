@@ -2,12 +2,8 @@
 
 import uuid
 
-import pytest
-
 from knowledge_router.config import RoutingConfig
 from knowledge_router.models import (
-    AgentDefinition,
-    AgentType,
     Answer,
     RoutingRule,
     ValidationOutcome,

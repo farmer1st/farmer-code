@@ -1,7 +1,6 @@
 """End-to-end tests for confidence gating (KR-002)."""
 
 import uuid
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -20,7 +19,6 @@ class TestConfidenceGateE2E:
 
     def test_high_confidence_answer_accepted_e2e(self) -> None:
         """Test end-to-end: high confidence answer is accepted."""
-        from knowledge_router.router import KnowledgeRouterService
         from knowledge_router.validator import ConfidenceValidator
 
         config = ConfigLoader.load_from_dict({
@@ -33,7 +31,6 @@ class TestConfidenceGateE2E:
             },
         })
 
-        router = KnowledgeRouterService(config)
         validator = ConfidenceValidator(config)
 
         question = Question(
@@ -61,7 +58,6 @@ class TestConfidenceGateE2E:
 
     def test_low_confidence_answer_escalated_e2e(self) -> None:
         """Test end-to-end: low confidence answer triggers escalation."""
-        from knowledge_router.router import KnowledgeRouterService
         from knowledge_router.validator import ConfidenceValidator
 
         config = ConfigLoader.load_from_dict({
@@ -74,7 +70,6 @@ class TestConfidenceGateE2E:
             },
         })
 
-        router = KnowledgeRouterService(config)
         validator = ConfidenceValidator(config)
 
         question = Question(

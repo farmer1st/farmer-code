@@ -21,7 +21,10 @@ class TestRouteQuestionE2E:
         # Mock CLI response
         mock_run.return_value = MagicMock(
             returncode=0,
-            stdout='{"answer": "Use OAuth2 with JWT", "rationale": "Industry standard for APIs", "confidence": 92}',
+            stdout=(
+                '{"answer": "Use OAuth2 with JWT", '
+                '"rationale": "Industry standard for APIs", "confidence": 92}'
+            ),
             stderr="",
         )
 

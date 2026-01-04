@@ -1,15 +1,10 @@
 """Unit tests for Q&A logging (KR-004)."""
 
 import json
-import os
 import tempfile
 import uuid
-from datetime import datetime
 from pathlib import Path
 
-import pytest
-
-from knowledge_router.config import RoutingConfig
 from knowledge_router.models import (
     Answer,
     AnswerValidationResult,

@@ -5,13 +5,19 @@ import uuid
 from pathlib import Path
 
 import pytest
-from jsonschema import validate, ValidationError as JsonSchemaValidationError
+from jsonschema import ValidationError as JsonSchemaValidationError
+from jsonschema import validate
 
 from knowledge_router.models import Question, QuestionTarget
 
-
 # Load the JSON schema
-SCHEMA_PATH = Path(__file__).parent.parent.parent.parent / "specs" / "004-knowledge-router" / "contracts" / "question.json"
+SCHEMA_PATH = (
+    Path(__file__).parent.parent.parent.parent
+    / "specs"
+    / "004-knowledge-router"
+    / "contracts"
+    / "question.json"
+)
 
 
 @pytest.fixture

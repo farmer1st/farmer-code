@@ -1,9 +1,6 @@
 """Unit tests for escalation handling (KR-003)."""
 
 import uuid
-from datetime import datetime
-
-import pytest
 
 from knowledge_router.config import RoutingConfig
 from knowledge_router.models import (
@@ -291,7 +288,7 @@ class TestEscalationHandler:
 
     def test_handler_process_correct_response(self) -> None:
         """Test processing a CORRECT response."""
-        from knowledge_router.escalation import EscalationHandler, EscalationResult
+        from knowledge_router.escalation import EscalationHandler
         from knowledge_router.models import EscalationRequest, HumanAction, HumanResponse
 
         config = RoutingConfig(default_confidence_threshold=80)
