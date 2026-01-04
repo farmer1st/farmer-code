@@ -1,0 +1,78 @@
+# Knowledge Router Configuration
+# This file defines agent routing rules, confidence thresholds, and model selection
+
+defaults:
+  confidence_threshold: 80
+  timeout_seconds: 120
+  model: sonnet
+
+agents:
+  architect:
+    name: "@duc"
+    topics:
+      - authentication
+      - authorization
+      - api_design
+      - database
+      - caching
+      - architecture
+      - security_patterns
+      - infrastructure
+      - data_model
+      - integration
+    model: opus  # Override for complex decisions
+
+  product:
+    name: "@veuve"
+    topics:
+      - scope
+      - priority
+      - user_experience
+      - business_logic
+      - features
+      - requirements
+    model: sonnet
+
+overrides:
+  # Topic-specific rules that override agent defaults
+  security:
+    agent: architect
+    confidence_threshold: 95  # Higher bar for security
+
+  compliance:
+    agent: human  # Always escalate compliance questions
+    confidence_threshold: 100
+
+  budget:
+    agent: human  # Always ask humans about budget
+
+  timeline:
+    agent: human  # Always ask humans about timeline
+
+execution_agents:
+  qa:
+    name: "@marie"
+    scope:
+      - "tests/"
+    model: sonnet
+
+  dev:
+    name: "@dede"
+    scope:
+      - "src/"
+    model: sonnet
+
+  devops:
+    name: "@gustave"
+    scope:
+      - "k8s/"
+      - "argocd/"
+      - "kustomize/"
+      - "helm/"
+      - ".github/workflows/"
+    model: sonnet
+
+  reviewer:
+    name: "@degaulle"
+    scope: []  # Read-only
+    model: opus  # Thorough review

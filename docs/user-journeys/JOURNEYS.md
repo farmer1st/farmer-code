@@ -8,6 +8,7 @@ Complete list of all user journeys for FarmCode orchestrator.
 |--------|-------------|
 | **ORC** | Orchestrator - AI agent workflow orchestration and SDLC management |
 | **WT**  | Worktree - Git worktree and branch management for isolated development |
+| **KR**  | Knowledge Router - Question routing, validation, and escalation |
 | **GH**  | GitHub - Direct GitHub integration operations (future) |
 | **UI**  | User Interface - Web/TUI user interactions (future) |
 
@@ -24,6 +25,14 @@ Complete list of all user journeys for FarmCode orchestrator.
 | [WT-002](./WT-002-init-plans.md) | Initialize Plans Folder Structure | P1 | ✅ Implemented | ✅ 100% | 1/1 passing |
 | [WT-003](./WT-003-commit-push.md) | Commit and Push Feature Changes | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
 | [WT-004](./WT-004-cleanup-worktree.md) | Cleanup Worktree After Feature Completion | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
+| [KR-001](./KR-001-route-question.md) | Route Question to Knowledge Agent | P1 | ✅ Implemented | ✅ 100% | 2/2 passing |
+| [KR-002](./KR-002-validate-confidence.md) | Validate Answer Confidence | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
+| [KR-003](./KR-003-escalate-human.md) | Escalate Low-Confidence to Human | P1 | ✅ Implemented | ✅ 100% | 5/5 passing |
+| [KR-004](./KR-004-log-qa.md) | Log Q&A Exchange for Retrospectives | P1 | ✅ Implemented | ✅ 100% | 4/4 passing |
+| KR-005 | Dispatch Execution Tasks to Specialists | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
+| KR-006 | Configure Routing Rules | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
+| KR-007 | Generate Retrospective Report | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
+| KR-008 | Handle Agent Unavailability | P3 | 📋 Planned | ⏳ 0% | 0/0 tests |
 
 ## Status Legend
 
@@ -42,8 +51,12 @@ Complete list of all user journeys for FarmCode orchestrator.
 | ORC-005 | Complete 8-Phase SDLC Workflow | ✅ Implemented | 100% (partial) |
 | WT-001 | Create Worktree for Feature Development | ✅ Implemented | 100% |
 | WT-002 | Initialize Plans Folder Structure | ✅ Implemented | 100% |
+| KR-001 | Route Question to Knowledge Agent | ✅ Implemented | 100% |
+| KR-002 | Validate Answer Confidence | ✅ Implemented | 100% |
+| KR-003 | Escalate Low-Confidence to Human | ✅ Implemented | 100% |
+| KR-004 | Log Q&A Exchange for Retrospectives | ✅ Implemented | 100% |
 
-**P1 Coverage**: 4/4 implemented (100%)
+**P1 Coverage**: 8/8 implemented (100%)
 
 ### P2 Journeys (Important - Post-MVP)
 | ID | Name | Status | Coverage |
@@ -52,15 +65,19 @@ Complete list of all user journeys for FarmCode orchestrator.
 | ORC-003 | Progress Issue Through Workflow Phases | 📋 Planned | 0% |
 | WT-003 | Commit and Push Feature Changes | ✅ Implemented | 100% |
 | WT-004 | Cleanup Worktree After Feature Completion | ✅ Implemented | 100% |
+| KR-005 | Dispatch Execution Tasks to Specialists | 📋 Planned | 0% |
+| KR-006 | Configure Routing Rules | 📋 Planned | 0% |
+| KR-007 | Generate Retrospective Report | 📋 Planned | 0% |
 
-**P2 Coverage**: 2/4 implemented (50%)
+**P2 Coverage**: 2/7 implemented (29%)
 
 ### P3 Journeys (Nice to Have)
 | ID | Name | Status | Coverage |
 |----|------|--------|----------|
 | ORC-004 | Link Pull Request to Feature Issue | 📋 Planned | 0% |
+| KR-008 | Handle Agent Unavailability | 📋 Planned | 0% |
 
-**P3 Coverage**: 0/1 implemented (0%)
+**P3 Coverage**: 0/2 implemented (0%)
 
 ## Test Coverage Visualization
 
@@ -75,10 +92,18 @@ WT-001:  ████████████████████ 100% (1/1 
 WT-002:  ████████████████████ 100% (1/1 E2E tests passing)
 WT-003:  ████████████████████ 100% (1/1 E2E tests passing)
 WT-004:  ████████████████████ 100% (1/1 E2E tests passing)
+KR-001:  ████████████████████ 100% (2/2 E2E tests passing)
+KR-002:  ████████████████████ 100% (3/3 E2E tests passing)
+KR-003:  ████████████████████ 100% (5/5 E2E tests passing)
+KR-004:  ████████████████████ 100% (4/4 E2E tests passing)
+KR-005:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
+KR-006:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
+KR-007:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
+KR-008:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 
-Total: 6/9 journeys implemented (67%)
-P1 Journeys: 4/4 implemented (100%) ✅
-P2 Journeys: 2/4 implemented (50%)
+Total: 10/17 journeys implemented (59%)
+P1 Journeys: 8/8 implemented (100%) ✅
+P2 Journeys: 2/7 implemented (29%)
 ```
 
 ## Journeys by Feature
@@ -102,13 +127,31 @@ P2 Journeys: 2/4 implemented (50%)
 | US3: Commit and Push Changes | WT-003 | ✅ Implemented |
 | US4: Cleanup Worktree | WT-004 | ✅ Implemented |
 
+### Feature 003: Orchestrator State Machine
+
+| User Story | Journeys | Status |
+|------------|----------|--------|
+| US1-3: State Machine Phases | ORC-005 | ✅ Implemented |
+
+### Feature 004: Knowledge Router
+
+| User Story | Journeys | Status |
+|------------|----------|--------|
+| US1: Route Questions | KR-001 | ✅ Implemented |
+| US2: Validate Answers | KR-002 | ✅ Implemented |
+| US3: Escalate to Human | KR-003 | ✅ Implemented |
+| US4: Log Q&A | KR-004 | ✅ Implemented |
+| US5: Dispatch Execution | KR-005 | 📋 Planned |
+| US6: Configure Routing | KR-006 | 📋 Planned |
+| US7: Retrospective Report | KR-007 | 📋 Planned |
+| US8: Handle Unavailability | KR-008 | 📋 Planned |
+
 ### Future Features
 
 | Feature | Journeys | Status |
 |---------|----------|--------|
-| Feature 003: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
-| Feature 004: Orchestrator Logic | ORC-006 to ORC-015 | 🔮 Not yet planned |
-| Feature 005: Advanced GitHub | GH-001 to GH-005 | 🔮 Not yet planned |
+| Feature 005: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
+| Feature 006: Advanced GitHub | GH-001 to GH-005 | 🔮 Not yet planned |
 
 ## Running Journey Tests
 
@@ -145,6 +188,6 @@ pytest --co -m journey
 
 ## Last Updated
 
-**Date**: 2026-01-03
-**By**: Git Worktree Manager implementation (Feature 002)
-**Next Review**: After implementing Feature 003 (TUI Interface)
+**Date**: 2026-01-04
+**By**: Knowledge Router implementation (Feature 004)
+**Next Review**: After implementing Feature 005 (TUI Interface)

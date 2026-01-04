@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://farmcode.dev/schemas/knowledge-router/answer.json",
+  "title": "Answer",
+  "description": "An agent's answer to a question with confidence score",
+  "type": "object",
+  "required": ["question_id", "answered_by", "answer", "rationale", "confidence", "model_used", "duration_seconds"],
+  "properties": {
+    "question_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to the question"
+    },
+    "answered_by": {
+      "type": "string",
+      "pattern": "^@?[a-z]+$",
+      "description": "Agent role (e.g., 'architect', '@duc')"
+    },
+    "answer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10000,
+      "description": "The answer content"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 5000,
+      "description": "Why this answer is correct"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Confidence percentage (0-100)"
+    },
+    "uncertainty_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      },
+      "default": [],
+      "description": "Reasons for uncertainty (if confidence < 100)"
+    },
+    "model_used": {
+      "type": "string",
+      "enum": ["opus", "sonnet", "haiku"],
+      "description": "Model that generated this answer"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Time to generate answer"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "question_id": "550e8400-e29b-41d4-a716-446655440000",
+      "answered_by": "@duc",
+      "answer": "OAuth2 with JWT tokens is the recommended approach for this use case.",
+      "rationale": "OAuth2 provides industry-standard authentication that works well for both web and mobile clients. JWT tokens allow stateless authentication which scales better for APIs.",
+      "confidence": 92,
+      "uncertainty_reasons": [],
+      "model_used": "opus",
+      "duration_seconds": 3.5,
+      "created_at": "2026-01-03T10:30:15Z"
+    },
+    {
+      "question_id": "660e8400-e29b-41d4-a716-446655440001",
+      "answered_by": "@duc",
+      "answer": "I would suggest using Redis for the caching layer.",
+      "rationale": "Redis is a common choice for caching, but I don't have specific information about your infrastructure constraints.",
+      "confidence": 68,
+      "uncertainty_reasons": [
+        "No information about existing infrastructure",
+        "Unknown scaling requirements",
+        "Not sure if managed Redis is available"
+      ],
+      "model_used": "sonnet",
+      "duration_seconds": 2.1,
+      "created_at": "2026-01-03T10:35:00Z"
+    }
+  ]
+}

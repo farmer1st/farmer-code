@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://farmcode.dev/schemas/knowledge-router/routing-config.json",
+  "title": "RoutingConfig",
+  "description": "Complete routing configuration for the Knowledge Router",
+  "type": "object",
+  "required": ["defaults", "agents"],
+  "properties": {
+    "defaults": {
+      "type": "object",
+      "required": ["confidence_threshold"],
+      "properties": {
+        "confidence_threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 80,
+          "description": "Default confidence threshold"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 3600,
+          "default": 120,
+          "description": "Default agent timeout"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["opus", "sonnet", "haiku"],
+          "default": "sonnet",
+          "description": "Default model for agents"
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/AgentDefinition"
+      },
+      "description": "Agent definitions keyed by ID"
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/RoutingRule"
+      },
+      "description": "Topic-specific override rules"
+    },
+    "execution_agents": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/ExecutionAgentDefinition"
+      },
+      "description": "Execution agent definitions"
+    }
+  },
+  "$defs": {
+    "AgentDefinition": {
+      "type": "object",
+      "required": ["name", "topics"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^@[a-z]+$",
+          "description": "Display name (e.g., '@duc')"
+        },
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": "Topics this agent handles"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["opus", "sonnet", "haiku"],
+          "description": "Model override for this agent"
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 10,
+          "description": "Timeout override for this agent"
+        }
+      }
+    },
+    "RoutingRule": {
+      "type": "object",
+      "required": ["agent"],
+      "properties": {
+        "agent": {
+          "type": "string",
+          "description": "Target agent ID or 'human'"
+        },
+        "confidence_threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Override threshold for this topic"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["opus", "sonnet", "haiku"],
+          "description": "Model override for this topic"
+        }
+      }
+    },
+    "ExecutionAgentDefinition": {
+      "type": "object",
+      "required": ["name", "scope"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^@[a-z]+$",
+          "description": "Display name (e.g., '@marie')"
+        },
+        "scope": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Directories agent can write to"
+        },
+        "model": {
+          "type": "string",
+          "enum": ["opus", "sonnet", "haiku"],
+          "description": "Model for this agent"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "defaults": {
+        "confidence_threshold": 80,
+        "timeout_seconds": 120,
+        "model": "sonnet"
+      },
+      "agents": {
+        "architect": {
+          "name": "@duc",
+          "topics": ["authentication", "authorization", "api_design", "database", "architecture"],
+          "model": "opus"
+        },
+        "product": {
+          "name": "@veuve",
+          "topics": ["scope", "priority", "user_experience", "features"],
+          "model": "sonnet"
+        }
+      },
+      "overrides": {
+        "security": {
+          "agent": "architect",
+          "confidence_threshold": 95
+        },
+        "budget": {
+          "agent": "human"
+        }
+      },
+      "execution_agents": {
+        "qa": {
+          "name": "@marie",
+          "scope": ["tests/"],
+          "model": "sonnet"
+        },
+        "dev": {
+          "name": "@dede",
+          "scope": ["src/"],
+          "model": "sonnet"
+        },
+        "devops": {
+          "name": "@gustave",
+          "scope": ["k8s/", "argocd/", "helm/", ".github/workflows/"],
+          "model": "sonnet"
+        },
+        "reviewer": {
+          "name": "@degaulle",
+          "scope": [],
+          "model": "opus"
+        }
+      }
+    }
+  ]
+}

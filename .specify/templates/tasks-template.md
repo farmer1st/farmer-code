@@ -18,6 +18,13 @@ description: "Task list template for feature implementation"
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
 
+## Journey ID Convention
+
+Each user story MUST have a journey ID for documentation and test markers:
+- Format: `[DOMAIN]-[NNN]` (e.g., `KR-001`, `WT-002`, `ORC-003`)
+- Domain codes are 2-4 uppercase letters matching the feature domain
+- Journey IDs are assigned in plan.md under "User Journey Mapping"
+
 ## Path Conventions
 
 - **Single project**: `src/`, `tests/` at repository root
@@ -77,25 +84,35 @@ Examples of foundational tasks (adjust based on your project):
 
 **Goal**: [Brief description of what this story delivers]
 
+**Journey ID**: [DOMAIN]-001
+
 **Independent Test**: [How to verify this story works on its own]
 
 ### Tests for User Story 1 (OPTIONAL - only if tests requested) ⚠️
 
-> **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
+> **NOTE: Write tests FIRST (TDD). E2E tests MUST have journey markers.**
 
 - [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
 - [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T012 [P] [US1] E2E test with `@pytest.mark.journey("[DOMAIN]-001")` in tests/e2e/test_[name].py
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T013 [P] [US1] Create [Entity1] model in src/models/[entity1].py
+- [ ] T014 [P] [US1] Create [Entity2] model in src/models/[entity2].py
+- [ ] T015 [US1] Implement [Service] in src/services/[service].py (depends on T013, T014)
+- [ ] T016 [US1] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T017 [US1] Add validation and error handling
+- [ ] T018 [US1] Add logging for user story 1 operations
 
-**Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
+### Documentation for User Story 1 (REQUIRED per Constitution Principle XI)
+
+- [ ] T019 [US1] Create user journey doc in docs/user-journeys/[DOMAIN]-001-[name].md
+
+**Checkpoint**: User Story 1 is complete when:
+- All tests pass (including E2E with journey marker)
+- Implementation is functional and testable independently
+- User journey documentation exists and matches test coverage
 
 ---
 
@@ -103,21 +120,33 @@ Examples of foundational tasks (adjust based on your project):
 
 **Goal**: [Brief description of what this story delivers]
 
+**Journey ID**: [DOMAIN]-002
+
 **Independent Test**: [How to verify this story works on its own]
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T018 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T019 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+> **NOTE: Write tests FIRST (TDD). E2E tests MUST have journey markers.**
+
+- [ ] T020 [P] [US2] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T021 [P] [US2] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T022 [P] [US2] E2E test with `@pytest.mark.journey("[DOMAIN]-002")` in tests/e2e/test_[name].py
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T023 [P] [US2] Create [Entity] model in src/models/[entity].py
+- [ ] T024 [US2] Implement [Service] in src/services/[service].py
+- [ ] T025 [US2] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [US2] Integrate with User Story 1 components (if needed)
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
+### Documentation for User Story 2 (REQUIRED per Constitution Principle XI)
+
+- [ ] T027 [US2] Create user journey doc in docs/user-journeys/[DOMAIN]-002-[name].md
+
+**Checkpoint**: User Story 2 is complete when:
+- All tests pass (including E2E with journey marker)
+- Implementation is functional and testable independently
+- User journey documentation exists and matches test coverage
 
 ---
 
@@ -125,20 +154,32 @@ Examples of foundational tasks (adjust based on your project):
 
 **Goal**: [Brief description of what this story delivers]
 
+**Journey ID**: [DOMAIN]-003
+
 **Independent Test**: [How to verify this story works on its own]
 
 ### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T024 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T025 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+> **NOTE: Write tests FIRST (TDD). E2E tests MUST have journey markers.**
+
+- [ ] T028 [P] [US3] Contract test for [endpoint] in tests/contract/test_[name].py
+- [ ] T029 [P] [US3] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T030 [P] [US3] E2E test with `@pytest.mark.journey("[DOMAIN]-003")` in tests/e2e/test_[name].py
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T031 [P] [US3] Create [Entity] model in src/models/[entity].py
+- [ ] T032 [US3] Implement [Service] in src/services/[service].py
+- [ ] T033 [US3] Implement [endpoint/feature] in src/[location]/[file].py
 
-**Checkpoint**: All user stories should now be independently functional
+### Documentation for User Story 3 (REQUIRED per Constitution Principle XI)
+
+- [ ] T034 [US3] Create user journey doc in docs/user-journeys/[DOMAIN]-003-[name].md
+
+**Checkpoint**: User Story 3 is complete when:
+- All tests pass (including E2E with journey marker)
+- Implementation is functional and testable independently
+- User journey documentation exists and matches test coverage
 
 ---
 
@@ -150,17 +191,36 @@ Examples of foundational tasks (adjust based on your project):
 
 **Purpose**: Improvements that affect multiple user stories
 
-### User Journey Documentation (REQUIRED per Constitution Principle XI)
+### User Journey Index Update (REQUIRED per Constitution Principle XI)
 
-- [ ] TXXX [P] Create user journey docs in docs/user-journeys/[DOMAIN]-001-[name].md
-- [ ] TXXX [P] Create user journey docs in docs/user-journeys/[DOMAIN]-002-[name].md
-- [ ] TXXX Update docs/user-journeys/JOURNEYS.md with new journeys
-- [ ] TXXX Add @pytest.mark.journey("[DOMAIN]-XXX") markers to E2E tests
+> **NOTE**: Individual journey docs are created in each user story phase above.
+> This section only updates the central JOURNEYS.md index.
 
-### Module Documentation
+- [ ] TXXX Update docs/user-journeys/JOURNEYS.md with all new journeys
 
-- [ ] TXXX [P] Create/update module README in src/[module]/README.md
-- [ ] TXXX [P] Documentation updates in docs/
+### Documentation (REQUIRED per Constitution Principle XI)
+
+> **NOTE**: Documentation is NOT optional. Missing docs blocks PR merge.
+
+**Module Documentation** (REQUIRED for each new module):
+- [ ] TXXX [P] Create/update src/[module]/README.md with:
+  - Purpose, quick start, API reference, usage examples
+- [ ] TXXX [P] Create docs/modules/[module-name].md with:
+  - Extended documentation, architecture details, integration guide
+
+**Architecture Documentation** (REQUIRED when adding new components):
+- [ ] TXXX Update docs/architecture/system-overview.md if new module added
+- [ ] TXXX Update docs/architecture/module-interactions.md if module integrates with others
+- [ ] TXXX [P] Add/update diagrams in docs/architecture/diagrams/
+
+**Configuration Documentation** (if feature has configurable options):
+- [ ] TXXX Update docs/configuration/environment-variables.md with new env vars
+- [ ] TXXX Document config files (YAML, JSON) in docs/configuration/
+
+**Infrastructure Documentation** (first feature only - verify exists):
+- [ ] TXXX Verify docs/README.md exists (docs index)
+- [ ] TXXX Verify docs/getting-started/ exists (developer onboarding)
+- [ ] TXXX Verify docs/testing/ exists (testing guide)
 
 ### Quality & Validation
 
@@ -195,6 +255,7 @@ Examples of foundational tasks (adjust based on your project):
 - Models before services
 - Services before endpoints
 - Core implementation before integration
+- **User journey doc MUST be created before story is marked complete**
 - Story complete before moving to next priority
 
 ### Parallel Opportunities
@@ -261,4 +322,18 @@ With multiple developers:
 - Verify tests fail before implementing
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
+- **User journey doc is part of each story's "definition of done" - NOT a polish task**
+- **Documentation in docs/ is REQUIRED - not optional polish work**
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+
+## Documentation Checklist
+
+Before marking a feature complete, verify:
+
+- [ ] src/[module]/README.md exists with quick start and API reference
+- [ ] docs/modules/[module-name].md exists with extended documentation
+- [ ] docs/architecture/ updated if new components were added
+- [ ] docs/user-journeys/ has journey doc for each user story
+- [ ] docs/user-journeys/JOURNEYS.md updated with new journeys
+- [ ] docs/configuration/ updated if new config options were added
+- [ ] All docs link to each other appropriately

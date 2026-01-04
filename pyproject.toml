@@ -13,6 +13,7 @@ dependencies = [
     "requests>=2.31.0",
     "pydantic>=2.5.0",
     "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +23,8 @@ dev = [
     "ruff>=0.1.0",
     "mypy>=1.7.0",
     "types-requests>=2.31.0",
+    "jsonschema>=4.20.0",
+    "types-pyyaml>=6.0.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -75,6 +78,7 @@ addopts = [
     "--cov=src/github_integration",
     "--cov=src/worktree_manager",
     "--cov=src/orchestrator",
+    "--cov=src/knowledge_router",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
@@ -87,7 +91,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/github_integration", "src/worktree_manager", "src/orchestrator"]
+source = ["src/github_integration", "src/worktree_manager", "src/orchestrator", "src/knowledge_router"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

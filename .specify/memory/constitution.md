@@ -1,16 +1,17 @@
 <!--
 Sync Impact Report:
-- Version change: 1.6.3 → 1.6.4
-- Modified principles: None
-- Added sections: Redocly CLI tooling and API-first workflow in API Documentation Standards
+- Version change: 1.6.4 → 1.7.0
+- Modified principles: XI (Documentation and User Journeys)
+- Added sections: Documentation Directory Structure with explicit docs/ folder requirements
 - Removed sections: None
 - Templates requiring updates:
-  - speckit.plan.md - should generate openapi.yaml for REST API features
+  - tasks-template.md - add documentation tasks for docs/ folder structure
 - Follow-up TODOs:
-  - Add redocly lint to CI workflow when first REST API is added
-  - Add redocly build-docs to release workflow
-- Rationale for PATCH bump: Added specific tooling (Redocly) for existing API docs requirement (clarification)
+  - Create missing docs/ structure for existing features
+  - Add docs/ structure validation to CI (optional)
+- Rationale for MINOR bump: Added new requirement (docs/ folder structure) that affects all features
 Previous changes:
+- 1.6.3 → 1.6.4: Added Redocly CLI tooling and API-first workflow
 - 1.6.2 → 1.6.3: Added comprehensive API Documentation Standards in Quality Standards
 - 1.6.1 → 1.6.2: Added Service Interface requirement in Documentation Requirements
 - 1.6.0 → 1.6.1: Reverted to manual tagging (release-please blocked by org)
@@ -394,6 +395,59 @@ Previous changes:
   - Configuration options
   - Common use cases
   - FAQ section
+
+**Documentation Directory Structure** (REQUIRED):
+
+The `docs/` folder MUST contain comprehensive project documentation:
+
+```
+docs/
+├── README.md                    # Documentation index and navigation
+├── getting-started/             # Developer onboarding
+│   ├── README.md               # Setup and installation guide
+│   ├── quickstart.md           # Quick start tutorial
+│   └── development-workflow.md # How to contribute
+├── architecture/                # System design documentation
+│   ├── README.md               # Architecture overview
+│   ├── system-overview.md      # High-level system design
+│   ├── module-interactions.md  # How modules work together
+│   └── diagrams/               # Mermaid/draw.io diagrams
+├── modules/                     # Detailed module documentation
+│   ├── README.md               # Module index
+│   ├── [module-name].md        # One file per module (links to src/[module]/README.md)
+│   └── ...
+├── api/                         # API documentation
+│   ├── README.md               # API overview
+│   └── openapi.yaml            # OpenAPI spec (when REST APIs exist)
+├── user-journeys/               # User journey documentation
+│   ├── README.md               # Journey guide
+│   ├── JOURNEYS.md             # Journey registry
+│   └── [DOMAIN]-[NNN]-*.md     # Individual journey docs
+├── configuration/               # Configuration documentation
+│   ├── README.md               # Configuration overview
+│   └── environment-variables.md # All env vars documented
+└── testing/                     # Testing documentation
+    ├── README.md               # Testing overview
+    ├── running-tests.md        # How to run tests
+    └── writing-tests.md        # How to write tests
+```
+
+**Documentation Requirements by Type**:
+
+- **docs/README.md** (REQUIRED): Entry point with links to all documentation sections
+- **docs/getting-started/** (REQUIRED): Must exist before first feature is merged
+- **docs/architecture/** (REQUIRED): Updated when new modules are added
+- **docs/modules/**: One doc per module, created with each new module
+- **docs/api/**: Required when REST APIs are added
+- **docs/user-journeys/**: Journey docs created per user story (Principle XI)
+- **docs/configuration/**: Required when configurable options exist
+- **docs/testing/**: Required, explains how to test the project
+
+**Documentation Enforcement**:
+- Missing docs/ structure blocks PR merge
+- Each new module MUST have corresponding docs/modules/[name].md
+- Each feature MUST update docs/architecture/ if it adds new components
+- CI should verify docs/ structure exists (optional linting)
 
 **Test-to-Journey Mapping**:
 - **E2E Tests MUST be tagged** with journey markers:
@@ -849,4 +903,4 @@ All APIs and public interfaces MUST be documented for discoverability and usabil
 
 **Guidance Document**: See `.specify/templates/` for implementation guidance and workflow execution details.
 
-**Version**: 1.6.4 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-03
+**Version**: 1.7.0 | **Ratified**: 2026-01-02 | **Last Amended**: 2026-01-04

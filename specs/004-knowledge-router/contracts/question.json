@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://farmcode.dev/schemas/knowledge-router/question.json",
+  "title": "Question",
+  "description": "A structured question from @baron to a knowledge agent",
+  "type": "object",
+  "required": ["id", "topic", "suggested_target", "question", "feature_id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique question ID"
+    },
+    "topic": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "minLength": 2,
+      "maxLength": 50,
+      "description": "Question topic for routing (lowercase, alphanumeric with underscores)"
+    },
+    "suggested_target": {
+      "type": "string",
+      "enum": ["architect", "product", "human"],
+      "description": "@baron's suggested target agent"
+    },
+    "question": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 2000,
+      "description": "The question text"
+    },
+    "context": {
+      "type": "string",
+      "default": "",
+      "maxLength": 5000,
+      "description": "Additional context for the question"
+    },
+    "options": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "maxItems": 10
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Optional answer choices"
+    },
+    "feature_id": {
+      "type": "string",
+      "pattern": "^[0-9]{3}-[a-z0-9-]+$",
+      "description": "Feature this question belongs to (e.g., '004-knowledge-router')"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "topic": "authentication",
+      "suggested_target": "architect",
+      "question": "What authentication method should we use for the API?",
+      "context": "The system needs to support both web and mobile clients",
+      "options": ["OAuth2", "JWT", "Session-based", "API Keys"],
+      "feature_id": "005-user-auth",
+      "created_at": "2026-01-03T10:30:00Z"
+    }
+  ]
+}
