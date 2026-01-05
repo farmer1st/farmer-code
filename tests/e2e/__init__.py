@@ -1,1 +1,1 @@
-"""End-to-end tests with real GitHub API (slow, requires credentials)"""
+"""End-to-end tests for Farmer Code services."""

@@ -47,7 +47,7 @@ cp config/routing.yaml config/routing.local.yaml
 | `GITHUB_TOKEN` | Yes | Personal access token |
 | `GITHUB_REPO` | Yes | Repository (owner/repo) |
 
-### Knowledge Router
+### Agent Hub
 
 | File | Purpose |
 |------|---------|

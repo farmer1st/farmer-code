@@ -149,7 +149,8 @@ def test_dispatch_specify_creates_spec(dispatcher, mock_runner):
 ## Notes
 
 - This journey represents the entry point for the speckit workflow
-- Baron is a Claude Agent SDK agent, not a Python library
+- Baron is a **prompt-driven Claude agent** invoked via CLI subprocess
+- Baron is NOT implemented using the `claude_code_sdk` Python library
 - Most logic resides in prompts (`.claude/agents/baron/`)
 - Python code is minimal (BaronDispatcher only)
 - Expert consultation limited to 3 questions per workflow

@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: Agent Service API
+  description: |
+    Generic API specification for individual Agent Services (Baron, Duc, Marie, etc.).
+    Each agent service follows this contract with agent-specific behavior.
+
+    Agent services are:
+    - **Stateless**: All context passed in request
+    - **SDK-based**: Use Claude Code SDK for AI capabilities
+    - **Tool-enabled**: Can use MCP servers, custom tools, and skills
+  version: 1.0.0
+  contact:
+    name: Farmer Code Team
+
+servers:
+  - url: http://localhost:8010
+    description: Baron (local development)
+  - url: http://localhost:8011
+    description: Duc (local development)
+  - url: http://localhost:8012
+    description: Marie (local development)
+  - url: http://baron:8000
+    description: Baron (Docker Compose)
+  - url: http://duc:8000
+    description: Duc (Docker Compose)
+  - url: http://marie:8000
+    description: Marie (Docker Compose)
+
+tags:
+  - name: invoke
+    description: Agent invocation
+  - name: health
+    description: Health and status
+
+paths:
+  /invoke:
+    post:
+      summary: Process a request
+      description: |
+        Invokes the agent with a request. The agent uses Claude Code SDK
+        to process the request and returns a result.
+
+        Each agent type handles different workflow_type values:
+        - **Baron**: specify, plan, tasks, implement
+        - **Duc**: architecture, design, api
+        - **Marie**: test, qa, review
+      operationId: invoke
+      tags: [invoke]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeRequest'
+            examples:
+              baron_specify:
+                summary: Baron - Specify workflow
+                value:
+                  workflow_type: specify
+                  context:
+                    feature_description: Add user authentication with OAuth2
+                    priority: P1
+                  parameters:
+                    output_format: markdown
+              duc_architecture:
+                summary: Duc - Architecture review
+                value:
+                  workflow_type: architecture
+                  context:
+                    question: What authentication method should we use?
+                    codebase_context: FastAPI backend, React frontend
+                  parameters: {}
+              marie_test:
+                summary: Marie - Test design
+                value:
+                  workflow_type: test
+                  context:
+                    feature: User authentication
+                    requirements: Must test login, logout, session expiry
+                  parameters:
+                    coverage_target: 80
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+              examples:
+                success:
+                  summary: Successful response
+                  value:
+                    success: true
+                    result:
+                      output: "# Feature Specification: User Authentication..."
+                      files_created:
+                        - specs/001-user-auth/spec.md
+                    confidence: 92
+                    metadata:
+                      duration_ms: 15234
+                      model_used: claude-3-5-sonnet-20241022
+                      tools_used:
+                        - Read
+                        - Write
+                        - Glob
+                low_confidence:
+                  summary: Low confidence response
+                  value:
+                    success: true
+                    result:
+                      output: "Based on the limited context..."
+                      uncertainty_reasons:
+                        - Missing database schema information
+                        - Security requirements not specified
+                    confidence: 65
+                    metadata:
+                      duration_ms: 8123
+                      model_used: claude-3-5-sonnet-20241022
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Agent execution failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '504':
+          description: Agent timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: AGENT_TIMEOUT
+                  message: Agent execution timed out after 300 seconds
+
+  /health:
+    get:
+      summary: Health check
+      description: |
+        Returns the health status of the agent service.
+        Includes agent-specific information like available tools and skills.
+      operationId: healthCheck
+      tags: [health]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                version: 1.0.0
+                agent_name: baron
+                uptime_seconds: 3600
+                capabilities:
+                  workflow_types:
+                    - specify
+                    - plan
+                    - tasks
+                    - implement
+                  tools:
+                    - Read
+                    - Write
+                    - Glob
+                    - Grep
+                  mcp_servers:
+                    - agent-hub
+                    - github
+                  skills:
+                    - speckit.specify
+                    - speckit.plan
+
+components:
+  schemas:
+    InvokeRequest:
+      type: object
+      required:
+        - workflow_type
+        - context
+      properties:
+        workflow_type:
+          type: string
+          description: |
+            Type of workflow or task. Agent-specific values:
+            - Baron: specify, plan, tasks, implement
+            - Duc: architecture, design, api, review
+            - Marie: test, qa, edge_cases
+        context:
+          type: object
+          additionalProperties: true
+          description: Context for the agent (varies by workflow_type)
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Additional parameters for customization
+          default: {}
+
+    InvokeResponse:
+      type: object
+      required:
+        - success
+        - result
+        - confidence
+        - metadata
+      properties:
+        success:
+          type: boolean
+          description: Whether the invocation completed successfully
+        result:
+          type: object
+          additionalProperties: true
+          description: Agent output (structure varies by workflow_type)
+          properties:
+            output:
+              type: string
+              description: Primary text output
+            files_created:
+              type: array
+              items:
+                type: string
+              description: List of files created/modified
+            files_read:
+              type: array
+              items:
+                type: string
+              description: List of files read
+            uncertainty_reasons:
+              type: array
+              items:
+                type: string
+              description: Reasons for low confidence (if applicable)
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Confidence level (0-100)
+        metadata:
+          type: object
+          required:
+            - duration_ms
+            - model_used
+          properties:
+            duration_ms:
+              type: integer
+              description: Execution time in milliseconds
+            model_used:
+              type: string
+              description: Claude model used
+            tools_used:
+              type: array
+              items:
+                type: string
+              description: Tools invoked during execution
+            tokens_used:
+              type: integer
+              description: Approximate tokens consumed
+        error:
+          type: string
+          nullable: true
+          description: Error message if success is false
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - INVALID_REQUEST
+                - UNKNOWN_WORKFLOW_TYPE
+                - AGENT_EXECUTION_FAILED
+                - AGENT_TIMEOUT
+                - INTERNAL_ERROR
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: string
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - agent_name
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        agent_name:
+          type: string
+          description: Agent identifier (baron, duc, marie, etc.)
+        uptime_seconds:
+          type: integer
+        capabilities:
+          type: object
+          properties:
+            workflow_types:
+              type: array
+              items:
+                type: string
+              description: Supported workflow types
+            tools:
+              type: array
+              items:
+                type: string
+              description: Available Claude Code tools
+            mcp_servers:
+              type: array
+              items:
+                type: string
+              description: Connected MCP servers
+            skills:
+              type: array
+              items:
+                type: string
+              description: Available skills

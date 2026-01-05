@@ -240,12 +240,16 @@ result = hub.add_human_response(
 
 ## MCP Server
 
-The Agent Hub can be exposed as an MCP server for Claude Agent SDK integration:
+The Agent Hub can optionally be exposed as an MCP server:
 
 ```bash
-# Run as MCP server
+# Run as MCP server (optional alternative interface)
 python -m agent_hub.mcp_server
 ```
+
+> **Note**: The core Agent Hub dispatches agents via **Claude CLI subprocess calls**
+> (see `AgentRouter`). The MCP server is an optional alternative interface for
+> external consumers.
 
 ### MCP Tools
 
@@ -254,7 +258,10 @@ python -m agent_hub.mcp_server
 | `ask_expert` | Route question to appropriate expert |
 | `check_escalation` | Check pending escalation status |
 
-### Claude Agent SDK Integration
+### Optional: Claude Code SDK Integration
+
+The MCP server can be consumed by Claude Code SDK agents as an alternative
+integration pattern:
 
 ```python
 from claude_code_sdk import query, ClaudeCodeOptions

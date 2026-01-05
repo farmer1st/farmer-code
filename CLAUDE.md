@@ -4,14 +4,16 @@ Auto-generated from all feature plans. Last updated: 2026-01-03
 
 ## Active Technologies
 - N/A (text changes only) + grep/sed for search and replace (007-farmer-code-rebrand)
-- Python 3.11+ + Claude Agent SDK, Agent Hub (MCP client), Pydantic v2, subprocess (for bash scripts) (006-baron-pm-agent)
+- Python 3.11+ + Claude CLI (via subprocess), Agent Hub (MCP server), Pydantic v2 (006-baron-pm-agent)
 - File-based (specs/ directory structure, JSON state files) (006-baron-pm-agent)
+- Python 3.11+ + FastAPI, Claude Code SDK (claude-code-sdk), Pydantic v2, httpx, SQLAlchemy (008-services-architecture)
+- SQLite (local), JSONL for audit logs (008-services-architecture)
 
 - **001-github-integration-core**: Python 3.11+ + PyGithub, python-dotenv, python-jose
-- **002-git-worktree-manager**: Python 3.11+ + subprocess, pathlib, Pydantic v2
-- **003-orchestrator-state-machine**: Python 3.11+ + Pydantic v2, subprocess (CLI runner), JSON state persistence
-- **004-knowledge-router**: Python 3.11+ + Pydantic v2, subprocess (CLI spawning), YAML routing config, JSONL logging
-- **005-agent-hub-refactor**: Python 3.11+ + Pydantic v2, MCP SDK, in-memory sessions, JSONL logging
+- **002-git-worktree-manager**: Python 3.11+ + subprocess (git commands), pathlib, Pydantic v2
+- **003-orchestrator-state-machine**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), JSON state persistence
+- **004-knowledge-router**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), YAML routing config, JSONL logging
+- **005-agent-hub-refactor**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), MCP SDK (optional server), in-memory sessions, JSONL logging
 
 ## Project Structure
 
@@ -21,7 +23,6 @@ src/
   worktree_manager/      # Git worktree management
   orchestrator/          # SDLC workflow state machine
   agent_hub/             # Central coordination for agent interactions
-  knowledge_router/      # AI agent Q&A routing (legacy, replaced by agent_hub)
 tests/
   unit/                  # Unit tests
   integration/           # Integration tests
@@ -103,34 +104,10 @@ else:
     escalation = hub.check_escalation(response.escalation_id)
 ```
 
-### knowledge_router (legacy)
-
-AI agent Q&A routing and validation. See `src/knowledge_router/README.md` for details.
-**Note**: Replaced by `agent_hub` module. Kept for backward compatibility.
-
-**Key exports**:
-- `KnowledgeRouter` - Main facade for routing and validation
-- `Question`, `Answer` - Core Q&A models
-- `AnswerValidationResult`, `ValidationOutcome` - Validation results
-- `EscalationRequest`, `HumanResponse`, `HumanAction` - Human escalation
-- `QALogger`, `QALogEntry` - Q&A logging
-- `RoutingConfig` - Configuration management
-
-**Usage**:
-```python
-from knowledge_router import KnowledgeRouter, Question, QuestionTarget
-
-router = KnowledgeRouter(config_path)
-question = Question(topic="auth", suggested_target=QuestionTarget.ARCHITECT, ...)
-handle = router.route_question(question)
-answer = router.submit_answer(handle, question)
-```
-
 ## Recent Changes
-- 006-baron-pm-agent: Added Python 3.11+ + Claude Agent SDK, Agent Hub (MCP client), Pydantic v2, subprocess (for bash scripts)
-- 007-farmer-code-rebrand: Added N/A (text changes only) + grep/sed for search and replace
-
-- 005-agent-hub-refactor: Central agent coordination with sessions, MCP server, audit logging
+- 008-services-architecture: Added Python 3.11+ + FastAPI, Claude Code SDK (claude-code-sdk), Pydantic v2, httpx, SQLAlchemy
+- 008-services-architecture: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 006-baron-pm-agent: Added Python 3.11+ + Claude CLI (via subprocess), Agent Hub (MCP server), Pydantic v2
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

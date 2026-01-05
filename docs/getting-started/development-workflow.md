@@ -68,28 +68,27 @@ Implement following Test-First Development (NON-NEGOTIABLE):
 1. **Write Test First** (Red)
    ```python
    def test_question_routes_to_architect():
-       router = KnowledgeRouter(config)
-       question = Question(topic="architecture", ...)
-       handle = router.route_question(question)
-       assert handle.agent_name == "@duc"
+       hub = AgentHub(config)
+       response = hub.ask_expert(topic="architecture", question="...")
+       assert response.status.value == "resolved"
    ```
 
 2. **Run Test - Should Fail**
    ```bash
-   uv run pytest tests/unit/knowledge_router/test_router.py -v
-   # FAILED - route_question not implemented
+   uv run pytest tests/unit/agent_hub/test_hub.py -v
+   # FAILED - ask_expert not implemented
    ```
 
 3. **Implement Minimal Code** (Green)
    ```python
-   def route_question(self, question: Question) -> AgentHandle:
-       agent = self.config.get_agent_for_topic(question.topic)
-       return AgentHandle(agent_name=agent.name, ...)
+   def ask_expert(self, topic: str, question: str, ...) -> HubResponse:
+       agent = self.config.get_agent_for_topic(topic)
+       return self._dispatch_to_agent(agent, question)
    ```
 
 4. **Run Test - Should Pass**
    ```bash
-   uv run pytest tests/unit/knowledge_router/test_router.py -v
+   uv run pytest tests/unit/agent_hub/test_hub.py -v
    # PASSED
    ```
 
@@ -101,7 +100,7 @@ Implement following Test-First Development (NON-NEGOTIABLE):
 
 ```bash
 git add .
-git commit -m "feat(knowledge-router): implement question routing"
+git commit -m "feat(agent-hub): implement question routing"
 ```
 
 Use conventional commits:
@@ -180,10 +179,10 @@ Examples:
 
 Examples:
 ```
-feat(knowledge-router): implement question routing
+feat(agent-hub): implement expert routing
 
-- Add KnowledgeRouter class with route_question method
-- Add AgentDispatcher for Claude CLI spawning
+- Add AgentHub class with ask_expert method
+- Add AgentRouter for Claude CLI spawning
 - Add ConfidenceValidator for answer validation
 
 Closes #123
@@ -209,9 +208,9 @@ E2E tests MUST have journey markers:
 
 ```python
 @pytest.mark.e2e
-@pytest.mark.journey("KR-001")
+@pytest.mark.journey("AH-001")
 def test_route_question_to_architect_e2e():
-    """Test KR-001: Route Question to Knowledge Agent."""
+    """Test AH-001: Route Question to Expert Agent."""
     ...
 ```
 

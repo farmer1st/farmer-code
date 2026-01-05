@@ -8,6 +8,8 @@ This section documents the system architecture, component interactions, and desi
 |----------|-------------|
 | [System Overview](./system-overview.md) | High-level architecture and design principles |
 | [Module Interactions](./module-interactions.md) | How modules communicate and depend on each other |
+| [Agent Hub](./agent-hub.md) | Agent Hub service architecture |
+| [Services](../services/README.md) | Microservices architecture (Feature 008) |
 | [Diagrams](./diagrams/) | Visual architecture diagrams (Mermaid) |
 
 ## Architecture Principles
@@ -16,9 +18,9 @@ Farmer Code follows these architectural principles (from the [Constitution](../.
 
 1. **Thin Client Architecture**: All business logic in backend, clients are presentation-only
 2. **Local-First Design**: Primary deployment is local, cloud-ready as future option
-3. **Modular Design**: Clear module boundaries with explicit dependencies
+3. **Services Architecture**: Independent services communicating via REST APIs
 4. **Event-Driven State**: State machine manages workflow transitions
-5. **Agent-Based Processing**: AI agents handle specialized tasks
+5. **Agent-Based Processing**: AI agents handle specialized tasks (Baron, Duc, Marie)
 
 ## System Context
 
@@ -33,7 +35,7 @@ graph TB
         ORC[Orchestrator]
         GI[GitHub Integration]
         WM[Worktree Manager]
-        KR[Knowledge Router]
+        AH[Agent Hub]
     end
 
     subgraph "Storage"
@@ -43,10 +45,10 @@ graph TB
 
     ORC --> GI
     ORC --> WM
-    ORC --> KR
+    ORC --> AH
 
     GI --> GH
-    KR --> AI
+    AH --> AI
     WM --> GIT
     ORC --> FS
 ```
@@ -62,15 +64,15 @@ graph LR
 
     subgraph "Service Layer"
         ORC[orchestrator]
-        KR[knowledge_router]
+        AH[agent_hub]
     end
 
     ORC --> GI
     ORC --> WM
-    KR --> GI
+    AH --> GI
 
     style ORC fill:#f9f,stroke:#333
-    style KR fill:#f9f,stroke:#333
+    style AH fill:#f9f,stroke:#333
     style GI fill:#bbf,stroke:#333
     style WM fill:#bbf,stroke:#333
 ```

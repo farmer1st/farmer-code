@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: Orchestrator Service API
+  description: |
+    The Orchestrator Service manages SpecKit workflow execution.
+    It owns workflow definitions (specify, plan, tasks, implement) and manages state transitions.
+    All agent invocations go through the Agent Hub Service.
+  version: 1.0.0
+  contact:
+    name: Farmer Code Team
+
+servers:
+  - url: http://localhost:8001
+    description: Local development server
+  - url: http://orchestrator:8000
+    description: Docker Compose internal
+
+tags:
+  - name: workflows
+    description: Workflow management operations
+
+paths:
+  /workflows:
+    post:
+      summary: Start a new workflow
+      description: |
+        Creates and starts a new SpecKit workflow. The workflow will invoke agents
+        via the Agent Hub service to complete each phase.
+      operationId: createWorkflow
+      tags: [workflows]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+            example:
+              workflow_type: specify
+              feature_description: Add user authentication with OAuth2
+              context:
+                priority: P1
+      responses:
+        '201':
+          description: Workflow created and started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /workflows/{workflow_id}:
+    get:
+      summary: Get workflow status
+      description: Returns the current status and result of a workflow.
+      operationId: getWorkflow
+      tags: [workflows]
+      parameters:
+        - name: workflow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Workflow identifier
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /workflows/{workflow_id}/advance:
+    post:
+      summary: Advance workflow to next phase
+      description: |
+        Advances the workflow to the next phase after human approval or
+        agent completion. Used by external systems to signal phase completion.
+      operationId: advanceWorkflow
+      tags: [workflows]
+      parameters:
+        - name: workflow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvanceWorkflowRequest'
+            example:
+              trigger: human_approved
+              phase_result:
+                approved: true
+                comments: "LGTM"
+      responses:
+        '200':
+          description: Workflow advanced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResponse'
+        '400':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    CreateWorkflowRequest:
+      type: object
+      required:
+        - workflow_type
+        - feature_description
+      properties:
+        workflow_type:
+          type: string
+          enum: [specify, plan, tasks, implement]
+          description: Type of SpecKit workflow to execute
+        feature_description:
+          type: string
+          minLength: 10
+          description: Description of the feature to work on
+        context:
+          type: object
+          additionalProperties: true
+          description: Additional context for the workflow
+
+    WorkflowResponse:
+      type: object
+      required:
+        - id
+        - workflow_type
+        - status
+        - feature_id
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow_type:
+          type: string
+          enum: [specify, plan, tasks, implement]
+        status:
+          type: string
+          enum: [pending, in_progress, waiting_approval, completed, failed]
+        feature_id:
+          type: string
+          pattern: '^\d{3}-[a-z0-9-]+$'
+        current_phase:
+          type: string
+          nullable: true
+        result:
+          type: object
+          nullable: true
+          additionalProperties: true
+        error:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AdvanceWorkflowRequest:
+      type: object
+      required:
+        - trigger
+      properties:
+        trigger:
+          type: string
+          description: What triggered the advancement
+          enum: [agent_complete, human_approved, human_rejected]
+        phase_result:
+          type: object
+          additionalProperties: true
+          description: Output from the completed phase
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: array
+              items:
+                type: string
+              description: Additional error details
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime_seconds:
+          type: integer

@@ -8,11 +8,15 @@
 
 ## Architecture Overview
 
-Baron is a **Claude Agent SDK agent**, NOT a Python library. This means:
+Baron is a **prompt-driven Claude agent** invoked via CLI subprocess, NOT a Python library. This means:
 
 1. **Agent logic** lives in system prompts and workflow instructions
 2. **Python code** is MINIMAL - only the `BaronDispatcher` class
-3. **Data models** support dispatch interface and result parsing
+3. **Execution** is via `ClaudeCLIRunner` (subprocess to `claude` command)
+4. **Data models** support dispatch interface and result parsing
+
+> **Note**: Baron is NOT implemented using the `claude_code_sdk` Python library.
+> It is executed via subprocess calling the Claude CLI command.
 
 ---
 

@@ -68,7 +68,7 @@ uv run pytest
 uv run pytest --cov=src --cov-report=html
 
 # Run specific module tests
-uv run pytest tests/unit/knowledge_router/ -v
+uv run pytest tests/unit/agent_hub/ -v
 ```
 
 ### 5. Run Linting
@@ -92,7 +92,7 @@ farmer-code/
 │   ├── github_integration/   # GitHub API wrapper
 │   ├── worktree_manager/     # Git worktree management
 │   ├── orchestrator/         # SDLC workflow state machine
-│   └── knowledge_router/     # AI agent Q&A routing
+│   └── agent_hub/            # Central agent coordination
 ├── tests/                    # Test suites
 │   ├── unit/                 # Unit tests
 │   ├── integration/          # Integration tests

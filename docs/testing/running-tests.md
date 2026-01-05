@@ -14,12 +14,12 @@ uv run pytest tests/integration/
 uv run pytest tests/e2e/
 
 # By module
-uv run pytest tests/unit/knowledge_router/
-uv run pytest tests/e2e/knowledge_router/
+uv run pytest tests/unit/agent_hub/
+uv run pytest tests/e2e/agent_hub/
 
 # By journey
 uv run pytest -m journey
-uv run pytest -m "journey('KR-001')"
+uv run pytest -m "journey('AH-001')"
 
 # With coverage
 uv run pytest --cov=src --cov-report=html
@@ -71,16 +71,52 @@ uv run pytest tests/e2e/ -v
 ## Running by Module
 
 ```bash
-# Knowledge Router
-uv run pytest tests/unit/knowledge_router/
-uv run pytest tests/e2e/knowledge_router/
+# Agent Hub
+uv run pytest tests/unit/agent_hub/
+uv run pytest tests/e2e/agent_hub/
 
 # Orchestrator
+uv run pytest tests/unit/orchestrator/
 uv run pytest tests/unit/test_state_machine.py
-uv run pytest tests/unit/test_phase_executor.py
 
 # Worktree Manager
 uv run pytest tests/unit/worktree_manager/
+```
+
+## Running Services Tests
+
+Each service has its own test suite in `services/`:
+
+```bash
+# Agent Hub service tests
+cd services/agent-hub
+uv run pytest
+
+# Agent Hub E2E tests (requires RUN_E2E_TESTS=1)
+cd services/agent-hub
+RUN_E2E_TESTS=1 uv run pytest tests/e2e/ -v
+
+# Baron agent tests
+cd services/agents/baron
+uv run pytest
+
+# Duc agent tests
+cd services/agents/duc
+uv run pytest
+
+# Marie agent tests
+cd services/agents/marie
+uv run pytest
+```
+
+### Contract Tests
+
+Each service has contract tests to verify API schemas:
+
+```bash
+# Run all contract tests for a service
+cd services/agent-hub
+uv run pytest tests/contract/ -v
 ```
 
 ## Running Journey Tests
@@ -90,10 +126,10 @@ uv run pytest tests/unit/worktree_manager/
 uv run pytest -m journey -v
 
 # Specific journey
-uv run pytest -m "journey('KR-001')" -v
+uv run pytest -m "journey('AH-001')" -v
 
-# All KR journeys
-uv run pytest -m "journey" tests/e2e/knowledge_router/ -v
+# All AH journeys
+uv run pytest -m "journey" tests/e2e/agent_hub/ -v
 ```
 
 ## Verbose Output
@@ -120,7 +156,7 @@ uv run pytest --cov=src --cov-report=html
 open htmlcov/index.html
 
 # Specific module coverage
-uv run pytest --cov=src/knowledge_router tests/unit/knowledge_router/
+uv run pytest --cov=src/agent_hub tests/unit/agent_hub/
 ```
 
 ## Parallel Execution
@@ -177,7 +213,7 @@ cp .env.example .env
 ### Module Not Found
 
 ```
-ModuleNotFoundError: No module named 'knowledge_router'
+ModuleNotFoundError: No module named 'agent_hub'
 ```
 
 **Fix**: Use `uv run`:

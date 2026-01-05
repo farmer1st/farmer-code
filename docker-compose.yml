@@ -1,0 +1,111 @@
+# Docker Compose for Farmer Code Services
+# Usage: docker-compose up
+
+services:
+  # Orchestrator Service - Workflow state management
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/orchestrator.db
+      - AGENT_HUB_URL=http://agent-hub:8001
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - orchestrator-data:/app/data
+    depends_on:
+      agent-hub:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Agent Hub Service - Central agent coordination
+  agent-hub:
+    build:
+      context: ./services/agent-hub
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=sqlite:///./data/agent-hub.db
+      - BARON_URL=http://baron:8002
+      - DUC_URL=http://duc:8003
+      - MARIE_URL=http://marie:8004
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_REPO=${GITHUB_REPO:-farmer1st/farmer-code}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - agent-hub-data:/app/data
+    depends_on:
+      baron:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Baron Agent Service - PM Agent
+  baron:
+    build:
+      context: ./services/agents/baron
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Duc Agent Service - Architecture Expert
+  duc:
+    build:
+      context: ./services/agents/duc
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # Marie Agent Service - Testing Expert
+  marie:
+    build:
+      context: ./services/agents/marie
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  orchestrator-data:
+  agent-hub-data:

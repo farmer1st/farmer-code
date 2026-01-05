@@ -49,6 +49,7 @@ ignore = []
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101"]  # Allow assert in tests
+"services/**/tests/**/*.py" = ["S101"]  # Allow assert in service tests
 
 [tool.mypy]
 python_version = "3.11"
@@ -66,6 +67,10 @@ strict_equality = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "services.*.tests.*"
 disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
