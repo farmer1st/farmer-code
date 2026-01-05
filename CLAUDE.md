@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-03
 
 ## Active Technologies
 - N/A (text changes only) + grep/sed for search and replace (007-farmer-code-rebrand)
+- Python 3.11+ + Claude Agent SDK, Agent Hub (MCP client), Pydantic v2, subprocess (for bash scripts) (006-baron-pm-agent)
+- File-based (specs/ directory structure, JSON state files) (006-baron-pm-agent)
 
 - **001-github-integration-core**: Python 3.11+ + PyGithub, python-dotenv, python-jose
 - **002-git-worktree-manager**: Python 3.11+ + subprocess, pathlib, Pydantic v2
@@ -125,10 +127,10 @@ answer = router.submit_answer(handle, question)
 ```
 
 ## Recent Changes
+- 006-baron-pm-agent: Added Python 3.11+ + Claude Agent SDK, Agent Hub (MCP client), Pydantic v2, subprocess (for bash scripts)
 - 007-farmer-code-rebrand: Added N/A (text changes only) + grep/sed for search and replace
 
 - 005-agent-hub-refactor: Central agent coordination with sessions, MCP server, audit logging
-- 004-knowledge-router: Q&A routing, validation, escalation, and logging (MVP complete)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

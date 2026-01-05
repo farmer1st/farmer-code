@@ -225,6 +225,67 @@ class ClaudeCLIRunner:
 
         return cmd
 
+    def execute(
+        self,
+        prompt: str,
+        system_prompt: str,
+        model: str,
+        tools: list[str],
+        timeout: int,
+    ) -> "ExecuteResult":
+        """Execute Claude CLI with simplified interface for Baron.
+
+        This method provides a simpler interface than dispatch() for
+        Baron-style agent execution.
+
+        Args:
+            prompt: The prompt to execute.
+            system_prompt: System prompt (currently unused, reserved).
+            model: Model to use (e.g., "sonnet", "opus").
+            tools: List of tools/skills to allow.
+            timeout: Timeout in seconds.
+
+        Returns:
+            ExecuteResult with output attribute.
+        """
+        cmd = [self._claude_path, "--model", model, "--print", "-p", prompt]
+
+        for tool in tools:
+            cmd.extend(["--allowedTools", tool])
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            return ExecuteResult(
+                output=result.stdout,
+                exit_code=result.returncode,
+            )
+        except subprocess.TimeoutExpired:
+            return ExecuteResult(
+                output="",
+                exit_code=-1,
+            )
+        except FileNotFoundError as e:
+            raise AgentDispatchError(f"Claude CLI not found at '{self._claude_path}': {e}") from e
+
+
+class ExecuteResult:
+    """Result from execute() method."""
+
+    def __init__(self, output: str, exit_code: int = 0) -> None:
+        """Initialize execute result.
+
+        Args:
+            output: Raw output from the command.
+            exit_code: Exit code from the command.
+        """
+        self.output = output
+        self.exit_code = exit_code
+
 
 def get_runner(config: AgentConfig) -> AgentRunner:
     """Get appropriate runner for the configuration.

@@ -1,0 +1,48 @@
+# Baron PM Agent Configuration
+# Version: 1.0.0
+
+name: baron-pm
+description: Autonomous PM agent for speckit workflows
+version: "1.0.0"
+
+# Model settings
+model: claude-sonnet-4-20250514
+max_tokens: 16000
+temperature: 0.3
+
+# Tool access
+tools:
+  - Read
+  - Write
+  - Bash
+  - Glob
+  - Grep
+
+# MCP server configuration
+mcp_servers:
+  - name: agent-hub
+    command: python -m agent_hub.mcp_server
+    env:
+      AGENT_HUB_LOG_LEVEL: INFO
+
+# Execution settings
+timeout_seconds: 600
+working_directory: "."
+
+# Output parsing
+output:
+  format: structured_json
+  result_markers:
+    start: "<!-- BARON_RESULT_START -->"
+    end: "<!-- BARON_RESULT_END -->"
+
+# State persistence
+state:
+  enabled: true
+  path_template: "specs/{feature_id}/.baron-state.json"
+
+# Workflow files
+workflows:
+  specify: ".claude/agents/baron/workflows/specify.md"
+  plan: ".claude/agents/baron/workflows/plan.md"
+  tasks: ".claude/agents/baron/workflows/tasks.md"

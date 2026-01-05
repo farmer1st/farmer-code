@@ -172,6 +172,56 @@ uv run pytest tests/unit/test_state_machine.py tests/unit/test_phase_executor.py
 uv run pytest src/orchestrator/ --cov=src/orchestrator --cov-report=html
 ```
 
+## BaronDispatcher
+
+The module includes `BaronDispatcher` for dispatching the Baron PM agent:
+
+```python
+from orchestrator.baron_dispatch import BaronDispatcher
+from orchestrator.baron_models import SpecifyRequest, PlanRequest, TasksRequest
+
+# Create dispatcher
+dispatcher = BaronDispatcher(runner=ClaudeCLIRunner())
+
+# Dispatch specify workflow (create spec.md)
+result = dispatcher.dispatch_specify(SpecifyRequest(
+    feature_description="Add OAuth2 authentication"
+))
+print(f"Spec: {result.spec_path}")
+
+# Dispatch plan workflow (create plan.md and artifacts)
+result = dispatcher.dispatch_plan(PlanRequest(
+    spec_path=Path("specs/008-auth/spec.md")
+))
+print(f"Plan: {result.plan_path}")
+
+# Dispatch tasks workflow (create tasks.md)
+result = dispatcher.dispatch_tasks(TasksRequest(
+    plan_path=Path("specs/008-auth/plan.md")
+))
+print(f"Tasks: {result.tasks_path}, Count: {result.task_count}")
+```
+
+### Baron Models
+
+| Model | Description |
+|-------|-------------|
+| `SpecifyRequest` | Request to create spec.md from description |
+| `SpecifyResult` | Result with spec_path, feature_id, branch_name |
+| `PlanRequest` | Request to create plan.md from spec.md |
+| `PlanResult` | Result with plan_path, research_path, data_model_path |
+| `TasksRequest` | Request to create tasks.md from plan.md |
+| `TasksResult` | Result with tasks_path, task_count, test_count |
+
+### Baron Errors
+
+| Error | When Raised |
+|-------|-------------|
+| `DispatchError` | Agent execution failed |
+| `ParseError` | Could not parse result markers |
+
+See `.claude/agents/baron/README.md` for full Baron documentation.
+
 ## Dependencies
 
 - `github_integration` - GitHub API operations
