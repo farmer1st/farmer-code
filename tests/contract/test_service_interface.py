@@ -90,7 +90,7 @@ class TestCreateIssue:
         assert "test" in issue.labels
         assert "contract" in issue.labels
         assert "test:automated" in issue.labels  # Added by auto_cleanup_issue
-        assert issue.repository == "farmer1st/farmcode-tests"
+        assert issue.repository == "farmer1st/farmer-code-tests"
         assert isinstance(issue.created_at, datetime)
         assert isinstance(issue.updated_at, datetime)
         assert issue.url.startswith("https://github.com/")
@@ -158,7 +158,7 @@ class TestGetIssue:
         assert retrieved_issue.number == created_issue.number
         assert retrieved_issue.title == created_issue.title
         assert retrieved_issue.state == created_issue.state
-        assert retrieved_issue.repository == "farmer1st/farmcode-tests"
+        assert retrieved_issue.repository == "farmer1st/farmer-code-tests"
 
     def test_get_issue_with_invalid_number(self, service):
         """

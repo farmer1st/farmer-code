@@ -47,7 +47,7 @@ class GitHubService:
             app_id: GitHub App ID (2578431)
             installation_id: GitHub App installation ID (102211688)
             private_key_path: Path to PEM file (from GITHUB_APP_PRIVATE_KEY_PATH env var)
-            repository: Target repository in format "owner/repo" (farmer1st/farmcode-tests)
+            repository: Target repository in format "owner/repo" (farmer1st/farmer-code-tests)
 
         Raises:
             FileNotFoundError: If PEM file doesn't exist
@@ -59,7 +59,7 @@ class GitHubService:
                 app_id=2578431,
                 installation_id=102211688,
                 private_key_path=os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"),
-                repository="farmer1st/farmcode-tests"
+                repository="farmer1st/farmer-code-tests"
             )
         """
 ```
@@ -603,7 +603,7 @@ All operations log to stdout as structured JSON (per FR-017):
   "context": {
     "method": "create_issue",
     "issue_number": 42,
-    "repository": "farmer1st/farmcode-tests",
+    "repository": "farmer1st/farmer-code-tests",
     "duration_ms": 234
   }
 }
@@ -617,7 +617,7 @@ All operations log to stdout as structured JSON (per FR-017):
   "message": "GitHub API request failed",
   "context": {
     "method": "GET",
-    "url": "/repos/farmer1st/farmcode-tests/issues/999",
+    "url": "/repos/farmer1st/farmer-code-tests/issues/999",
     "status_code": 404,
     "error": "Not Found",
     "attempt": 1

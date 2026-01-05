@@ -96,7 +96,7 @@ class TestServiceWithMockedAPI:
 
         # Verify HTTP method and URL
         assert call_args.kwargs["method"] == "POST"
-        assert "/repos/farmer1st/farmcode-tests/issues" in call_args.kwargs["url"]
+        assert "/repos/farmer1st/farmer-code-tests/issues" in call_args.kwargs["url"]
 
         # Verify request body
         request_body = call_args.kwargs["json"]
@@ -135,7 +135,7 @@ class TestServiceWithMockedAPI:
 
         # Verify HTTP method and URL
         assert call_args.kwargs["method"] == "GET"
-        assert "/repos/farmer1st/farmcode-tests/issues/42" in call_args.kwargs["url"]
+        assert "/repos/farmer1st/farmer-code-tests/issues/42" in call_args.kwargs["url"]
 
         # Verify response parsing
         assert isinstance(issue, Issue)
@@ -168,7 +168,7 @@ class TestServiceWithMockedAPI:
 
         # Verify HTTP method and URL
         assert call_args.kwargs["method"] == "GET"
-        assert "/repos/farmer1st/farmcode-tests/issues" in call_args.kwargs["url"]
+        assert "/repos/farmer1st/farmer-code-tests/issues" in call_args.kwargs["url"]
 
         # Verify query parameters
         params = call_args.kwargs["params"]

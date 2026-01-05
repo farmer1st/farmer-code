@@ -47,7 +47,7 @@ class GitHubService:
             app_id: GitHub App ID (e.g., 2578431)
             installation_id: GitHub App installation ID (e.g., 102211688)
             private_key_path: Path to PEM file (from GITHUB_APP_PRIVATE_KEY_PATH env var)
-            repository: Target repository in format "owner/repo" (e.g., farmer1st/farmcode-tests)
+            repository: Target repository in format "owner/repo" (e.g., farmer1st/farmer-code-tests)
 
         Raises:
             FileNotFoundError: If PEM file doesn't exist

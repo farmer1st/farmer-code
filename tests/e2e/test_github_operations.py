@@ -1,7 +1,7 @@
 """
 End-to-end tests for GitHub operations with real GitHub API.
 
-These tests make actual API calls to GitHub (farmer1st/farmcode-tests repository)
+These tests make actual API calls to GitHub (farmer1st/farmer-code-tests repository)
 and verify complete workflows with real GitHub responses.
 
 **Important**: These tests handle GitHub's eventual consistency using polling helpers.
@@ -10,7 +10,7 @@ immediately appear in list/filter queries. Tests use `wait_for_*` helpers to pol
 until conditions are met (with 10s timeout).
 
 Prerequisites:
-- GitHub App must be installed on farmer1st/farmcode-tests
+- GitHub App must be installed on farmer1st/farmer-code-tests
 - PEM file must exist at path specified in GITHUB_APP_PRIVATE_KEY_PATH
 - GitHub API rate limit must not be exceeded
 - Internet connection required
@@ -79,7 +79,7 @@ class TestFullIssueLifecycle:
         assert set(labels).issubset(set(created_issue.labels))
         assert "test:automated" in created_issue.labels  # Added by auto_cleanup_issue
         assert created_issue.state == "open"
-        assert created_issue.repository == "farmer1st/farmcode-tests"
+        assert created_issue.repository == "farmer1st/farmer-code-tests"
 
         # Step 2: Retrieve issue by number
         retrieved_issue = service.get_issue(created_issue.number)

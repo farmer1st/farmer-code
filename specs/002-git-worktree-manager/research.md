@@ -146,7 +146,7 @@ def get_worktree_path(
 **Rationale**:
 - Worktree operations need real git repos
 - Can't mock git internals meaningfully
-- Use farmer1st/farmcode-tests for E2E tests
+- Use farmer1st/farmer-code-tests for E2E tests
 
 **Fixture Pattern**:
 ```python

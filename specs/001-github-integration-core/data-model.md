@@ -69,8 +69,8 @@ issue = Issue(
     assignees=["duc"],
     created_at=datetime(2026, 1, 2, 10, 30, 0),
     updated_at=datetime(2026, 1, 2, 10, 30, 0),
-    repository="farmer1st/farmcode-tests",
-    url="https://github.com/farmer1st/farmcode-tests/issues/42"
+    repository="farmer1st/farmer-code-tests",
+    url="https://github.com/farmer1st/farmer-code-tests/issues/42"
 )
 ```
 
@@ -122,7 +122,7 @@ comment = Comment(
     author="dede",
     body="✅ Backend plan complete. @baron",
     created_at=datetime(2026, 1, 2, 11, 15, 0),
-    url="https://github.com/farmer1st/farmcode-tests/issues/42#issuecomment-987654321"
+    url="https://github.com/farmer1st/farmer-code-tests/issues/42#issuecomment-987654321"
 )
 ```
 
@@ -222,7 +222,7 @@ pr = PullRequest(
     base_branch="main",
     head_branch="123-add-auth",
     linked_issues=[42],
-    url="https://github.com/farmer1st/farmcode-tests/pull/15"
+    url="https://github.com/farmer1st/farmer-code-tests/pull/15"
 )
 ```
 

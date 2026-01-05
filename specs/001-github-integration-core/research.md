@@ -194,7 +194,7 @@ class ServerError(GitHubAPIError): pass
   "message": "GitHub API request completed",
   "context": {
     "method": "POST",
-    "url": "/repos/farmer1st/farmcode-tests/issues",
+    "url": "/repos/farmer1st/farmer-code-tests/issues",
     "status_code": 201,
     "duration_ms": 234,
     "issue_number": 42
@@ -294,7 +294,7 @@ def add_label(issue_number, label_name):
    - Run on every commit
 
 2. **Integration Tests** (test/integration/):
-   - Live GitHub API calls to farmer1st/farmcode-tests repo
+   - Live GitHub API calls to farmer1st/farmer-code-tests repo
    - Create/retrieve/update actual issues, comments, labels
    - Verify end-to-end workflows
    - Clean up test data after each test
@@ -311,7 +311,7 @@ def add_label(issue_number, label_name):
 **Test Data Management**:
 - Use issue labels like `test-issue` to identify test artifacts
 - Clean up in teardown: close issues, delete labels
-- farmer1st/farmcode-tests repo dedicated to testing (spec requirement)
+- farmer1st/farmer-code-tests repo dedicated to testing (spec requirement)
 
 **Mocking Strategy**:
 - Use `responses` library to mock requests

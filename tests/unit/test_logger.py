@@ -9,7 +9,7 @@ Tests that the logger produces JSON output matching the specification:
     "context": {
         "method": "create_issue",
         "issue_number": 42,
-        "repository": "farmer1st/farmcode-tests",
+        "repository": "farmer1st/farmer-code-tests",
         "duration_ms": 234
     }
 }
@@ -130,7 +130,7 @@ class TestJSONFormatter:
         record.context = {
             "method": "create_issue",
             "issue_number": 42,
-            "repository": "farmer1st/farmcode-tests",
+            "repository": "farmer1st/farmer-code-tests",
             "duration_ms": 234,
         }
 
@@ -140,7 +140,7 @@ class TestJSONFormatter:
         assert "context" in parsed
         assert parsed["context"]["method"] == "create_issue"
         assert parsed["context"]["issue_number"] == 42
-        assert parsed["context"]["repository"] == "farmer1st/farmcode-tests"
+        assert parsed["context"]["repository"] == "farmer1st/farmer-code-tests"
         assert parsed["context"]["duration_ms"] == 234
 
     def test_no_context_when_not_provided(self):
@@ -322,7 +322,7 @@ class TestLogFormatSpec:
         record.context = {
             "method": "create_issue",
             "issue_number": 42,
-            "repository": "farmer1st/farmcode-tests",
+            "repository": "farmer1st/farmer-code-tests",
             "duration_ms": 234,
         }
 

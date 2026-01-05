@@ -79,7 +79,7 @@ Create `.env` file with GitHub App credentials:
 GITHUB_APP_ID=2578431
 GITHUB_INSTALLATION_ID=102211688
 GITHUB_APP_PRIVATE_KEY_PATH=./.keys/orchestrator.pem
-GITHUB_REPOSITORY=farmer1st/farmcode-tests
+GITHUB_REPOSITORY=farmer1st/farmer-code-tests
 ```
 
 ### Usage
@@ -92,7 +92,7 @@ service = GitHubService(
     app_id=2578431,
     installation_id=102211688,
     private_key_path="./.keys/orchestrator.pem",
-    repository="farmer1st/farmcode-tests",
+    repository="farmer1st/farmer-code-tests",
 )
 
 # Create an issue
@@ -372,7 +372,7 @@ Current journey test status:
 | `GITHUB_APP_ID` | Yes | GitHub App ID | `2578431` |
 | `GITHUB_INSTALLATION_ID` | Yes | Installation ID | `102211688` |
 | `GITHUB_APP_PRIVATE_KEY_PATH` | Yes | Path to PEM file | `./.keys/orchestrator.pem` |
-| `GITHUB_REPOSITORY` | Yes | Target repository | `farmer1st/farmcode-tests` |
+| `GITHUB_REPOSITORY` | Yes | Target repository | `farmer1st/farmer-code-tests` |
 
 ### PEM File Permissions
 

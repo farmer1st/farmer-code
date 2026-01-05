@@ -412,4 +412,4 @@ This service is NOT thread-safe. Git operations should be serialized at the call
 
 ## Test Repository
 
-E2E tests use `farmer1st/farmcode-tests` repository for real git operations.
+E2E tests use `farmer1st/farmer-code-tests` repository for real git operations.

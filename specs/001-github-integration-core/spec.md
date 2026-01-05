@@ -138,13 +138,13 @@ As the Farmer Code orchestrator, I need to create pull requests and retrieve PR 
 - Q: Where should the service write log output for GitHub API operations (FR-016)? → A: Structured JSON to stdout/stderr (12-factor app pattern)
 - Q: How should the GitHub authentication token (PAT or App token) be stored and accessed by the service? → A: PEM file on disk (chmod 600), path in env var GITHUB_APP_PRIVATE_KEY_PATH (current path: ./keys/orchestrator.pem)
 - Q: What should happen when a label that doesn't exist in the repository is added to an issue? → A: Create the label automatically with a default color
-- Q: Which GitHub repository should the service connect to for the farmcode-tests testing repository? → A: farmer1st/farmcode-tests
+- Q: Which GitHub repository should the service connect to for the farmer-code-tests testing repository? → A: farmer1st/farmer-code-tests
 
 ## Assumptions *(if applicable)*
 
 - The GitHub App (ID: 2578431) has been registered with necessary permissions (read/write issues, read/write pull requests) and installed (Installation ID: 102211688)
 - The private key PEM file is stored at ./keys/orchestrator.pem with file permissions 600
-- The service will connect to the farmer1st/farmcode-tests repository for testing purposes initially (multi-repo support is deferred)
+- The service will connect to the farmer1st/farmer-code-tests repository for testing purposes initially (multi-repo support is deferred)
 - The service will use github.com (GitHub Enterprise Server support is out of scope)
 - The service runs as a backend service accessible only to the orchestrator (no direct human/UI access)
 - **The service runs locally on developer's machine (Mac/Linux/Windows) without publicly accessible endpoint**

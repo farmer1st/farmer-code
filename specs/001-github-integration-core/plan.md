@@ -19,7 +19,7 @@ Backend service providing GitHub operations (issues, comments, labels, PRs) for 
 **Project Type**: Single (backend service)
 **Performance Goals**: <2s issue creation/retrieval, <1s comment retrieval (100 comments), 95% success rate
 **Constraints**: 5-10 second polling interval, 3 retries with 1s delay, local-first (no public endpoint)
-**Scale/Scope**: Single repository (farmer1st/farmcode-tests), single installation, bootstrap MVP
+**Scale/Scope**: Single repository (farmer1st/farmer-code-tests), single installation, bootstrap MVP
 
 ## Constitution Check
 

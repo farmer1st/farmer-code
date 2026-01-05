@@ -1,9 +1,9 @@
 """
 E2E tests for worktree_manager.
 
-Tests against real repositories (farmer1st/farmcode-tests).
+Tests against real repositories (farmer1st/farmer-code-tests).
 These tests require:
-1. A test repository at ../farmcode-tests (sibling directory)
+1. A test repository at ../farmer-code-tests (sibling directory)
 2. Git configured with push access to the test repo
 
 Run with: pytest tests/e2e/test_worktree_e2e.py -v --run-e2e
@@ -31,7 +31,7 @@ pytestmark = pytest.mark.skipif(
 
 
 # Test repository path
-TEST_REPO_NAME = "farmcode-tests"
+TEST_REPO_NAME = "farmer-code-tests"
 
 
 @pytest.fixture

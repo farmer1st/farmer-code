@@ -90,8 +90,8 @@ This document defines the JSON schemas and validation rules for all Pydantic mod
   "assignees": ["duc"],
   "created_at": "2026-01-02T10:30:00Z",
   "updated_at": "2026-01-02T10:30:00Z",
-  "repository": "farmer1st/farmcode-tests",
-  "url": "https://github.com/farmer1st/farmcode-tests/issues/42"
+  "repository": "farmer1st/farmer-code-tests",
+  "url": "https://github.com/farmer1st/farmer-code-tests/issues/42"
 }
 ```
 
@@ -162,7 +162,7 @@ This document defines the JSON schemas and validation rules for all Pydantic mod
   "author": "dede",
   "body": "✅ Backend plan complete. @baron",
   "created_at": "2026-01-02T11:15:00Z",
-  "url": "https://github.com/farmer1st/farmcode-tests/issues/42#issuecomment-987654321"
+  "url": "https://github.com/farmer1st/farmer-code-tests/issues/42#issuecomment-987654321"
 }
 ```
 
@@ -301,7 +301,7 @@ This document defines the JSON schemas and validation rules for all Pydantic mod
   "base_branch": "main",
   "head_branch": "123-add-auth",
   "linked_issues": [42],
-  "url": "https://github.com/farmer1st/farmcode-tests/pull/15"
+  "url": "https://github.com/farmer1st/farmer-code-tests/pull/15"
 }
 ```
 

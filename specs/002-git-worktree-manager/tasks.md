@@ -193,12 +193,12 @@
 - [x] T072 [P] Integration test for existing branch checkout in tests/integration/test_worktree_integration.py
 - [x] T073 [P] Integration test for error scenarios in tests/integration/test_worktree_integration.py (git not found, not a repo, disk full mock)
 
-### E2E Tests (farmer1st/farmcode-tests)
+### E2E Tests (farmer1st/farmer-code-tests)
 
-- [x] T074 E2E test for create_worktree() against farmcode-tests in tests/e2e/test_worktree_e2e.py
-- [x] T075 E2E test for init_plans() against farmcode-tests in tests/e2e/test_worktree_e2e.py
-- [x] T076 E2E test for commit_and_push() against farmcode-tests in tests/e2e/test_worktree_e2e.py
-- [x] T077 E2E test for remove_worktree() against farmcode-tests in tests/e2e/test_worktree_e2e.py
+- [x] T074 E2E test for create_worktree() against farmer-code-tests in tests/e2e/test_worktree_e2e.py
+- [x] T075 E2E test for init_plans() against farmer-code-tests in tests/e2e/test_worktree_e2e.py
+- [x] T076 E2E test for commit_and_push() against farmer-code-tests in tests/e2e/test_worktree_e2e.py
+- [x] T077 E2E test for remove_worktree() against farmer-code-tests in tests/e2e/test_worktree_e2e.py
 
 ### Final Validation
 
@@ -323,7 +323,7 @@ With multiple developers:
 - [P] tasks = different files, no dependencies
 - [Story] label maps task to specific user story
 - TDD enforced: tests MUST fail before implementation
-- Test repository: farmer1st/farmcode-tests for E2E
+- Test repository: farmer1st/farmer-code-tests for E2E
 - Follow github_integration patterns for consistency
 - All paths use pathlib.Path for cross-platform support
 - Commit after each task or logical group

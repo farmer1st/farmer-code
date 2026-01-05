@@ -136,9 +136,9 @@ Use these methods for test cleanup with label-based filtering:
 2. **Close after test** using `close_issue()` in fixture teardown
 3. **Bulk cleanup** (if needed):
    ```bash
-   gh issue list -R farmer1st/farmcode-tests \
+   gh issue list -R farmer1st/farmer-code-tests \
      -L test:automated --state open --json number -q '.[].number' | \
-     xargs -I {} gh issue close {} -R farmer1st/farmcode-tests
+     xargs -I {} gh issue close {} -R farmer1st/farmer-code-tests
    ```
 
 **Important**: Always filter by `--state open` AND `-L test:automated` to avoid processing all issues.

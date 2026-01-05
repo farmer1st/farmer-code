@@ -2,7 +2,7 @@
 
 **Purpose**: End-to-end validation guide for testing the GitHub Integration service
 **Audience**: Developers implementing or testing the service
-**Prerequisites**: GitHub App configured, PEM file available, farmer1st/farmcode-tests repo accessible
+**Prerequisites**: GitHub App configured, PEM file available, farmer1st/farmer-code-tests repo accessible
 
 ---
 
@@ -61,7 +61,7 @@ service = GitHubService(
     app_id=2578431,
     installation_id=102211688,
     private_key_path=os.getenv("GITHUB_APP_PRIVATE_KEY_PATH"),
-    repository="farmer1st/farmcode-tests"
+    repository="farmer1st/farmer-code-tests"
 )
 
 # Create a test issue
@@ -80,7 +80,7 @@ print(f"   Labels: {issue.labels}")
 **Expected Output**:
 ```
 ✅ Created issue #X
-   URL: https://github.com/farmer1st/farmcode-tests/issues/X
+   URL: https://github.com/farmer1st/farmer-code-tests/issues/X
    State: open
    Labels: ['test']
 ```
@@ -107,7 +107,7 @@ print(f"   URL: {comment.url}")
 ```
 ✅ Posted comment 123456789
    Author: farmcode[bot]
-   URL: https://github.com/farmer1st/farmcode-tests/issues/X#issuecomment-123456789
+   URL: https://github.com/farmer1st/farmer-code-tests/issues/X#issuecomment-123456789
 ```
 
 **Verify**: Refresh the issue URL and confirm the comment appears.
@@ -198,7 +198,7 @@ for issue in test_issues:
 # This is intentionally out of scope per the spec (only create/read)
 # For cleanup, manually close the test issue on GitHub or use gh CLI:
 
-# gh issue close X -R farmer1st/farmcode-tests
+# gh issue close X -R farmer1st/farmer-code-tests
 ```
 
 ---
@@ -479,7 +479,7 @@ After running all tests, verify:
 
 **Solutions**:
 1. Verify issue number exists in repository
-2. Check repository name is correct (farmer1st/farmcode-tests)
+2. Check repository name is correct (farmer1st/farmer-code-tests)
 3. Confirm GitHub App has access to the repository
 
 ---

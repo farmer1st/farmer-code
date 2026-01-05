@@ -27,7 +27,7 @@ def github_installation_id() -> int:
 @pytest.fixture
 def github_repository() -> str:
     """Target GitHub repository"""
-    return "farmer1st/farmcode-tests"
+    return "farmer1st/farmer-code-tests"
 
 
 @pytest.fixture
@@ -51,8 +51,8 @@ def sample_issue_data() -> dict[str, Any]:
         "assignees": ["duc"],
         "created_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=UTC),
         "updated_at": datetime(2026, 1, 2, 10, 30, 0, tzinfo=UTC),
-        "repository": "farmer1st/farmcode-tests",
-        "url": "https://github.com/farmer1st/farmcode-tests/issues/42",
+        "repository": "farmer1st/farmer-code-tests",
+        "url": "https://github.com/farmer1st/farmer-code-tests/issues/42",
     }
 
 
@@ -65,7 +65,7 @@ def sample_comment_data() -> dict[str, Any]:
         "author": "dede",
         "body": "✅ Backend plan complete. @baron",
         "created_at": datetime(2026, 1, 2, 11, 15, 0, tzinfo=UTC),
-        "url": "https://github.com/farmer1st/farmcode-tests/issues/42#issuecomment-987654321",
+        "url": "https://github.com/farmer1st/farmer-code-tests/issues/42#issuecomment-987654321",
     }
 
 
@@ -91,7 +91,7 @@ def sample_pr_data() -> dict[str, Any]:
         "base_branch": "main",
         "head_branch": "123-add-auth",
         "linked_issues": [42],
-        "url": "https://github.com/farmer1st/farmcode-tests/pull/15",
+        "url": "https://github.com/farmer1st/farmer-code-tests/pull/15",
     }
 
 
@@ -113,7 +113,7 @@ def mock_github_issue_response() -> dict[str, Any]:
         "assignees": [{"login": "duc"}],
         "created_at": "2026-01-02T10:30:00Z",
         "updated_at": "2026-01-02T10:30:00Z",
-        "html_url": "https://github.com/farmer1st/farmcode-tests/issues/42",
+        "html_url": "https://github.com/farmer1st/farmer-code-tests/issues/42",
     }
 
 
@@ -125,7 +125,7 @@ def mock_github_comment_response() -> dict[str, Any]:
         "user": {"login": "dede"},
         "body": "✅ Backend plan complete. @baron",
         "created_at": "2026-01-02T11:15:00Z",
-        "html_url": "https://github.com/farmer1st/farmcode-tests/issues/42#issuecomment-987654321",
+        "html_url": "https://github.com/farmer1st/farmer-code-tests/issues/42#issuecomment-987654321",
     }
 
 
@@ -140,7 +140,7 @@ def mock_github_pr_response() -> dict[str, Any]:
         "merged": False,
         "base": {"ref": "main"},
         "head": {"ref": "123-add-auth"},
-        "html_url": "https://github.com/farmer1st/farmcode-tests/pull/15",
+        "html_url": "https://github.com/farmer1st/farmer-code-tests/pull/15",
     }
 
 
@@ -269,7 +269,7 @@ def cleanup_issues():
             app_id=2578431,
             installation_id=102211688,
             private_key_path=os.getenv("GITHUB_APP_PRIVATE_KEY_PATH", "./.keys/orchestrator.pem"),
-            repository="farmer1st/farmcode-tests",
+            repository="farmer1st/farmer-code-tests",
         )
 
         # Close all registered issues

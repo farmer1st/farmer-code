@@ -23,7 +23,7 @@ class JSONFormatter(logging.Formatter):
         "context": {
             "method": "create_issue",
             "issue_number": 42,
-            "repository": "farmer1st/farmcode-tests",
+            "repository": "farmer1st/farmer-code-tests",
             "duration_ms": 234
         }
     }
@@ -62,7 +62,7 @@ def setup_logger(name: str = "github_integration") -> logging.Logger:
         logger = setup_logger()
         logger.info(
             "Created GitHub issue",
-            extra={"context": {"issue_number": 42, "repository": "farmer1st/farmcode-tests"}}
+            extra={"context": {"issue_number": 42, "repository": "farmer1st/farmer-code-tests"}}
         )
     """
     logger = logging.getLogger(name)
