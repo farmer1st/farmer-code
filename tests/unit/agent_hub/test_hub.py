@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -404,7 +404,7 @@ class TestAddHumanResponse:
 
     def test_add_human_response_confirms_answer(self) -> None:
         """Test that add_human_response processes confirmation correctly."""
-        from agent_hub.models import EscalationStatus, HumanAction
+        from agent_hub.models import HumanAction
 
         config = RoutingConfig(
             default_confidence_threshold=80,

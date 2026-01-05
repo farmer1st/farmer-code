@@ -41,9 +41,7 @@ class TestHubResponseSchemaContract:
         response_dict = response.model_dump(mode="json")
         validate(instance=response_dict, schema=hub_response_schema)
 
-    def test_pending_human_response_matches_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_pending_human_response_matches_schema(self, hub_response_schema: dict) -> None:
         """Test that a PENDING_HUMAN HubResponse with escalation_id matches schema."""
         response = HubResponse(
             answer="Consider using encryption.",
@@ -60,9 +58,7 @@ class TestHubResponseSchemaContract:
         response_dict = response.model_dump(mode="json")
         validate(instance=response_dict, schema=hub_response_schema)
 
-    def test_needs_reroute_response_matches_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_needs_reroute_response_matches_schema(self, hub_response_schema: dict) -> None:
         """Test that NEEDS_REROUTE response matches schema."""
         response = HubResponse(
             answer="",  # No answer yet, need to re-ask
@@ -74,9 +70,7 @@ class TestHubResponseSchemaContract:
         response_dict = response.model_dump(mode="json")
         validate(instance=response_dict, schema=hub_response_schema)
 
-    def test_response_with_empty_uncertainty_reasons(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_response_with_empty_uncertainty_reasons(self, hub_response_schema: dict) -> None:
         """Test that response with empty uncertainty_reasons is valid."""
         response = HubResponse(
             answer="Use PostgreSQL for the database.",
@@ -89,9 +83,7 @@ class TestHubResponseSchemaContract:
         response_dict = response.model_dump(mode="json")
         validate(instance=response_dict, schema=hub_response_schema)
 
-    def test_confidence_boundaries_valid_in_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_confidence_boundaries_valid_in_schema(self, hub_response_schema: dict) -> None:
         """Test confidence at 0 and 100 are valid."""
         for confidence in [0, 100]:
             response = HubResponse(
@@ -104,9 +96,7 @@ class TestHubResponseSchemaContract:
             response_dict = response.model_dump(mode="json")
             validate(instance=response_dict, schema=hub_response_schema)
 
-    def test_invalid_confidence_rejected_by_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_invalid_confidence_rejected_by_schema(self, hub_response_schema: dict) -> None:
         """Test that schema rejects invalid confidence values."""
         invalid_data = {
             "answer": "Test answer.",
@@ -118,9 +108,7 @@ class TestHubResponseSchemaContract:
         with pytest.raises(JsonSchemaValidationError):
             validate(instance=invalid_data, schema=hub_response_schema)
 
-    def test_invalid_status_rejected_by_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_invalid_status_rejected_by_schema(self, hub_response_schema: dict) -> None:
         """Test that schema rejects invalid status values."""
         invalid_data = {
             "answer": "Test answer.",
@@ -132,9 +120,7 @@ class TestHubResponseSchemaContract:
         with pytest.raises(JsonSchemaValidationError):
             validate(instance=invalid_data, schema=hub_response_schema)
 
-    def test_missing_required_field_rejected_by_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_missing_required_field_rejected_by_schema(self, hub_response_schema: dict) -> None:
         """Test that schema rejects missing required fields."""
         invalid_data = {
             "answer": "Test answer.",
@@ -143,9 +129,7 @@ class TestHubResponseSchemaContract:
         with pytest.raises(JsonSchemaValidationError):
             validate(instance=invalid_data, schema=hub_response_schema)
 
-    def test_all_status_values_valid_in_schema(
-        self, hub_response_schema: dict
-    ) -> None:
+    def test_all_status_values_valid_in_schema(self, hub_response_schema: dict) -> None:
         """Test all valid status values are accepted."""
         for status in [
             ResponseStatus.RESOLVED,

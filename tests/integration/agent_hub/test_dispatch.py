@@ -104,8 +104,8 @@ class TestAgentDispatch:
     @patch("agent_hub.router.subprocess.run")
     def test_dispatch_handles_cli_error(self, mock_run: MagicMock) -> None:
         """Test that dispatch handles CLI errors gracefully."""
-        from agent_hub.router import AgentRouter as AgentDispatcher
         from agent_hub.exceptions import AgentDispatchError
+        from agent_hub.router import AgentRouter as AgentDispatcher
 
         mock_run.return_value = MagicMock(
             returncode=1,

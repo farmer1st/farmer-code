@@ -1,13 +1,12 @@
 """End-to-end tests for session management (AH-002)."""
 
 import uuid
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from agent_hub.config import ConfigLoader
-from agent_hub.models import MessageRole, ResponseStatus, SessionStatus
+from agent_hub.models import SessionStatus
 
 
 @pytest.mark.journey("AH-002")
@@ -63,9 +62,7 @@ class TestSessionManagementE2E:
         uuid.UUID(response.session_id)
 
     @patch("agent_hub.router.subprocess.run")
-    def test_session_preserves_context_across_questions_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_session_preserves_context_across_questions_e2e(self, mock_run: MagicMock) -> None:
         """Test that session preserves context across multiple questions."""
         from agent_hub.hub import AgentHub
 
@@ -128,9 +125,7 @@ class TestSessionManagementE2E:
         assert len(session.messages) >= 2  # At least 2 Q&A pairs
 
     @patch("agent_hub.router.subprocess.run")
-    def test_get_session_returns_full_history_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_get_session_returns_full_history_e2e(self, mock_run: MagicMock) -> None:
         """Test that get_session returns complete conversation history."""
         from agent_hub.hub import AgentHub
 
@@ -174,11 +169,8 @@ class TestSessionManagementE2E:
         assert len(session.messages) >= 1
 
     @patch("agent_hub.router.subprocess.run")
-    def test_close_session_prevents_new_messages_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_close_session_prevents_new_messages_e2e(self, mock_run: MagicMock) -> None:
         """Test that closing a session prevents adding new messages."""
-        from agent_hub.exceptions import SessionClosedError
         from agent_hub.hub import AgentHub
 
         mock_run.return_value = MagicMock(
@@ -244,9 +236,7 @@ class TestSessionManagementE2E:
         assert exc_info.value.session_id == "nonexistent-session-id"
 
     @patch("agent_hub.router.subprocess.run")
-    def test_session_tracks_multiple_turn_conversation_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_session_tracks_multiple_turn_conversation_e2e(self, mock_run: MagicMock) -> None:
         """Test complete multi-turn conversation tracking."""
         from agent_hub.hub import AgentHub
 

@@ -4,11 +4,12 @@ Tests the MCP server implementation that exposes Agent Hub functionality
 as MCP tools for Claude Agent SDK integration.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from agent_hub.models import HubResponse, ResponseStatus
+import pytest
+
 from agent_hub.exceptions import EscalationError, UnknownTopicError
+from agent_hub.models import HubResponse, ResponseStatus
 
 
 class TestMCPServerInitialization:
@@ -95,7 +96,7 @@ class TestAskExpertMCPTool:
         set_hub(mock_hub)
 
         tool_fn = server._tool_manager._tools["ask_expert"].fn
-        result = tool_fn(
+        tool_fn(
             topic="architecture",
             question="Follow-up question",
             session_id="existing-session",
@@ -180,9 +181,7 @@ class TestCheckEscalationMCPTool:
 
     def test_check_escalation_handles_not_found(self, mock_hub):
         """check_escalation returns error for missing escalation."""
-        mock_hub.check_escalation.side_effect = EscalationError(
-            "Escalation not found: invalid-id"
-        )
+        mock_hub.check_escalation.side_effect = EscalationError("Escalation not found: invalid-id")
 
         from agent_hub.mcp_server import create_mcp_server, set_hub
 
@@ -209,7 +208,7 @@ class TestMCPServerEntryPoint:
 
     def test_mcp_server_can_be_configured_with_hub(self):
         """MCP server can be configured with a custom hub."""
-        from agent_hub.mcp_server import create_mcp_server, set_hub, get_hub
+        from agent_hub.mcp_server import get_hub, set_hub
 
         mock_hub = MagicMock()
         set_hub(mock_hub)

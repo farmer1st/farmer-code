@@ -1,7 +1,7 @@
 """Unit tests for SessionManager (US2: Maintain Conversation Sessions)."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -66,9 +66,9 @@ class TestSessionManagerCreate:
         from agent_hub.session import SessionManager
 
         manager = SessionManager()
-        before = datetime.now(timezone.utc)
+        _before = datetime.now(UTC)  # noqa: F841
         session = manager.create(agent_id="architect")
-        after = datetime.now(timezone.utc)
+        _after = datetime.now(UTC)  # noqa: F841
 
         # Timestamps should be set (within reasonable range)
         assert session.created_at is not None
@@ -170,6 +170,7 @@ class TestSessionManagerAddMessage:
 
         # Small delay to ensure timestamp difference
         import time
+
         time.sleep(0.01)
 
         manager.add_message(
@@ -290,6 +291,7 @@ class TestSessionManagerGetAndClose:
         session = manager.create(agent_id="architect")
 
         import time
+
         time.sleep(0.01)
 
         manager.close(session.id)
@@ -329,14 +331,14 @@ class TestSessionManagerIntegration:
         )
 
         # Add question
-        q1 = manager.add_message(
+        manager.add_message(
             session.id,
             MessageRole.USER,
             "What auth method should we use?",
         )
 
         # Add answer
-        a1 = manager.add_message(
+        manager.add_message(
             session.id,
             MessageRole.ASSISTANT,
             "Use OAuth2 with JWT",
@@ -344,14 +346,14 @@ class TestSessionManagerIntegration:
         )
 
         # Add follow-up question
-        q2 = manager.add_message(
+        manager.add_message(
             session.id,
             MessageRole.USER,
             "What about refresh tokens?",
         )
 
         # Add follow-up answer
-        a2 = manager.add_message(
+        manager.add_message(
             session.id,
             MessageRole.ASSISTANT,
             "Use rotating refresh tokens with 7-day expiry",

@@ -136,10 +136,7 @@ class SessionManager:
         Returns:
             List of sessions with ACTIVE status.
         """
-        return [
-            s for s in self._sessions.values()
-            if s.status == SessionStatus.ACTIVE
-        ]
+        return [s for s in self._sessions.values() if s.status == SessionStatus.ACTIVE]
 
     def get_by_feature(self, feature_id: str) -> list[Session]:
         """Get all sessions for a feature.
@@ -150,7 +147,4 @@ class SessionManager:
         Returns:
             List of sessions matching the feature ID.
         """
-        return [
-            s for s in self._sessions.values()
-            if s.feature_id == feature_id
-        ]
+        return [s for s in self._sessions.values() if s.feature_id == feature_id]

@@ -362,7 +362,7 @@ class TestAgentHubAuditLoggingE2E:
 
     def test_ask_expert_logs_exchange_automatically_e2e(self) -> None:
         """Test that ask_expert automatically logs the Q&A exchange."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from agent_hub.config import AgentDefinition, AgentType, RoutingConfig
         from agent_hub.hub import AgentHub
@@ -418,7 +418,7 @@ class TestAgentHubAuditLoggingE2E:
 
     def test_ask_expert_logs_escalation_details_e2e(self) -> None:
         """Test that escalated exchanges include escalation details in log."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from agent_hub.config import AgentDefinition, AgentType, RoutingConfig
         from agent_hub.hub import AgentHub
@@ -478,7 +478,7 @@ class TestAgentHubAuditLoggingE2E:
 
     def test_ask_expert_logs_session_id_e2e(self) -> None:
         """Test that session_id is included in log entries."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from agent_hub.config import AgentDefinition, AgentType, RoutingConfig
         from agent_hub.hub import AgentHub
@@ -533,7 +533,7 @@ class TestAgentHubAuditLoggingE2E:
 
     def test_multiple_ask_expert_calls_all_logged_e2e(self) -> None:
         """Test that multiple ask_expert calls are all logged."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from agent_hub.config import AgentDefinition, AgentType, RoutingConfig
         from agent_hub.hub import AgentHub
@@ -588,7 +588,7 @@ class TestAgentHubAuditLoggingE2E:
 
     def test_ask_expert_logs_routing_decision_e2e(self) -> None:
         """Test that routing decision is captured in log."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import patch
 
         from agent_hub.config import AgentDefinition, AgentType, RoutingConfig
         from agent_hub.hub import AgentHub

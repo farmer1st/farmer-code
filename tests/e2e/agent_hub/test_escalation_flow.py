@@ -324,9 +324,7 @@ class TestConfidenceEscalationE2E:
     """
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_low_confidence_creates_escalation_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_low_confidence_creates_escalation_e2e(self, mock_run: MagicMock) -> None:
         """Test that low confidence answer creates escalation with proper fields."""
         from agent_hub.hub import AgentHub
 
@@ -334,9 +332,9 @@ class TestConfidenceEscalationE2E:
             returncode=0,
             stdout=(
                 '{"answer": "Consider using AES encryption", '
-                '"rationale": "Standard choice but need to verify key management approach", '
+                '"rationale": "Standard choice but need to verify key management", '
                 '"confidence": 65, '
-                '"uncertainty_reasons": ["Key management unclear", "Missing compliance requirements"]}'
+                '"uncertainty_reasons": ["Key management unclear", "Compliance unclear"]}'
             ),
             stderr="",
         )
@@ -373,9 +371,7 @@ class TestConfidenceEscalationE2E:
         assert response.rationale is not None
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_topic_override_triggers_escalation_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_topic_override_triggers_escalation_e2e(self, mock_run: MagicMock) -> None:
         """Test that topic override threshold can trigger escalation."""
         from agent_hub.hub import AgentHub
 
@@ -422,9 +418,7 @@ class TestConfidenceEscalationE2E:
         assert response.escalation_id is not None
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_high_confidence_no_escalation_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_high_confidence_no_escalation_e2e(self, mock_run: MagicMock) -> None:
         """Test that high confidence answers don't create escalation."""
         from agent_hub.hub import AgentHub
 
@@ -432,7 +426,7 @@ class TestConfidenceEscalationE2E:
             returncode=0,
             stdout=(
                 '{"answer": "Use PostgreSQL with connection pooling", '
-                '"rationale": "Reliable choice with excellent query optimization and ACID compliance", '
+                '"rationale": "Reliable choice with query optimization", '
                 '"confidence": 95}'
             ),
             stderr="",
@@ -476,7 +470,8 @@ class TestConfidenceEscalationE2E:
                 '{"answer": "Maybe use Redis", '
                 '"rationale": "Common choice but depends on scale requirements", '
                 '"confidence": 50, '
-                '"uncertainty_reasons": ["Unknown traffic volume", "Unclear persistence needs", "Memory constraints unknown"]}'
+                '"uncertainty_reasons": '
+                '["Unknown traffic volume", "Unclear persistence", "Scale unclear"]}'
             ),
             stderr="",
         )
@@ -507,9 +502,7 @@ class TestConfidenceEscalationE2E:
         assert "Unknown traffic volume" in response.uncertainty_reasons
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_escalation_with_session_context_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_escalation_with_session_context_e2e(self, mock_run: MagicMock) -> None:
         """Test that escalation works correctly within a session context."""
         from agent_hub.hub import AgentHub
 
@@ -591,9 +584,7 @@ class TestPendingEscalationE2E:
     """
 
     @patch("agent_hub.router.subprocess.run")
-    def test_check_escalation_returns_status_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_check_escalation_returns_status_e2e(self, mock_run: MagicMock) -> None:
         """Test that check_escalation returns escalation with correct status."""
         from agent_hub.hub import AgentHub
 
@@ -641,9 +632,7 @@ class TestPendingEscalationE2E:
         assert escalation.tentative_answer is not None
 
     @patch("agent_hub.router.subprocess.run")
-    def test_add_human_response_confirms_and_resolves_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_add_human_response_confirms_and_resolves_e2e(self, mock_run: MagicMock) -> None:
         """Test that human confirmation resolves the escalation."""
         from agent_hub.hub import AgentHub
 
@@ -693,9 +682,7 @@ class TestPendingEscalationE2E:
         assert escalation.status == "resolved"
 
     @patch("agent_hub.router.subprocess.run")
-    def test_add_human_response_corrects_answer_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_add_human_response_corrects_answer_e2e(self, mock_run: MagicMock) -> None:
         """Test that human correction provides new answer with 100% confidence."""
         from agent_hub.hub import AgentHub
 
@@ -743,9 +730,7 @@ class TestPendingEscalationE2E:
         assert result.final_answer.confidence == 100
 
     @patch("agent_hub.router.subprocess.run")
-    def test_add_human_response_adds_context_for_reroute_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_add_human_response_adds_context_for_reroute_e2e(self, mock_run: MagicMock) -> None:
         """Test that ADD_CONTEXT triggers NEEDS_REROUTE with updated question."""
         from agent_hub.hub import AgentHub
 
@@ -781,10 +766,11 @@ class TestPendingEscalationE2E:
         )
 
         # Human adds context
+        context = "5 developers, 50K daily users, 3 month timeline"
         result = hub.add_human_response(
             escalation_id=response.escalation_id,
             action=HumanAction.ADD_CONTEXT,
-            additional_context="We have 5 developers, expect 50K daily users, need to ship in 3 months",
+            additional_context=context,
             responder="@farmer1st",
         )
 
@@ -795,9 +781,7 @@ class TestPendingEscalationE2E:
         assert "5 developers" in result.updated_question.context
 
     @patch("agent_hub.router.subprocess.run")
-    def test_human_response_fed_back_to_session_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_human_response_fed_back_to_session_e2e(self, mock_run: MagicMock) -> None:
         """Test that human response is added to session message history."""
         from agent_hub.hub import AgentHub
         from agent_hub.models import MessageRole
@@ -852,9 +836,7 @@ class TestPendingEscalationE2E:
         assert last_human_msg.metadata.get("responder") == "@farmer1st"
 
     @patch("agent_hub.router.subprocess.run")
-    def test_full_escalation_workflow_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_full_escalation_workflow_e2e(self, mock_run: MagicMock) -> None:
         """Test complete escalation workflow: create, check, resolve."""
         from agent_hub.hub import AgentHub
 

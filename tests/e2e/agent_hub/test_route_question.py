@@ -112,9 +112,7 @@ class TestAskExpertE2E:
     """
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_routes_and_returns_response_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_routes_and_returns_response_e2e(self, mock_run: MagicMock) -> None:
         """Test end-to-end ask_expert routing and response."""
         from agent_hub.hub import AgentHub
 
@@ -164,9 +162,7 @@ class TestAskExpertE2E:
         mock_run.assert_called_once()
 
     @patch("agent_hub.router.subprocess.run")
-    def test_ask_expert_low_confidence_triggers_escalation_e2e(
-        self, mock_run: MagicMock
-    ) -> None:
+    def test_ask_expert_low_confidence_triggers_escalation_e2e(self, mock_run: MagicMock) -> None:
         """Test that low confidence triggers escalation with PENDING_HUMAN status."""
         from agent_hub.hub import AgentHub
 
