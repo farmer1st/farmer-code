@@ -1,13 +1,13 @@
 # GitHub Integration Module
 
-**Purpose**: Type-safe GitHub API client for FarmCode orchestrator using GitHub App authentication.
+**Purpose**: Type-safe GitHub API client for Farmer Code orchestrator using GitHub App authentication.
 
 **Version**: 1.0.0 (Feature 001 - GitHub Integration Core)
 **Status**: ✅ Fully Implemented (All 4 User Stories complete)
 
 ## Overview
 
-This module provides a clean, type-safe interface for GitHub operations using GitHub App authentication. It powers the FarmCode orchestrator's 8-phase SDLC workflow by managing issues, comments, labels, and pull requests.
+This module provides a clean, type-safe interface for GitHub operations using GitHub App authentication. It powers the Farmer Code orchestrator's 8-phase SDLC workflow by managing issues, comments, labels, and pull requests.
 
 ## Features
 

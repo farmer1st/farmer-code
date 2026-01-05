@@ -1,6 +1,6 @@
 # Writing Tests
 
-How to write tests for FarmCode following TDD principles.
+How to write tests for Farmer Code following TDD principles.
 
 ## TDD Workflow (NON-NEGOTIABLE)
 

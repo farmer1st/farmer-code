@@ -1,6 +1,6 @@
 # Architecture Documentation
 
-This section documents the system architecture, component interactions, and design decisions for FarmCode.
+This section documents the system architecture, component interactions, and design decisions for Farmer Code.
 
 ## Contents
 
@@ -12,7 +12,7 @@ This section documents the system architecture, component interactions, and desi
 
 ## Architecture Principles
 
-FarmCode follows these architectural principles (from the [Constitution](../../.specify/memory/constitution.md)):
+Farmer Code follows these architectural principles (from the [Constitution](../../.specify/memory/constitution.md)):
 
 1. **Thin Client Architecture**: All business logic in backend, clients are presentation-only
 2. **Local-First Design**: Primary deployment is local, cloud-ready as future option
@@ -29,7 +29,7 @@ graph TB
         AI[Claude CLI]
     end
 
-    subgraph "FarmCode"
+    subgraph "Farmer Code"
         ORC[Orchestrator]
         GI[GitHub Integration]
         WM[Worktree Manager]

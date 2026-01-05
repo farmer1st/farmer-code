@@ -1,6 +1,6 @@
 # Testing Guide
 
-How to run and write tests for FarmCode.
+How to run and write tests for Farmer Code.
 
 ## Contents
 

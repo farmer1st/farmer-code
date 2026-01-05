@@ -30,7 +30,7 @@ class GitHubService:
     Main service interface for GitHub operations.
 
     Handles GitHub App authentication, API calls, retry logic,
-    and error handling for the FarmCode orchestrator.
+    and error handling for the Farmer Code orchestrator.
     """
 
     def __init__(

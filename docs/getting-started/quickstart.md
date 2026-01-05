@@ -1,6 +1,6 @@
 # Quick Start
 
-Get FarmCode running in 5 minutes.
+Get Farmer Code running in 5 minutes.
 
 ## TL;DR
 

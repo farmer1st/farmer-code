@@ -1,4 +1,4 @@
-# Farm Code .gitignore
+# Farmer Code .gitignore
 
 # Python
 __pycache__/
@@ -89,7 +89,7 @@ dist-electron/
 secrets/
 credentials/
 
-# Farm Code Specific
+# Farmer Code Specific
 # State files (user-specific)
 .farmcode/
 

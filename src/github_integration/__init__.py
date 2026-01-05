@@ -2,7 +2,7 @@
 GitHub Integration Core
 
 Provides programmatic access to GitHub operations (issues, comments, labels, PRs)
-for the FarmCode AI agent orchestration system.
+for the Farmer Code AI agent orchestration system.
 
 Public API:
 - GitHubService: Main service interface

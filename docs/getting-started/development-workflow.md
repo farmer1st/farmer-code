@@ -1,10 +1,10 @@
 # Development Workflow
 
-How to contribute to FarmCode following our development standards.
+How to contribute to Farmer Code following our development standards.
 
 ## Workflow Overview
 
-FarmCode uses a specification-driven, test-first development workflow:
+Farmer Code uses a specification-driven, test-first development workflow:
 
 ```
 1. Create Spec → 2. Plan → 3. Tasks → 4. Implement (TDD) → 5. Review → 6. Merge

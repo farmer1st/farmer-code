@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide will help you set up FarmCode for development.
+This guide will help you set up Farmer Code for development.
 
 ## Contents
 

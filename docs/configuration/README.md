@@ -1,6 +1,6 @@
 # Configuration Guide
 
-How to configure FarmCode for different environments.
+How to configure Farmer Code for different environments.
 
 ## Contents
 
@@ -10,7 +10,7 @@ How to configure FarmCode for different environments.
 
 ## Configuration Sources
 
-FarmCode reads configuration from:
+Farmer Code reads configuration from:
 
 1. **Environment Variables** (`.env` file)
 2. **YAML Configuration** (`config/routing.yaml`)

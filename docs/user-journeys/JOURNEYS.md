@@ -1,6 +1,6 @@
 # User Journeys
 
-Complete list of all user journeys for FarmCode orchestrator.
+Complete list of all user journeys for Farmer Code orchestrator.
 
 ## Journey Domains
 

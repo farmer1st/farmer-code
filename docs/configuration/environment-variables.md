@@ -1,6 +1,6 @@
 # Environment Variables
 
-Complete list of environment variables used by FarmCode.
+Complete list of environment variables used by Farmer Code.
 
 ## Required Variables
 
@@ -97,7 +97,7 @@ LOG_LEVEL=INFO
 
 ## Loading Environment Variables
 
-FarmCode uses `python-dotenv` to load `.env`:
+Farmer Code uses `python-dotenv` to load `.env`:
 
 ```python
 from dotenv import load_dotenv

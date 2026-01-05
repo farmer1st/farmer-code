@@ -1,6 +1,6 @@
 # User Journey Documentation Guide
 
-This directory contains all user journey documentation for FarmCode orchestrator.
+This directory contains all user journey documentation for Farmer Code orchestrator.
 
 **📊 [View all journeys →](./JOURNEYS.md)** - Complete list with status and test coverage
 

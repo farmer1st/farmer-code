@@ -1,6 +1,6 @@
 # API Documentation
 
-This directory contains API documentation for the FarmCode project.
+This directory contains API documentation for the Farmer Code project.
 
 ## REST APIs
 

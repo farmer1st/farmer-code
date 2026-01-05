@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "github-integration"
 version = "0.1.0"
-description = "GitHub Integration Core for FarmCode AI agent orchestration"
+description = "GitHub Integration Core for Farmer Code AI agent orchestration"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

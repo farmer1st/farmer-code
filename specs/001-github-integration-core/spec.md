@@ -9,7 +9,7 @@
 
 ### User Story 1 - Create and Track Workflow Issues (Priority: P1)
 
-As the FarmCode orchestrator, I need to create GitHub issues to represent features being developed, and retrieve issue details to understand what work needs to be done, so that I can initiate and track the SDLC workflow.
+As the Farmer Code orchestrator, I need to create GitHub issues to represent features being developed, and retrieve issue details to understand what work needs to be done, so that I can initiate and track the SDLC workflow.
 
 **Why this priority**: This is the absolute foundation. Without the ability to create and read issues, the orchestrator cannot start any workflow. Every workflow begins with a GitHub issue as the source of truth.
 
@@ -26,7 +26,7 @@ As the FarmCode orchestrator, I need to create GitHub issues to represent featur
 
 ### User Story 2 - Facilitate Agent Communication (Priority: P2)
 
-As the FarmCode orchestrator, I need to post comments to issues on behalf of agents and read all comments to detect agent signals (completion, questions, blocks), so that I can coordinate multi-agent workflows and track progress.
+As the Farmer Code orchestrator, I need to post comments to issues on behalf of agents and read all comments to detect agent signals (completion, questions, blocks), so that I can coordinate multi-agent workflows and track progress.
 
 **Why this priority**: Agent communication is the heartbeat of the system. Agents signal completion (✅), ask questions (❓), and report status (📝) via comments. Without this, the orchestrator cannot detect when agents finish their work or need help.
 
@@ -43,7 +43,7 @@ As the FarmCode orchestrator, I need to post comments to issues on behalf of age
 
 ### User Story 3 - Track Workflow State (Priority: P3)
 
-As the FarmCode orchestrator, I need to add and remove labels on issues to track the current workflow phase (status:new, status:specs-ready, etc.), so that both the system and humans can understand workflow progress at a glance.
+As the Farmer Code orchestrator, I need to add and remove labels on issues to track the current workflow phase (status:new, status:specs-ready, etc.), so that both the system and humans can understand workflow progress at a glance.
 
 **Why this priority**: Labels are the visual state indicator. While the orchestrator tracks state internally, labels make the workflow transparent to humans on GitHub and enable filtering/reporting.
 
@@ -60,7 +60,7 @@ As the FarmCode orchestrator, I need to add and remove labels on issues to track
 
 ### User Story 4 - Manage Code Review Process (Priority: P4)
 
-As the FarmCode orchestrator, I need to create pull requests and retrieve PR details to manage the code review phase of the workflow, so that agent-generated code can be reviewed and merged.
+As the Farmer Code orchestrator, I need to create pull requests and retrieve PR details to manage the code review phase of the workflow, so that agent-generated code can be reviewed and merged.
 
 **Why this priority**: PR operations are essential for workflow completion, but only needed in Phase 6-8. The orchestrator can function through Phase 1-5 without this, making it lower priority for the initial bootstrap.
 

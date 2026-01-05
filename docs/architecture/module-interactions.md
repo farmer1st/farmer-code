@@ -1,6 +1,6 @@
 # Module Interactions
 
-This document describes how FarmCode modules interact with each other, including dependencies, interfaces, and data flow.
+This document describes how Farmer Code modules interact with each other, including dependencies, interfaces, and data flow.
 
 ## Module Dependency Matrix
 

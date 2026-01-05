@@ -1,6 +1,6 @@
 # Running Tests
 
-How to execute FarmCode tests.
+How to execute Farmer Code tests.
 
 ## Quick Reference
 

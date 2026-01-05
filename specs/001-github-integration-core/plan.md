@@ -7,7 +7,7 @@
 
 ## Summary
 
-Backend service providing GitHub operations (issues, comments, labels, PRs) for the FarmCode orchestrator. Uses GitHub App authentication (App ID: 2578431, Installation ID: 102211688) with REST API polling (5-10 second intervals) for monitoring agent communications. Implements CRUD operations via programmatic interface, structured logging, and fixed retry logic for reliability. Local-first design runs on developer's machine without public endpoint.
+Backend service providing GitHub operations (issues, comments, labels, PRs) for the Farmer Code orchestrator. Uses GitHub App authentication (App ID: 2578431, Installation ID: 102211688) with REST API polling (5-10 second intervals) for monitoring agent communications. Implements CRUD operations via programmatic interface, structured logging, and fixed retry logic for reliability. Local-first design runs on developer's machine without public endpoint.
 
 ## Technical Context
 

@@ -30,7 +30,7 @@ Previous changes:
 - Initial: 1.0.0 ratified with 7 core principles
 -->
 
-# Farm Code Constitution
+# Farmer Code Constitution
 
 ## Core Principles
 
@@ -45,7 +45,7 @@ Previous changes:
 - Refactoring occurs only after tests pass
 - Red-Green-Refactor cycle is strictly enforced
 
-**Rationale**: Test-first development ensures code meets requirements, reduces defects, provides living documentation, and enables confident refactoring. This is the foundation of quality in Farm Code.
+**Rationale**: Test-first development ensures code meets requirements, reduces defects, provides living documentation, and enables confident refactoring. This is the foundation of quality in Farmer Code.
 
 ### II. Specification-Driven Development
 
@@ -525,7 +525,7 @@ Feature 001: GitHub Integration Core
 └── US4 (PRs): 📋 Planned
 ```
 
-**Rationale**: User journeys provide end-to-end validation that the system works as users expect. Mapping tests to journeys ensures comprehensive coverage and makes test reports meaningful to stakeholders. Documentation prevents knowledge silos and enables new contributors to onboard quickly. For FarmCode orchestrator, user journeys represent the 8-phase SDLC workflow that is the core value proposition. Documenting at the feature/story level (not task level) ensures docs stay current without creating update burden for every small change.
+**Rationale**: User journeys provide end-to-end validation that the system works as users expect. Mapping tests to journeys ensures comprehensive coverage and makes test reports meaningful to stakeholders. Documentation prevents knowledge silos and enables new contributors to onboard quickly. For Farmer Code orchestrator, user journeys represent the 8-phase SDLC workflow that is the core value proposition. Documenting at the feature/story level (not task level) ensures docs stay current without creating update burden for every small change.
 
 ### XII. Continuous Integration and Delivery
 

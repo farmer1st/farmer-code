@@ -1,6 +1,6 @@
 # Module Documentation
 
-Detailed documentation for each FarmCode module.
+Detailed documentation for each Farmer Code module.
 
 ## Module Index
 

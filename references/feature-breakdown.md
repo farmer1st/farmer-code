@@ -1,4 +1,4 @@
-# FarmCode Feature Breakdown
+# Farmer Code Feature Breakdown
 
 **Vision**: AI agent orchestration system for automated software development following the Farmer1st SDLC workflow.
 
@@ -212,7 +212,7 @@
 ---
 
 ## Phase 4: Bootstrap Ready
-**Goal**: Use FarmCode to build FarmCode features!
+**Goal**: Use Farmer Code to build Farmer Code features!
 
 ### Feature 4.1: Plans Folder Templates
 **Priority**: P4
@@ -238,7 +238,7 @@
 - See all active workflows across projects
 - Project-specific agent configurations
 
-**Acceptance**: Can work on FarmCode AND another project simultaneously
+**Acceptance**: Can work on Farmer Code AND another project simultaneously
 
 ---
 
@@ -291,8 +291,8 @@
 - Can orchestrate full feature from description to merged PR
 
 **Week 6+: Bootstrap!**
-- Use FarmCode to build Features 3.2, 3.3, 4.1, 4.2, 5.1, 5.2
-- FarmCode builds FarmCode!
+- Use Farmer Code to build Features 3.2, 3.3, 4.1, 4.2, 5.1, 5.2
+- Farmer Code builds Farmer Code!
 
 ---
 

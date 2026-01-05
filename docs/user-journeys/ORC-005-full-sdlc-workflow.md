@@ -4,15 +4,15 @@
 **Goal**: Complete a full feature development cycle from idea to deployment using AI agent orchestration
 **Preconditions**:
 - GitHub App configured and installed
-- FarmCode orchestrator running
+- Farmer Code orchestrator running
 - Repository cloned with worktrees configured
 - AI agents (@duc, @dede, @marie, etc.) available
 
-**Priority**: P1 (Core value proposition of FarmCode)
+**Priority**: P1 (Core value proposition of Farmer Code)
 
 ## Overview
 
-This journey represents the complete end-to-end SDLC workflow managed by the FarmCode orchestrator. It encompasses all 8 phases from feature request to deployment.
+This journey represents the complete end-to-end SDLC workflow managed by the Farmer Code orchestrator. It encompasses all 8 phases from feature request to deployment.
 
 ## 8-Phase SDLC Workflow
 
@@ -188,7 +188,7 @@ stateDiagram-v2
 
 ## Notes
 
-- This is the **core value proposition** of FarmCode: AI-orchestrated SDLC
+- This is the **core value proposition** of Farmer Code: AI-orchestrated SDLC
 - Currently only Phases 1, 2, 5 are implemented (GitHub Integration Core)
 - Future features will complete Phases 3, 4, 6, 7, 8
 - Each phase has human approval gates to ensure quality and alignment

@@ -1,10 +1,10 @@
 # System Overview
 
-FarmCode is an AI-orchestrated software development lifecycle (SDLC) automation system. It coordinates AI agents to perform development tasks while maintaining human oversight through approval gates.
+Farmer Code is an AI-orchestrated software development lifecycle (SDLC) automation system. It coordinates AI agents to perform development tasks while maintaining human oversight through approval gates.
 
 ## Purpose
 
-FarmCode automates the mundane aspects of software development while ensuring quality through:
+Farmer Code automates the mundane aspects of software development while ensuring quality through:
 
 - **Structured Workflow**: 8-phase SDLC with clear deliverables
 - **AI Assistance**: Specialist agents for different domains

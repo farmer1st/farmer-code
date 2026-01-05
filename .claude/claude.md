@@ -1,4 +1,4 @@
-# Farm Code Project Instructions
+# Farmer Code Project Instructions
 
 ## Constitution
 

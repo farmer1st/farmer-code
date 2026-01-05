@@ -1,6 +1,6 @@
-# FarmCode Documentation
+# Farmer Code Documentation
 
-Welcome to the FarmCode documentation. This project implements an AI-driven orchestration system for automated software development lifecycle (SDLC) management.
+Welcome to the Farmer Code documentation. This project implements an AI-driven orchestration system for automated software development lifecycle (SDLC) management.
 
 ## Quick Links
 
@@ -16,7 +16,7 @@ Welcome to the FarmCode documentation. This project implements an AI-driven orch
 
 ## Project Overview
 
-FarmCode is an AI-orchestrated development system that:
+Farmer Code is an AI-orchestrated development system that:
 
 - **Automates SDLC Phases**: Issues, specs, planning, implementation, review
 - **Routes Questions**: Intelligent routing to specialist AI agents
@@ -38,7 +38,7 @@ FarmCode is an AI-orchestrated development system that:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    FarmCode Orchestrator                     │
+│                   Farmer Code Orchestrator                   │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
@@ -81,7 +81,7 @@ See [Architecture Documentation](./architecture/README.md) for detailed diagrams
 
 ### SDLC Workflow
 
-FarmCode implements an 8-phase SDLC workflow:
+Farmer Code implements an 8-phase SDLC workflow:
 
 1. **Issue & Worktree Creation** - Branch and workspace setup
 2. **Architecture & Specs** - System design (Gate 1)
