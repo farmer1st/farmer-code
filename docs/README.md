@@ -31,7 +31,8 @@ FarmCode is an AI-orchestrated development system that:
 | `github_integration` | GitHub API operations (issues, PRs, comments) | [Module Docs](./modules/github-integration.md) |
 | `worktree_manager` | Git worktree creation and management | [Module Docs](./modules/worktree-manager.md) |
 | `orchestrator` | SDLC workflow state machine | [Module Docs](./modules/orchestrator.md) |
-| `knowledge_router` | AI agent Q&A routing and validation | [Module Docs](./modules/knowledge-router.md) |
+| `agent_hub` | Central coordination for agent interactions | [Module Docs](./modules/agent-hub.md) |
+| `knowledge_router` | AI agent Q&A routing and validation (legacy) | [Module Docs](./modules/knowledge-router.md) |
 
 ## Architecture Overview
 
@@ -41,8 +42,8 @@ FarmCode is an AI-orchestrated development system that:
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
-│  │   GitHub     │  │   Worktree   │  │   Knowledge      │  │
-│  │ Integration  │◄─┤   Manager    │◄─┤   Router         │  │
+│  │   GitHub     │  │   Worktree   │  │   Agent Hub      │  │
+│  │ Integration  │◄─┤   Manager    │◄─┤  (Coordination)  │  │
 │  └──────────────┘  └──────────────┘  └──────────────────┘  │
 │         │                 │                   │             │
 │         ▼                 ▼                   ▼             │

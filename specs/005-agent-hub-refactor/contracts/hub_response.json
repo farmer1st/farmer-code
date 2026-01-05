@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HubResponse",
+  "description": "Response from ask_expert (T018)",
+  "type": "object",
+  "required": ["answer", "rationale", "confidence", "session_id", "status"],
+  "properties": {
+    "answer": {
+      "type": "string",
+      "description": "The expert's answer"
+    },
+    "rationale": {
+      "type": "string",
+      "description": "Why this answer"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "Confidence score (0-100)"
+    },
+    "uncertainty_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Reasons for uncertainty if not 100%"
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session ID for follow-ups"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["resolved", "pending_human", "needs_reroute"],
+      "description": "resolved, pending_human, or needs_reroute"
+    },
+    "escalation_id": {
+      "type": ["string", "null"],
+      "description": "Escalation ID if status is pending_human"
+    }
+  }
+}

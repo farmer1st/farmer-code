@@ -8,6 +8,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-03
 - **002-git-worktree-manager**: Python 3.11+ + subprocess, pathlib, Pydantic v2
 - **003-orchestrator-state-machine**: Python 3.11+ + Pydantic v2, subprocess (CLI runner), JSON state persistence
 - **004-knowledge-router**: Python 3.11+ + Pydantic v2, subprocess (CLI spawning), YAML routing config, JSONL logging
+- **005-agent-hub-refactor**: Python 3.11+ + Pydantic v2, MCP SDK, in-memory sessions, JSONL logging
 
 ## Project Structure
 
@@ -16,7 +17,8 @@ src/
   github_integration/    # GitHub API client and service
   worktree_manager/      # Git worktree management
   orchestrator/          # SDLC workflow state machine
-  knowledge_router/      # AI agent Q&A routing and validation
+  agent_hub/             # Central coordination for agent interactions
+  knowledge_router/      # AI agent Q&A routing (legacy, replaced by agent_hub)
 tests/
   unit/                  # Unit tests
   integration/           # Integration tests
@@ -66,9 +68,42 @@ orchestrator = OrchestratorService(repo_path, github_service, worktree_service)
 result = orchestrator.execute_phase_1(Phase1Request(feature_description="..."))
 ```
 
-### knowledge_router
+### agent_hub
+
+Central coordination layer for agent interactions. See `src/agent_hub/README.md` for details.
+
+**Key exports**:
+- `AgentHub` - Main facade for routing, sessions, validation
+- `HubResponse`, `ResponseStatus` - Response with status
+- `Session`, `Message`, `MessageRole` - Session management
+- `EscalationRequest`, `HumanAction` - Human escalation
+- `RoutingConfig`, `ConfigLoader` - Configuration
+- MCP server via `python -m agent_hub.mcp_server`
+
+**Usage**:
+```python
+from agent_hub import AgentHub, ConfigLoader
+
+config = ConfigLoader.load_from_file("config/routing.yaml")
+hub = AgentHub(config, log_dir="logs/qa")
+
+response = hub.ask_expert(
+    topic="architecture",
+    question="What auth method should we use?",
+    feature_id="005-auth"
+)
+
+if response.status.value == "resolved":
+    print(response.answer)
+else:
+    # Low confidence - check escalation
+    escalation = hub.check_escalation(response.escalation_id)
+```
+
+### knowledge_router (legacy)
 
 AI agent Q&A routing and validation. See `src/knowledge_router/README.md` for details.
+**Note**: Replaced by `agent_hub` module. Kept for backward compatibility.
 
 **Key exports**:
 - `KnowledgeRouter` - Main facade for routing and validation
@@ -90,10 +125,9 @@ answer = router.submit_answer(handle, question)
 
 ## Recent Changes
 
+- 005-agent-hub-refactor: Central agent coordination with sessions, MCP server, audit logging
 - 004-knowledge-router: Q&A routing, validation, escalation, and logging (MVP complete)
 - 003-orchestrator-state-machine: State machine with phases 1-2, agent dispatch, label sync
-- 002-git-worktree-manager: Git worktree management
-- 001-github-integration-core: GitHub API integration
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

@@ -14,6 +14,7 @@ dependencies = [
     "pydantic>=2.5.0",
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0.0",
+    "mcp>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -79,6 +80,7 @@ addopts = [
     "--cov=src/worktree_manager",
     "--cov=src/orchestrator",
     "--cov=src/knowledge_router",
+    "--cov=src/agent_hub",
     "--cov-report=term-missing",
     "--cov-report=html",
 ]
@@ -91,7 +93,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/github_integration", "src/worktree_manager", "src/orchestrator", "src/knowledge_router"]
+source = ["src/github_integration", "src/worktree_manager", "src/orchestrator", "src/knowledge_router", "src/agent_hub"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

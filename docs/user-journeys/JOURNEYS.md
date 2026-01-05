@@ -8,7 +8,8 @@ Complete list of all user journeys for FarmCode orchestrator.
 |--------|-------------|
 | **ORC** | Orchestrator - AI agent workflow orchestration and SDLC management |
 | **WT**  | Worktree - Git worktree and branch management for isolated development |
-| **KR**  | Knowledge Router - Question routing, validation, and escalation |
+| **KR**  | Knowledge Router - Question routing, validation, and escalation (legacy) |
+| **AH**  | Agent Hub - Central coordination layer for agent interactions (replaces KR) |
 | **GH**  | GitHub - Direct GitHub integration operations (future) |
 | **UI**  | User Interface - Web/TUI user interactions (future) |
 
@@ -29,6 +30,11 @@ Complete list of all user journeys for FarmCode orchestrator.
 | [KR-002](./KR-002-validate-confidence.md) | Validate Answer Confidence | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
 | [KR-003](./KR-003-escalate-human.md) | Escalate Low-Confidence to Human | P1 | ✅ Implemented | ✅ 100% | 5/5 passing |
 | [KR-004](./KR-004-log-qa.md) | Log Q&A Exchange for Retrospectives | P1 | ✅ Implemented | ✅ 100% | 4/4 passing |
+| [AH-001](./AH-001-route-question.md) | Route Question to Expert Agent | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
+| [AH-002](./AH-002-session-management.md) | Maintain Conversation Sessions | P1 | ✅ Implemented | ✅ 100% | 6/6 passing |
+| [AH-003](./AH-003-confidence-escalation.md) | Validate Confidence and Escalate | P2 | ✅ Implemented | ✅ 100% | 5/5 passing |
+| [AH-004](./AH-004-pending-escalation.md) | Track Pending Escalations | P2 | ✅ Implemented | ✅ 100% | 6/6 passing |
+| [AH-005](./AH-005-audit-logging.md) | Audit Trail Logging | P3 | ✅ Implemented | ✅ 100% | 5/5 passing |
 | KR-005 | Dispatch Execution Tasks to Specialists | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | KR-006 | Configure Routing Rules | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | KR-007 | Generate Retrospective Report | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
@@ -55,8 +61,10 @@ Complete list of all user journeys for FarmCode orchestrator.
 | KR-002 | Validate Answer Confidence | ✅ Implemented | 100% |
 | KR-003 | Escalate Low-Confidence to Human | ✅ Implemented | 100% |
 | KR-004 | Log Q&A Exchange for Retrospectives | ✅ Implemented | 100% |
+| AH-001 | Route Question to Expert Agent | ✅ Implemented | 100% |
+| AH-002 | Maintain Conversation Sessions | ✅ Implemented | 100% |
 
-**P1 Coverage**: 8/8 implemented (100%)
+**P1 Coverage**: 10/10 implemented (100%)
 
 ### P2 Journeys (Important - Post-MVP)
 | ID | Name | Status | Coverage |
@@ -65,11 +73,13 @@ Complete list of all user journeys for FarmCode orchestrator.
 | ORC-003 | Progress Issue Through Workflow Phases | 📋 Planned | 0% |
 | WT-003 | Commit and Push Feature Changes | ✅ Implemented | 100% |
 | WT-004 | Cleanup Worktree After Feature Completion | ✅ Implemented | 100% |
+| AH-003 | Validate Confidence and Escalate | ✅ Implemented | 100% |
+| AH-004 | Track Pending Escalations | ✅ Implemented | 100% |
 | KR-005 | Dispatch Execution Tasks to Specialists | 📋 Planned | 0% |
 | KR-006 | Configure Routing Rules | 📋 Planned | 0% |
 | KR-007 | Generate Retrospective Report | 📋 Planned | 0% |
 
-**P2 Coverage**: 2/7 implemented (29%)
+**P2 Coverage**: 4/9 implemented (44%)
 
 ### P3 Journeys (Nice to Have)
 | ID | Name | Status | Coverage |
@@ -77,7 +87,7 @@ Complete list of all user journeys for FarmCode orchestrator.
 | ORC-004 | Link Pull Request to Feature Issue | 📋 Planned | 0% |
 | KR-008 | Handle Agent Unavailability | 📋 Planned | 0% |
 
-**P3 Coverage**: 0/2 implemented (0%)
+**P3 Coverage**: 1/2 implemented (50%)
 
 ## Test Coverage Visualization
 
@@ -96,14 +106,20 @@ KR-001:  ████████████████████ 100% (2/2 
 KR-002:  ████████████████████ 100% (3/3 E2E tests passing)
 KR-003:  ████████████████████ 100% (5/5 E2E tests passing)
 KR-004:  ████████████████████ 100% (4/4 E2E tests passing)
+AH-001:  ████████████████████ 100% (3/3 E2E tests passing)
+AH-002:  ████████████████████ 100% (6/6 E2E tests passing)
+AH-003:  ████████████████████ 100% (5/5 E2E tests passing)
+AH-004:  ████████████████████ 100% (6/6 E2E tests passing)
+AH-005:  ████████████████████ 100% (5/5 E2E tests passing)
 KR-005:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 KR-006:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 KR-007:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 KR-008:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 
-Total: 10/17 journeys implemented (59%)
-P1 Journeys: 8/8 implemented (100%) ✅
-P2 Journeys: 2/7 implemented (29%)
+Total: 15/22 journeys implemented (68%)
+P1 Journeys: 10/10 implemented (100%) ✅
+P2 Journeys: 4/9 implemented (44%)
+P3 Journeys: 1/2 implemented (50%)
 ```
 
 ## Journeys by Feature
@@ -146,12 +162,22 @@ P2 Journeys: 2/7 implemented (29%)
 | US7: Retrospective Report | KR-007 | 📋 Planned |
 | US8: Handle Unavailability | KR-008 | 📋 Planned |
 
+### Feature 005: Agent Hub Refactor
+
+| User Story | Journeys | Status |
+|------------|----------|--------|
+| US1: Route Questions to Experts | AH-001 | ✅ Implemented |
+| US2: Maintain Conversation Sessions | AH-002 | ✅ Implemented |
+| US3: Validate Confidence and Escalate | AH-003 | ✅ Implemented |
+| US4: Track Pending Escalations | AH-004 | ✅ Implemented |
+| US5: Audit Trail Logging | AH-005 | ✅ Implemented |
+
 ### Future Features
 
 | Feature | Journeys | Status |
 |---------|----------|--------|
-| Feature 005: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
-| Feature 006: Advanced GitHub | GH-001 to GH-005 | 🔮 Not yet planned |
+| Feature 006: Baron PM Agent | TBD | 🔮 Not yet planned |
+| Feature 007: TUI Interface | UI-001 to UI-010 | 🔮 Not yet planned |
 
 ## Running Journey Tests
 
@@ -188,6 +214,6 @@ pytest --co -m journey
 
 ## Last Updated
 
-**Date**: 2026-01-04
-**By**: Knowledge Router implementation (Feature 004)
-**Next Review**: After implementing Feature 005 (TUI Interface)
+**Date**: 2026-01-05
+**By**: Agent Hub Refactor (Feature 005) - User Stories 1-5 Complete
+**Next Review**: After implementing Feature 005 MCP Server (Phase 8)
