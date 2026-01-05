@@ -4,17 +4,16 @@ Tests dispatch methods with mocked ClaudeCLIRunner.
 """
 
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
-import json
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
 from orchestrator.baron_dispatch import BaronDispatcher, DispatchError, ParseError
 from orchestrator.baron_models import (
-    SpecifyRequest,
-    SpecifyResult,
     PlanRequest,
     PlanResult,
+    SpecifyRequest,
+    SpecifyResult,
     TasksRequest,
     TasksResult,
 )

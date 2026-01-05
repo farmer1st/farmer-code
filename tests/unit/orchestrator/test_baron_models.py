@@ -9,10 +9,10 @@ import pytest
 from pydantic import ValidationError
 
 from orchestrator.baron_models import (
-    SpecifyRequest,
-    SpecifyResult,
     PlanRequest,
     PlanResult,
+    SpecifyRequest,
+    SpecifyResult,
     TasksRequest,
     TasksResult,
 )
