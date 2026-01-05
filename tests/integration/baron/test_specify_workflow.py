@@ -67,9 +67,7 @@ class TestSpecifyWorkflow:
 
     def test_dispatch_specify_creates_spec(self, dispatcher, mock_runner):
         """Test that Baron creates spec.md with valid result."""
-        request = SpecifyRequest(
-            feature_description="Add user authentication with OAuth2 support"
-        )
+        request = SpecifyRequest(feature_description="Add user authentication with OAuth2 support")
 
         result = dispatcher.dispatch_specify(request)
 
@@ -139,9 +137,7 @@ class TestSpecifyWorkflow:
             exit_code=1,
         )
 
-        request = SpecifyRequest(
-            feature_description="Add feature that will fail"
-        )
+        request = SpecifyRequest(feature_description="Add feature that will fail")
 
         result = dispatcher.dispatch_specify(request)
 
@@ -152,9 +148,7 @@ class TestSpecifyWorkflow:
         """Test handling of runner execution exception."""
         mock_runner.execute.side_effect = Exception("Claude CLI not found")
 
-        request = SpecifyRequest(
-            feature_description="Add feature with CLI error"
-        )
+        request = SpecifyRequest(feature_description="Add feature with CLI error")
 
         with pytest.raises(DispatchError) as exc_info:
             dispatcher.dispatch_specify(request)
@@ -168,9 +162,7 @@ class TestSpecifyWorkflow:
             exit_code=0,
         )
 
-        request = SpecifyRequest(
-            feature_description="Add feature with missing markers"
-        )
+        request = SpecifyRequest(feature_description="Add feature with missing markers")
 
         with pytest.raises(ParseError) as exc_info:
             dispatcher.dispatch_specify(request)

@@ -270,9 +270,7 @@ class ClaudeCLIRunner:
                 exit_code=-1,
             )
         except FileNotFoundError as e:
-            raise AgentDispatchError(
-                f"Claude CLI not found at '{self._claude_path}': {e}"
-            ) from e
+            raise AgentDispatchError(f"Claude CLI not found at '{self._claude_path}': {e}") from e
 
 
 class ExecuteResult:

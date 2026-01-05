@@ -23,9 +23,7 @@ class TestSpecifyRequest:
 
     def test_valid_request_minimal(self):
         """Test valid request with only required fields."""
-        request = SpecifyRequest(
-            feature_description="Add user authentication with OAuth2 support"
-        )
+        request = SpecifyRequest(feature_description="Add user authentication with OAuth2 support")
         assert request.feature_description == "Add user authentication with OAuth2 support"
         assert request.feature_number is None
         assert request.short_name is None

@@ -132,9 +132,7 @@ class TestDispatchSpecify:
             dispatcher.dispatch_specify(request)
         assert "CLI not found" in str(exc_info.value)
 
-    def test_dispatch_specify_includes_description_in_prompt(
-        self, dispatcher, mock_runner
-    ):
+    def test_dispatch_specify_includes_description_in_prompt(self, dispatcher, mock_runner):
         """Test that feature description is included in dispatch prompt."""
         mock_runner.execute.return_value = MagicMock(
             output="""

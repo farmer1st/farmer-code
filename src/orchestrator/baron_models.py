@@ -47,17 +47,13 @@ class SpecifyResult(BaseModel):
     """
 
     success: bool = Field(..., description="Whether workflow completed successfully")
-    spec_path: Path | None = Field(
-        default=None, description="Path to created spec.md"
-    )
+    spec_path: Path | None = Field(default=None, description="Path to created spec.md")
     feature_id: str | None = Field(
         default=None, description="Feature directory name (e.g., '008-oauth2-auth')"
     )
     branch_name: str | None = Field(default=None, description="Git branch name")
     error: str | None = Field(default=None, description="Error message if failed")
-    duration_seconds: float = Field(
-        default=0.0, ge=0, description="Time taken in seconds"
-    )
+    duration_seconds: float = Field(default=0.0, ge=0, description="Time taken in seconds")
 
 
 class PlanRequest(BaseModel):
@@ -67,9 +63,7 @@ class PlanRequest(BaseModel):
     """
 
     spec_path: Path = Field(..., description="Path to spec.md file")
-    force_research: bool = Field(
-        default=False, description="Force re-run of research phase"
-    )
+    force_research: bool = Field(default=False, description="Force re-run of research phase")
 
 
 class PlanResult(BaseModel):
@@ -79,28 +73,16 @@ class PlanResult(BaseModel):
     """
 
     success: bool = Field(..., description="Whether workflow completed successfully")
-    plan_path: Path | None = Field(
-        default=None, description="Path to created plan.md"
-    )
-    research_path: Path | None = Field(
-        default=None, description="Path to research.md"
-    )
-    data_model_path: Path | None = Field(
-        default=None, description="Path to data-model.md"
-    )
-    contracts_dir: Path | None = Field(
-        default=None, description="Path to contracts/ directory"
-    )
-    quickstart_path: Path | None = Field(
-        default=None, description="Path to quickstart.md"
-    )
+    plan_path: Path | None = Field(default=None, description="Path to created plan.md")
+    research_path: Path | None = Field(default=None, description="Path to research.md")
+    data_model_path: Path | None = Field(default=None, description="Path to data-model.md")
+    contracts_dir: Path | None = Field(default=None, description="Path to contracts/ directory")
+    quickstart_path: Path | None = Field(default=None, description="Path to quickstart.md")
     error: str | None = Field(default=None, description="Error message if failed")
     blocked_on_escalation: bool = Field(
         default=False, description="Whether waiting for human input"
     )
-    duration_seconds: float = Field(
-        default=0.0, ge=0, description="Time taken in seconds"
-    )
+    duration_seconds: float = Field(default=0.0, ge=0, description="Time taken in seconds")
 
 
 class TasksRequest(BaseModel):
@@ -119,12 +101,8 @@ class TasksResult(BaseModel):
     """
 
     success: bool = Field(..., description="Whether workflow completed successfully")
-    tasks_path: Path | None = Field(
-        default=None, description="Path to created tasks.md"
-    )
+    tasks_path: Path | None = Field(default=None, description="Path to created tasks.md")
     task_count: int = Field(default=0, ge=0, description="Number of tasks generated")
     test_count: int = Field(default=0, ge=0, description="Number of test tasks (TDD)")
     error: str | None = Field(default=None, description="Error message if failed")
-    duration_seconds: float = Field(
-        default=0.0, ge=0, description="Time taken in seconds"
-    )
+    duration_seconds: float = Field(default=0.0, ge=0, description="Time taken in seconds")
