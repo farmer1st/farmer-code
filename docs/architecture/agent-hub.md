@@ -36,8 +36,8 @@ The Agent Hub provides a unified interface for:
 │      │                         │             │                   │
 │      ▼                         │             │                   │
 │ ┌─────────┐                    │             │                   │
-│ │ Claude  │                    │             │                   │
-│ │   CLI   │                    │             │                   │
+│ │ Agent   │                    │             │                   │
+│ │Services │                    │             │                   │
 │ └─────────┘                    │             │                   │
 └────────────────────────────────┼─────────────┼───────────────────┘
                                  │             │
@@ -68,11 +68,11 @@ The main entry point for all agent interactions.
 
 ### AgentRouter
 
-Dispatches questions to Claude CLI agents.
+Routes questions to agent services via REST API.
 
 **Responsibilities:**
 - Resolve topic to agent mapping
-- Spawn Claude CLI process
+- Make HTTP calls to agent services
 - Parse agent responses
 - Handle timeouts and errors
 
@@ -215,8 +215,8 @@ Message:
 
 The Agent Hub can optionally be exposed as an MCP server for external consumers.
 
-> **Note**: The core Agent Hub dispatches agents via **Claude CLI subprocess calls**.
-> The MCP server is an optional alternative interface for SDK-based agents.
+> **Note**: The Agent Hub dispatches questions to agent services via **REST HTTP API calls**.
+> Each agent service (Baron, Duc, Marie) runs as an independent FastAPI service using the Claude Code SDK.
 
 ```
 ┌─────────────────────────────────────┐

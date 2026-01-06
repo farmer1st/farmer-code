@@ -69,8 +69,8 @@ Farmer Code uses a multi-agent orchestration system where:
 
 ### Baron PM Agent
 
-Baron is a **prompt-driven Claude agent** (invoked via CLI subprocess) that acts as a Product Manager for the speckit workflow.
-Baron's logic lives in prompts, not Python code. It is executed via `ClaudeCLIRunner`:
+Baron is an **agent service** that acts as a Product Manager for the speckit workflow.
+Baron runs as a FastAPI service using the Claude Code SDK. It is invoked via REST API calls:
 
 | Workflow | Input | Output | Purpose |
 |----------|-------|--------|---------|

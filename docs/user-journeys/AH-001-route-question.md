@@ -38,10 +38,10 @@ This journey represents the core ask_expert flow of the Agent Hub. Unlike the le
   - If routing directly to human, returns PENDING_HUMAN immediately
 
 ### 3. Dispatch and Get Answer
-- **Action**: Hub dispatches question to expert agent via CLI
+- **Action**: Hub dispatches question to agent service via REST API
 - **Expected outcome**: Agent provides structured JSON answer
 - **System behavior**:
-  - AgentRouter spawns `claude --model {model} --print -p "{prompt}"`
+  - AgentRouter makes HTTP POST to agent service `/invoke` endpoint
   - Parses answer with rationale, confidence, uncertainty_reasons
   - Records response duration
 

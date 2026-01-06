@@ -4,7 +4,7 @@
 **Goal**: Create a complete feature specification (spec.md) from a natural language description
 **Preconditions**:
 - Baron agent is configured in `.claude/agents/baron/`
-- Claude CLI is installed and authenticated
+- Baron agent service is running (port 8002)
 - `.specify/templates/spec-template.md` exists
 - `.specify/memory/constitution.md` is accessible
 
@@ -18,7 +18,7 @@
 - **System behavior**:
   - Builds dispatch prompt from `SpecifyRequest`
   - Loads system prompt from `.claude/agents/baron/system-prompt.md`
-  - Executes via `ClaudeCLIRunner`
+  - Executes via REST API call to Baron service
 
 ### 2. Baron Creates Feature Directory
 - **Action**: Baron runs `.specify/scripts/bash/create-new-feature.sh`
@@ -149,10 +149,10 @@ def test_dispatch_specify_creates_spec(dispatcher, mock_runner):
 ## Notes
 
 - This journey represents the entry point for the speckit workflow
-- Baron is a **prompt-driven Claude agent** invoked via CLI subprocess
-- Baron is NOT implemented using the `claude_code_sdk` Python library
-- Most logic resides in prompts (`.claude/agents/baron/`)
-- Python code is minimal (BaronDispatcher only)
+- Baron is an **agent service** running on port 8002
+- Baron IS implemented using the `claude_code_sdk` Python library
+- Logic resides in the Baron service (`services/agents/baron/`)
+- Agent Hub communicates with Baron via REST API
 - Expert consultation limited to 3 questions per workflow
 - Clarification markers limited to 3 per spec
 - Average execution time: 30-60 seconds (varies by feature complexity)

@@ -48,8 +48,8 @@ Farmer Code automates the mundane aspects of software development while ensuring
 └──────────────────┘  └──────────────────┘             │
                                                        ▼
                                             ┌──────────────────────┐
-                                            │ Claude CLI Agents    │
-                                            │ (@duc, @gustave...)  │
+                                            │ Agent Services       │
+                                            │ (Baron, Duc, Marie)  │
                                             └──────────────────────┘
 ```
 
@@ -129,12 +129,12 @@ sequenceDiagram
 sequenceDiagram
     participant Orchestrator
     participant Hub as AgentHub
-    participant Agent as Claude CLI Agent
+    participant Agent as Agent Service
     participant Validator
     participant Human
 
     Orchestrator->>Hub: ask_expert(topic, question)
-    Hub->>Agent: Dispatch via subprocess
+    Hub->>Agent: REST API call
     Agent-->>Hub: Answer (with confidence)
     Hub->>Validator: Validate Confidence
     alt High Confidence (>=80%)
@@ -179,7 +179,7 @@ This enables:
 |------------|---------|----------|
 | GitHub API | Issue/PR management | Yes |
 | Git | Version control | Yes |
-| Claude CLI | AI agent execution | Yes |
+| Claude Code SDK | AI agent execution | Yes |
 | File System | State/log persistence | Yes |
 
 ## Security Considerations
