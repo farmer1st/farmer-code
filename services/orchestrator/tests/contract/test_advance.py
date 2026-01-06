@@ -19,24 +19,30 @@ class TestAdvanceWorkflow:
         self,
         test_client: AsyncClient,
         sample_create_workflow_request: dict[str, Any],
-        sample_advance_request: dict[str, Any],
     ) -> None:
         """Test successful workflow advancement.
 
         Contract: POST /workflows/{id}/advance returns 200 with WorkflowResponse.
+
+        State flow: Created workflow is in IN_PROGRESS, so we use agent_complete
+        to advance to WAITING_APPROVAL.
         """
-        # First create a workflow
+        # First create a workflow (starts in IN_PROGRESS)
         create_response = await test_client.post(
             "/workflows",
             json=sample_create_workflow_request,
         )
         assert create_response.status_code == 201
         workflow_id = create_response.json()["id"]
+        assert create_response.json()["status"] == "in_progress"
 
-        # Advance the workflow
+        # Advance with agent_complete (valid from IN_PROGRESS -> WAITING_APPROVAL)
         response = await test_client.post(
             f"/workflows/{workflow_id}/advance",
-            json=sample_advance_request,
+            json={
+                "trigger": "agent_complete",
+                "phase_result": {"output": "Generated specification"},
+            },
         )
 
         assert response.status_code == 200
@@ -45,12 +51,12 @@ class TestAdvanceWorkflow:
         # Required fields per contract
         assert data["id"] == workflow_id
         assert "status" in data
+        assert data["status"] == "waiting_approval"
         assert "workflow_type" in data
 
     async def test_advance_workflow_not_found(
         self,
         test_client: AsyncClient,
-        sample_advance_request: dict[str, Any],
     ) -> None:
         """Test workflow advancement with non-existent ID.
 
@@ -60,7 +66,7 @@ class TestAdvanceWorkflow:
 
         response = await test_client.post(
             f"/workflows/{non_existent_id}/advance",
-            json=sample_advance_request,
+            json={"trigger": "agent_complete"},
         )
 
         assert response.status_code == 404
@@ -225,7 +231,6 @@ class TestAdvanceWorkflow:
             json=sample_create_workflow_request,
         )
         workflow_id = create_response.json()["id"]
-        initial_status = create_response.json()["status"]
 
         # Advance the workflow
         advance_response = await test_client.post(

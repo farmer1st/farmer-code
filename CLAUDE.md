@@ -1,113 +1,113 @@
 # Farmer Code Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-03
+## Architecture Overview
 
-## Active Technologies
-- N/A (text changes only) + grep/sed for search and replace (007-farmer-code-rebrand)
-- Python 3.11+ + Claude CLI (via subprocess), Agent Hub (MCP server), Pydantic v2 (006-baron-pm-agent)
-- File-based (specs/ directory structure, JSON state files) (006-baron-pm-agent)
-- Python 3.11+ + FastAPI, Claude Code SDK (claude-code-sdk), Pydantic v2, httpx, SQLAlchemy (008-services-architecture)
-- SQLite (local), JSONL for audit logs (008-services-architecture)
+Farmer Code uses a **microservices architecture** with FastAPI services.
 
-- **001-github-integration-core**: Python 3.11+ + PyGithub, python-dotenv, python-jose
-- **002-git-worktree-manager**: Python 3.11+ + subprocess (git commands), pathlib, Pydantic v2
-- **003-orchestrator-state-machine**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), JSON state persistence
-- **004-knowledge-router**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), YAML routing config, JSONL logging
-- **005-agent-hub-refactor**: Python 3.11+ + Pydantic v2, subprocess (Claude CLI), MCP SDK (optional server), in-memory sessions, JSONL logging
+### Service Ports
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Orchestrator | 8000 | Workflow state machine |
+| Agent Hub | 8001 | Central agent coordination |
+| Baron | 8002 | PM agent (specify, plan, tasks) |
+| Duc | 8003 | Architecture expert |
+| Marie | 8004 | Testing expert |
 
 ## Project Structure
 
 ```text
-src/
-  github_integration/    # GitHub API client and service
-  worktree_manager/      # Git worktree management
-  orchestrator/          # SDLC workflow state machine
-  agent_hub/             # Central coordination for agent interactions
-tests/
-  unit/                  # Unit tests
-  integration/           # Integration tests
-  contract/              # Contract tests
-  e2e/                   # End-to-end tests
+services/
+  orchestrator/           # Workflow state machine (FastAPI)
+    src/                  # Service source code
+    tests/                # Service tests (unit, integration, contract, e2e)
+
+  agent-hub/              # Agent routing & sessions (FastAPI)
+    src/
+    tests/
+
+  agents/
+    baron/                # PM agent
+    duc/                  # Architecture expert
+    marie/                # Testing expert
+
+  shared/                 # Shared code and utilities
+    src/
+      contracts/          # API contracts and models
+      github_integration/ # GitHub API client
+      worktree_manager/   # Git worktree utilities
+    tests/
+
+  tests/                  # Cross-service tests
+    e2e/                  # End-to-end tests
+    integration/          # Integration tests
+    contract/             # Contract tests
+
+docs/                     # MkDocs documentation
 ```
 
 ## Commands
 
 ```bash
-# Run tests
+# Run all tests
 uv run pytest
 
-# Run linting (must pass BOTH for CI)
-uv run ruff check src/ tests/
-uv run ruff format --check src/ tests/
+# Run tests for a specific service
+uv run pytest services/orchestrator/tests/
+uv run pytest services/agent-hub/tests/
+
+# Run linting
+uv run ruff check services/
+uv run ruff format --check services/
 
 # Run type checking
-uv run mypy src/ --strict
+uv run mypy services/
 
 # Auto-fix lint issues
-uv run ruff check --fix src/ tests/
-uv run ruff format src/ tests/
+uv run ruff check --fix services/
+uv run ruff format services/
+
+# Start services with Docker
+docker-compose up
+
+# Run individual service
+cd services/orchestrator
+uv run uvicorn src.main:app --port 8000 --reload
 ```
 
 ## Code Style
 
 Python 3.11+: Follow standard conventions with Google-style docstrings
 
-## Modules
+## Technologies
 
-### orchestrator
+- **Backend**: Python 3.11+, FastAPI, SQLAlchemy, Pydantic v2, uv
+- **Database**: SQLite (local), JSONL for audit logs
+- **Testing**: pytest
+- **Linting**: ruff, mypy
 
-State machine orchestration for SDLC Phases 1-2. See `src/orchestrator/README.md` for details.
+## Services Documentation
 
-**Key exports**:
-- `OrchestratorService` - Main facade
-- `WorkflowState` - State enum (IDLE, PHASE_1, PHASE_2, GATE_1, DONE)
-- `Phase1Request`, `Phase2Config` - Configuration models
-- `AgentRunner`, `ClaudeCLIRunner` - Agent dispatch
+See `docs/services/` for detailed service documentation:
+- [Orchestrator](docs/services/orchestrator.md) - Workflow management
+- [Agent Hub](docs/services/agent-hub.md) - Agent coordination
 
-**Usage**:
-```python
-from orchestrator import OrchestratorService, Phase1Request
+## Development Workflow
 
-orchestrator = OrchestratorService(repo_path, github_service, worktree_service)
-result = orchestrator.execute_phase_1(Phase1Request(feature_description="..."))
-```
+1. Make changes in `services/` for new features
+2. Run `docker-compose up` to test locally
+3. Check health endpoints: `curl http://localhost:8000/health`
+4. Run tests before committing
 
-### agent_hub
+## Test Organization
 
-Central coordination layer for agent interactions. See `src/agent_hub/README.md` for details.
+Tests are organized within each service:
+- **Unit tests**: `services/*/tests/unit/` - Test individual components
+- **Integration tests**: `services/*/tests/integration/` - Test component interactions
+- **Contract tests**: `services/*/tests/contract/` - Test API contracts
+- **E2E tests**: `services/*/tests/e2e/` - End-to-end tests
 
-**Key exports**:
-- `AgentHub` - Main facade for routing, sessions, validation
-- `HubResponse`, `ResponseStatus` - Response with status
-- `Session`, `Message`, `MessageRole` - Session management
-- `EscalationRequest`, `HumanAction` - Human escalation
-- `RoutingConfig`, `ConfigLoader` - Configuration
-- MCP server via `python -m agent_hub.mcp_server`
-
-**Usage**:
-```python
-from agent_hub import AgentHub, ConfigLoader
-
-config = ConfigLoader.load_from_file("config/routing.yaml")
-hub = AgentHub(config, log_dir="logs/qa")
-
-response = hub.ask_expert(
-    topic="architecture",
-    question="What auth method should we use?",
-    feature_id="005-auth"
-)
-
-if response.status.value == "resolved":
-    print(response.answer)
-else:
-    # Low confidence - check escalation
-    escalation = hub.check_escalation(response.escalation_id)
-```
-
-## Recent Changes
-- 008-services-architecture: Added Python 3.11+ + FastAPI, Claude Code SDK (claude-code-sdk), Pydantic v2, httpx, SQLAlchemy
-- 008-services-architecture: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 006-baron-pm-agent: Added Python 3.11+ + Claude CLI (via subprocess), Agent Hub (MCP server), Pydantic v2
+Cross-service tests live in `services/tests/`.
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

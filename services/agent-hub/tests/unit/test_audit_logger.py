@@ -6,8 +6,7 @@ Tests the audit log format and JSONL writing per data-model.md.
 import json
 import os
 import tempfile
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import datetime
 from uuid import uuid4
 
 import pytest

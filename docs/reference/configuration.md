@@ -20,8 +20,8 @@ Configuration options for Farmer Code services.
 # In docker-compose.yml
 orchestrator:
   environment:
-    - ORCHESTRATOR_PORT=8001
-    - AGENT_HUB_URL=http://agent-hub:8000
+    - ORCHESTRATOR_PORT=8000
+    - AGENT_HUB_URL=http://agent-hub:8001
     - DATABASE_URL=sqlite:///./data/orchestrator.db
 ```
 
@@ -30,7 +30,7 @@ orchestrator:
 ```yaml
 agent-hub:
   environment:
-    - AGENT_HUB_PORT=8000
+    - AGENT_HUB_PORT=8001
     - CONFIDENCE_THRESHOLD=80
     - DATABASE_URL=sqlite:///./data/agent_hub.db
     - AUDIT_LOG_PATH=/app/logs/audit.jsonl
@@ -41,7 +41,7 @@ agent-hub:
 ```yaml
 baron:
   environment:
-    - BARON_PORT=8010
+    - BARON_PORT=8002
     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     - BARON_MODEL=claude-sonnet-4-20250514
 ```

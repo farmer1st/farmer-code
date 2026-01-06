@@ -1,1 +1,1 @@
-"""Integration tests for Agent Hub service."""
+"""Integration tests for agent_hub module."""

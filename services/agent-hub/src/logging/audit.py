@@ -6,8 +6,7 @@ Logs all agent exchanges to JSONL format per data-model.md AuditLog schema.
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -39,7 +38,7 @@ class AuditLogEntry:
     status: str
     duration_ms: int
     id: UUID = field(default_factory=uuid4)
-    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     session_id: UUID | None = None
     escalation_id: UUID | None = None
     metadata: dict[str, Any] | None = None

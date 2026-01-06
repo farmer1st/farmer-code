@@ -3,6 +3,7 @@ site_description: AI-powered SDLC automation platform
 site_url: https://farmer1st.github.io/farmer-code
 repo_url: https://github.com/farmer1st/farmer-code
 repo_name: farmer1st/farmer-code
+site_dir: /tmp/farmer-code-docs
 
 theme:
   name: material

@@ -118,11 +118,11 @@ your-agent:
   build:
     context: ./services/agents/your-agent
   ports:
-    - "8013:8013"
+    - "8005:8005"  # Next available port after Marie (8004)
   environment:
     - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
   healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:8013/health"]
+    test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
 ```
 
 ## Step 4: Register with Agent Hub
@@ -132,7 +132,7 @@ Add to Agent Hub's agent configuration:
 ```python
 AGENTS = {
     "your-agent": {
-        "url": "http://your-agent:8013",
+        "url": "http://your-agent:8005",
         "capabilities": ["your-workflow"]
     }
 }
@@ -146,7 +146,7 @@ cd services/agents/your-agent
 uv run pytest tests/
 
 # Integration test
-curl -X POST http://localhost:8013/invoke \
+curl -X POST http://localhost:8005/invoke \
   -H "Content-Type: application/json" \
   -d '{"workflow_type": "your-workflow", "context": {}}'
 ```

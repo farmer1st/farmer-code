@@ -23,19 +23,19 @@ docker-compose up
 ```
 
 This starts:
-- Agent Hub on http://localhost:8000
-- Orchestrator on http://localhost:8001
-- Baron on http://localhost:8010
-- Duc on http://localhost:8011
-- Marie on http://localhost:8012
+- Orchestrator on http://localhost:8000
+- Agent Hub on http://localhost:8001
+- Baron on http://localhost:8002
+- Duc on http://localhost:8003
+- Marie on http://localhost:8004
 
 ### 3. Verify Services
 
 ```bash
 # Check all health endpoints
-curl http://localhost:8000/health
-curl http://localhost:8001/health
-curl http://localhost:8010/health
+curl http://localhost:8000/health  # Orchestrator
+curl http://localhost:8001/health  # Agent Hub
+curl http://localhost:8002/health  # Baron
 ```
 
 ## Development Mode
@@ -53,17 +53,17 @@ This mounts local source directories so changes are reflected immediately.
 To run services outside Docker:
 
 ```bash
-# Terminal 1: Agent Hub
-cd services/agent-hub
+# Terminal 1: Orchestrator
+cd services/orchestrator
 uv run uvicorn src.main:app --port 8000 --reload
 
-# Terminal 2: Orchestrator
-cd services/orchestrator
+# Terminal 2: Agent Hub
+cd services/agent-hub
 uv run uvicorn src.main:app --port 8001 --reload
 
 # Terminal 3: Baron
 cd services/agents/baron
-uv run uvicorn src.main:app --port 8010 --reload
+uv run uvicorn src.main:app --port 8002 --reload
 ```
 
 ## Troubleshooting

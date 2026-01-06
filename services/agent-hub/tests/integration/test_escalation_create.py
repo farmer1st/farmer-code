@@ -3,7 +3,6 @@
 Tests that low-confidence responses automatically create escalations.
 """
 
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest

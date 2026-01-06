@@ -6,7 +6,6 @@ These tests verify Baron processes requests statelessly:
 - Independent requests produce independent results
 """
 
-from typing import Any
 
 import pytest
 from httpx import AsyncClient

@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from sqlalchemy.orm import Session as DBSession
 
-from src.db.models import Message, MessageRole, Session, SessionStatus
+from src.db.models import Message, Session, SessionStatus
 
 
 class SessionNotFoundError(Exception):

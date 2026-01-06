@@ -4,7 +4,6 @@ Manages escalation lifecycle: create, get, resolve.
 """
 
 from datetime import datetime
-from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.orm import Session as DBSession

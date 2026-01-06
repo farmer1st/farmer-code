@@ -1,1 +1,1 @@
-"""Contract tests for Agent Hub service."""
+"""Contract tests for agent_hub module."""

@@ -9,7 +9,7 @@ from enum import Enum
 from typing import Any
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -107,16 +107,16 @@ class WorkflowHistory(Base):
     from_status = Column(String, nullable=False)
     to_status = Column(String, nullable=False)
     trigger = Column(String, nullable=False)
-    metadata = Column(Text, nullable=True)  # JSON string
+    transition_metadata = Column(Text, nullable=True)  # JSON string (renamed from 'metadata' which is reserved)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationship to workflow
     workflow = relationship("Workflow", back_populates="history")
 
-    def set_metadata(self, metadata: dict[str, Any] | None) -> None:
-        """Set metadata as JSON string."""
-        self.metadata = json.dumps(metadata) if metadata else None
+    def set_metadata(self, data: dict[str, Any] | None) -> None:
+        """Set transition metadata as JSON string."""
+        self.transition_metadata = json.dumps(data) if data else None
 
     def get_metadata(self) -> dict[str, Any] | None:
-        """Get metadata as dict."""
-        return json.loads(self.metadata) if self.metadata else None
+        """Get transition metadata as dict."""
+        return json.loads(self.transition_metadata) if self.transition_metadata else None

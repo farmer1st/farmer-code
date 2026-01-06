@@ -7,14 +7,14 @@ Farmer Code uses a microservices architecture with three main services and multi
 ```mermaid
 graph TB
     subgraph "Core Services"
-        ORC[Orchestrator<br/>:8001]
-        HUB[Agent Hub<br/>:8000]
+        ORC[Orchestrator<br/>:8000]
+        HUB[Agent Hub<br/>:8001]
     end
 
     subgraph "Agent Services"
-        BARON[Baron PM<br/>:8010]
-        DUC[Duc Architecture<br/>:8011]
-        MARIE[Marie Testing<br/>:8012]
+        BARON[Baron PM<br/>:8002]
+        DUC[Duc Architecture<br/>:8003]
+        MARIE[Marie Testing<br/>:8004]
     end
 
     ORC --> HUB
@@ -27,11 +27,11 @@ graph TB
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Agent Hub | 8000 | Central coordination, routing, sessions |
-| Orchestrator | 8001 | Workflow state machine |
-| Baron | 8010 | PM agent (specify, plan, tasks) |
-| Duc | 8011 | Architecture expert |
-| Marie | 8012 | Testing expert |
+| Orchestrator | 8000 | Workflow state machine |
+| Agent Hub | 8001 | Central coordination, routing, sessions |
+| Baron | 8002 | PM agent (specify, plan, tasks) |
+| Duc | 8003 | Architecture expert |
+| Marie | 8004 | Testing expert |
 
 ## Communication Patterns
 

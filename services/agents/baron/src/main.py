@@ -5,7 +5,7 @@ This is the main entry point for the Baron agent service.
 
 from fastapi import FastAPI
 
-from src import __agent_name__, __version__
+from src import __version__
 from src.api.health import router as health_router
 from src.api.invoke import router as invoke_router
 

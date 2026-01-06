@@ -12,6 +12,9 @@ dependencies = [
     "farmer-code-contracts",
 ]
 
+[tool.uv.sources]
+farmer-code-contracts = { path = "../shared", editable = true }
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",

@@ -23,7 +23,7 @@ cd services/orchestrator
 uv sync
 
 # Run the service
-uv run uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Running with Docker
@@ -33,21 +33,21 @@ uv run uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
 docker build -t orchestrator:latest .
 
 # Run container
-docker run -p 8001:8001 orchestrator:latest
+docker run -p 8000:8000 orchestrator:latest
 ```
 
 ### API Documentation
 
 Once running, visit:
-- OpenAPI docs: http://localhost:8001/docs
-- ReDoc: http://localhost:8001/redoc
+- OpenAPI docs: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
 ## API Reference
 
 ### Create Workflow
 
 ```bash
-curl -X POST http://localhost:8001/workflows \
+curl -X POST http://localhost:8000/workflows \
   -H "Content-Type: application/json" \
   -d '{
     "workflow_type": "specify",
@@ -59,13 +59,13 @@ curl -X POST http://localhost:8001/workflows \
 ### Get Workflow
 
 ```bash
-curl http://localhost:8001/workflows/{workflow_id}
+curl http://localhost:8000/workflows/{workflow_id}
 ```
 
 ### Advance Workflow
 
 ```bash
-curl -X POST http://localhost:8001/workflows/{workflow_id}/advance \
+curl -X POST http://localhost:8000/workflows/{workflow_id}/advance \
   -H "Content-Type: application/json" \
   -d '{
     "trigger": "human_approved",
@@ -76,7 +76,7 @@ curl -X POST http://localhost:8001/workflows/{workflow_id}/advance \
 ### Health Check
 
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 ```
 
 ## Architecture
@@ -174,7 +174,7 @@ CREATE TABLE workflow_history (
 | Variable | Default | Description |
 |----------|---------|-------------|
 | DATABASE_URL | sqlite:///./data/orchestrator.db | Database connection |
-| AGENT_HUB_URL | http://localhost:8000 | Agent Hub service URL |
+| AGENT_HUB_URL | http://localhost:8001 | Agent Hub service URL |
 
 ## Testing
 

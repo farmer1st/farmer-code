@@ -1,11 +1,14 @@
 """Shared fixtures for Orchestrator service tests."""
 
+import os
 from collections.abc import AsyncGenerator
 from typing import Any
-from uuid import UUID
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+
+# Set environment variable for in-memory database BEFORE importing app
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 
 @pytest.fixture
@@ -18,16 +21,24 @@ def anyio_backend() -> str:
 async def test_client() -> AsyncGenerator[AsyncClient, None]:
     """Create test client for Orchestrator service.
 
-    Note: This fixture will work once src/main.py is created.
-    For now, tests will fail with import error (expected in TDD).
+    Uses an in-memory SQLite database for isolation.
     """
+    # Import after setting DATABASE_URL
+    from src.db.models import Base
+    from src.db.session import engine
     from src.main import app
+
+    # Create tables for each test
+    Base.metadata.create_all(bind=engine)
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
     ) as client:
         yield client
+
+    # Clean up tables after test
+    Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture

@@ -4,7 +4,6 @@ Implements GET /escalations/{id}, POST /escalations/{id}
 per contracts/agent-hub.yaml.
 """
 
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException

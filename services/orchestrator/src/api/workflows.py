@@ -7,7 +7,8 @@ per contracts/orchestrator.yaml.
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -16,7 +17,7 @@ from src.core.state_machine import (
     WorkflowNotFoundError,
     WorkflowStateMachine,
 )
-from src.db.models import WorkflowStatus, WorkflowType
+from src.db.models import WorkflowType
 from src.db.session import get_db
 
 router = APIRouter()
@@ -85,6 +86,25 @@ class ErrorResponse(BaseModel):
     error: ErrorDetail
 
 
+def error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    details: list[str] | None = None,
+) -> JSONResponse:
+    """Create a standardized error response."""
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": {
+                "code": code,
+                "message": message,
+                **({"details": details} if details else {}),
+            }
+        },
+    )
+
+
 # Endpoints
 
 
@@ -115,15 +135,11 @@ async def create_workflow(
     # Validate workflow type
     valid_types = [wt.value for wt in WorkflowType]
     if request.workflow_type not in valid_types:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "INVALID_WORKFLOW_TYPE",
-                    "message": f"Invalid workflow type: {request.workflow_type}",
-                    "details": [f"Valid types: {valid_types}"],
-                }
-            },
+        return error_response(
+            400,
+            "INVALID_WORKFLOW_TYPE",
+            f"Invalid workflow type: {request.workflow_type}",
+            [f"Valid types: {valid_types}"],
         )
 
     state_machine = WorkflowStateMachine(db)
@@ -138,15 +154,7 @@ async def create_workflow(
         return WorkflowResponse(**workflow.to_dict())
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": str(e),
-                }
-            },
-        ) from e
+        return error_response(400, "VALIDATION_ERROR", str(e))
 
 
 @router.get(
@@ -175,16 +183,10 @@ async def get_workflow(
     # Validate UUID format
     try:
         UUID(workflow_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "INVALID_UUID",
-                    "message": f"Invalid workflow ID format: {workflow_id}",
-                }
-            },
-        ) from e
+    except ValueError:
+        return error_response(
+            400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}"
+        )
 
     state_machine = WorkflowStateMachine(db)
 
@@ -193,15 +195,7 @@ async def get_workflow(
         return WorkflowResponse(**workflow.to_dict())
 
     except WorkflowNotFoundError as e:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": {
-                    "code": "WORKFLOW_NOT_FOUND",
-                    "message": str(e),
-                }
-            },
-        ) from e
+        return error_response(404, "WORKFLOW_NOT_FOUND", str(e))
 
 
 @router.post(
@@ -233,29 +227,19 @@ async def advance_workflow(
     # Validate UUID format
     try:
         UUID(workflow_id)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "INVALID_UUID",
-                    "message": f"Invalid workflow ID format: {workflow_id}",
-                }
-            },
-        ) from e
+    except ValueError:
+        return error_response(
+            400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}"
+        )
 
     # Validate trigger
     valid_triggers = ["agent_complete", "human_approved", "human_rejected"]
     if request.trigger not in valid_triggers:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "INVALID_TRIGGER",
-                    "message": f"Invalid trigger: {request.trigger}",
-                    "details": [f"Valid triggers: {valid_triggers}"],
-                }
-            },
+        return error_response(
+            400,
+            "INVALID_TRIGGER",
+            f"Invalid trigger: {request.trigger}",
+            [f"Valid triggers: {valid_triggers}"],
         )
 
     state_machine = WorkflowStateMachine(db)
@@ -270,27 +254,12 @@ async def advance_workflow(
         return WorkflowResponse(**workflow.to_dict())
 
     except WorkflowNotFoundError as e:
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "error": {
-                    "code": "WORKFLOW_NOT_FOUND",
-                    "message": str(e),
-                }
-            },
-        ) from e
+        return error_response(404, "WORKFLOW_NOT_FOUND", str(e))
 
     except InvalidStateTransitionError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": {
-                    "code": "INVALID_STATE_TRANSITION",
-                    "message": str(e),
-                    "details": [
-                        f"From: {e.from_status}",
-                        f"Trigger: {e.trigger}",
-                    ],
-                }
-            },
-        ) from e
+        return error_response(
+            400,
+            "INVALID_STATE_TRANSITION",
+            str(e),
+            [f"From: {e.from_status}", f"Trigger: {e.trigger}"],
+        )

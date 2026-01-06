@@ -247,8 +247,6 @@ class TestWorkflowStateMachine:
         )
         workflow_id = create_response.json()["id"]
 
-        initial_phase = create_response.json().get("current_phase")
-
         # Advance
         advance_response = await test_client.post(
             f"/workflows/{workflow_id}/advance",

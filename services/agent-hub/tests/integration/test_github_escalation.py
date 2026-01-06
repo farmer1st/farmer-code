@@ -3,8 +3,7 @@
 Tests that escalations trigger GitHub issue comments.
 """
 
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import AsyncClient

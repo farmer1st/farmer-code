@@ -6,7 +6,6 @@ Tests that audit logs are written during API operations.
 import json
 import os
 import tempfile
-from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest

@@ -239,7 +239,7 @@ Get Orchestrator health status.
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
 | DATABASE_URL | sqlite:///./data/orchestrator.db | SQLite database path |
-| AGENT_HUB_URL | http://localhost:8000 | Agent Hub service URL |
+| AGENT_HUB_URL | http://localhost:8001 | Agent Hub service URL |
 
 ## Related Documentation
 

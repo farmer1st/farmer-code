@@ -12,21 +12,21 @@ All environment variables used by Farmer Code services.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AGENT_HUB_PORT` | 8000 | Agent Hub service port |
-| `ORCHESTRATOR_PORT` | 8001 | Orchestrator service port |
-| `BARON_PORT` | 8010 | Baron agent port |
-| `DUC_PORT` | 8011 | Duc agent port |
-| `MARIE_PORT` | 8012 | Marie agent port |
+| `ORCHESTRATOR_PORT` | 8000 | Orchestrator service port |
+| `AGENT_HUB_PORT` | 8001 | Agent Hub service port |
+| `BARON_PORT` | 8002 | Baron agent port |
+| `DUC_PORT` | 8003 | Duc agent port |
+| `MARIE_PORT` | 8004 | Marie agent port |
 
 ## Service URLs
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AGENT_HUB_URL` | http://agent-hub:8000 | Agent Hub URL (for Orchestrator) |
-| `ORCHESTRATOR_URL` | http://orchestrator:8001 | Orchestrator URL |
-| `BARON_URL` | http://baron:8010 | Baron agent URL |
-| `DUC_URL` | http://duc:8011 | Duc agent URL |
-| `MARIE_URL` | http://marie:8012 | Marie agent URL |
+| `AGENT_HUB_URL` | http://agent-hub:8001 | Agent Hub URL (for Orchestrator) |
+| `ORCHESTRATOR_URL` | http://orchestrator:8000 | Orchestrator URL |
+| `BARON_URL` | http://baron:8002 | Baron agent URL |
+| `DUC_URL` | http://duc:8003 | Duc agent URL |
+| `MARIE_URL` | http://marie:8004 | Marie agent URL |
 
 ## Database
 
@@ -75,8 +75,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 GITHUB_TOKEN=ghp_...
 
 # Optional - Override ports
-# AGENT_HUB_PORT=8000
-# ORCHESTRATOR_PORT=8001
+# ORCHESTRATOR_PORT=8000
+# AGENT_HUB_PORT=8001
 
 # Optional - Override models
 # BARON_MODEL=claude-opus-4-20250514

@@ -25,7 +25,7 @@ cd services/agent-hub
 uv sync
 
 # Run the service
-uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 ### Running with Docker
@@ -35,21 +35,21 @@ uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 docker build -t agent-hub:latest .
 
 # Run container
-docker run -p 8000:8000 agent-hub:latest
+docker run -p 8001:8001 agent-hub:latest
 ```
 
 ### API Documentation
 
 Once running, visit:
-- OpenAPI docs: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- OpenAPI docs: http://localhost:8001/docs
+- ReDoc: http://localhost:8001/redoc
 
 ## API Reference
 
 ### Direct Agent Invocation
 
 ```bash
-curl -X POST http://localhost:8000/invoke/baron \
+curl -X POST http://localhost:8001/invoke/baron \
   -H "Content-Type: application/json" \
   -d '{
     "workflow_type": "specify",
@@ -61,7 +61,7 @@ curl -X POST http://localhost:8000/invoke/baron \
 ### Ask Expert by Topic
 
 ```bash
-curl -X POST http://localhost:8000/ask/architecture \
+curl -X POST http://localhost:8001/ask/architecture \
   -H "Content-Type: application/json" \
   -d '{
     "question": "What authentication method should I use?",
@@ -74,21 +74,21 @@ curl -X POST http://localhost:8000/ask/architecture \
 
 ```bash
 # Create session
-curl -X POST http://localhost:8000/sessions \
+curl -X POST http://localhost:8001/sessions \
   -H "Content-Type: application/json" \
   -d '{"agent_id": "@baron", "feature_id": "008-auth"}'
 
 # Get session with messages
-curl http://localhost:8000/sessions/{session_id}
+curl http://localhost:8001/sessions/{session_id}
 
 # Close session
-curl -X DELETE http://localhost:8000/sessions/{session_id}
+curl -X DELETE http://localhost:8001/sessions/{session_id}
 ```
 
 ### Health Check
 
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 ```
 
 ## Architecture
@@ -193,10 +193,10 @@ When an agent response has low confidence, an escalation is created for human re
 
 ```bash
 # Get escalation details
-curl http://localhost:8000/escalations/{escalation_id}
+curl http://localhost:8001/escalations/{escalation_id}
 
 # Submit human response
-curl -X POST http://localhost:8000/escalations/{escalation_id} \
+curl -X POST http://localhost:8001/escalations/{escalation_id} \
   -H "Content-Type: application/json" \
   -d '{
     "action": "confirm",

@@ -81,7 +81,7 @@ async def test_client() -> AsyncGenerator[AsyncClient, None]:
     Note: This fixture will work once src/main.py is created.
     """
     from src.db.models import Base
-    from src.db.session import engine, init_db
+    from src.db.session import engine
     from src.main import app
 
     # Initialize tables

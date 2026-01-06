@@ -3,7 +3,6 @@
 This endpoint provides health check information per contracts/agent-service.yaml.
 """
 
-from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field

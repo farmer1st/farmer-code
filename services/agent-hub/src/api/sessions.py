@@ -12,8 +12,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from src.core.session_manager import (
-    SessionClosedError,
-    SessionExpiredError,
     SessionManager,
     SessionNotFoundError,
 )

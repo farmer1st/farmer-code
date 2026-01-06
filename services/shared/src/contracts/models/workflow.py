@@ -82,7 +82,7 @@ class AdvanceWorkflowRequest(BaseModel):
 
     trigger: str = Field(
         ...,
-        description="What triggered the advancement (agent_complete, human_approved, human_rejected)",
+        description="Trigger: agent_complete, human_approved, human_rejected",
     )
     phase_result: dict[str, Any] | None = Field(
         default=None,

@@ -4,7 +4,6 @@ Tests that session context is preserved across multiple exchanges.
 Success Criteria SC-006: Session preserves context across 5 consecutive exchanges.
 """
 
-from typing import Any
 
 import pytest
 from httpx import AsyncClient

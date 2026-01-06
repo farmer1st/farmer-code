@@ -23,7 +23,7 @@ uv sync
 docker-compose up
 
 # Create a workflow
-curl -X POST http://localhost:8001/workflows \
+curl -X POST http://localhost:8000/workflows \
   -H "Content-Type: application/json" \
   -d '{"workflow_type": "specify", "feature_description": "Add user authentication"}'
 ```
@@ -42,11 +42,11 @@ graph LR
 
 | Service | Port | Purpose |
 |---------|------|---------|
-| Agent Hub | 8000 | Central coordination |
-| Orchestrator | 8001 | Workflow state machine |
-| Baron | 8010 | PM agent |
-| Duc | 8011 | Architecture expert |
-| Marie | 8012 | Testing expert |
+| Orchestrator | 8000 | Workflow state machine |
+| Agent Hub | 8001 | Central coordination |
+| Baron | 8002 | PM agent |
+| Duc | 8003 | Architecture expert |
+| Marie | 8004 | Testing expert |
 
 **[Architecture Overview →](architecture/index.md)**
 
