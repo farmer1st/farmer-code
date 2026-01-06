@@ -1,5 +1,7 @@
 # Orchestrator Module
 
+> **⚠️ DEPRECATED**: This module-based documentation is deprecated. See [docs/services/orchestrator.md](../services/orchestrator.md) for the new services-based architecture.
+
 SDLC workflow state machine for automated development lifecycle management.
 
 ## Overview

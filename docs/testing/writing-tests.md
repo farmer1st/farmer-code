@@ -93,9 +93,9 @@ def test_escalation_created_when_confidence_below_threshold():
 Create in `tests/[type]/[module]/conftest.py`:
 
 ```python
-# tests/unit/knowledge_router/conftest.py
+# tests/unit/agent_hub/conftest.py
 import pytest
-from knowledge_router import Question, QuestionTarget
+from agent_hub import Question
 
 
 @pytest.fixture
@@ -104,7 +104,6 @@ def sample_question():
     return Question(
         id="q-test",
         topic="architecture",
-        suggested_target=QuestionTarget.ARCHITECT,
         question="How should we structure the API?",
         feature_id="test-feature",
     )
@@ -170,14 +169,14 @@ def test_dispatch_calls_subprocess(self):
 ### Mock Dependencies
 
 ```python
-def test_router_uses_config(self):
+def test_hub_uses_config(self):
     mock_config = Mock(spec=RoutingConfig)
     mock_config.get_agent_for_topic.return_value = AgentDefinition(
         name="@duc", model="opus"
     )
 
-    router = KnowledgeRouter(config=mock_config)
-    handle = router.route_question(question)
+    hub = AgentHub(config=mock_config)
+    response = hub.ask_expert(topic="architecture", question="...")
 
     mock_config.get_agent_for_topic.assert_called_with("architecture")
 ```
@@ -188,9 +187,9 @@ def test_router_uses_config(self):
 def test_raises_error_when_no_agent_available(self):
     config = RoutingConfig(agents=[])  # No agents
 
-    with pytest.raises(RoutingError) as exc_info:
-        router = KnowledgeRouter(config)
-        router.route_question(question)
+    with pytest.raises(UnknownTopicError) as exc_info:
+        hub = AgentHub(config)
+        hub.ask_expert(topic="unknown", question="...")
 
     assert "No agent available" in str(exc_info.value)
 ```
@@ -216,14 +215,14 @@ E2E tests MUST have journey markers:
 
 ```python
 @pytest.mark.e2e
-@pytest.mark.journey("KR-001")
+@pytest.mark.journey("AH-001")
 def test_route_question_to_architect_e2e():
-    """Test KR-001: Route Question to Knowledge Agent.
+    """Test AH-001: Route Question to Expert Agent.
 
     Steps tested:
     - Step 1: Create question with architecture topic
-    - Step 2: Route to appropriate agent
-    - Step 3: Verify agent received question
+    - Step 2: Route to appropriate expert
+    - Step 3: Verify response received
     """
     ...
 ```

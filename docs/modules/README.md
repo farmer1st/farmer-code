@@ -9,7 +9,9 @@ Detailed documentation for each Farmer Code module.
 | [GitHub Integration](./github-integration.md) | GitHub API operations | [`src/github_integration/`](../../src/github_integration/) | [001](../../specs/001-github-integration-core/) |
 | [Worktree Manager](./worktree-manager.md) | Git worktree management | [`src/worktree_manager/`](../../src/worktree_manager/) | [002](../../specs/002-git-worktree-manager/) |
 | [Orchestrator](./orchestrator.md) | SDLC workflow state machine | [`src/orchestrator/`](../../src/orchestrator/) | [003](../../specs/003-orchestrator-state-machine/) |
-| [Knowledge Router](./knowledge-router.md) | AI agent Q&A routing | [`src/knowledge_router/`](../../src/knowledge_router/) | [004](../../specs/004-knowledge-router/) |
+| [Agent Hub](./agent-hub.md) | Central agent coordination | [`src/agent_hub/`](../../src/agent_hub/) | [005](../../specs/005-agent-hub-refactor/) |
+
+> **Note**: For the services-based architecture (Feature 008), see [Services Documentation](../services/README.md).
 
 ## Module Organization
 
@@ -58,7 +60,7 @@ result = service.operation(Request(...))
 graph LR
     GI[github_integration] --> ORC[orchestrator]
     WM[worktree_manager] --> ORC
-    KR[knowledge_router] --> ORC
+    AH[agent_hub] --> ORC
 
     style ORC fill:#f9f
 ```
@@ -70,7 +72,7 @@ graph LR
 | github_integration | Stable | 85% | ORC-001, ORC-002 |
 | worktree_manager | Stable | 88% | WT-001 to WT-004 |
 | orchestrator | Stable | 84% | ORC-005 |
-| knowledge_router | MVP Complete | 84% | KR-001 to KR-004 |
+| agent_hub | Stable | 84% | AH-001 to AH-005 |
 
 ## Adding a New Module
 

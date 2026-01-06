@@ -1,0 +1,575 @@
+openapi: 3.0.3
+info:
+  title: Agent Hub Service API
+  description: |
+    The Agent Hub Service is the central coordination layer for all agent interactions.
+    It routes requests to agent services, validates confidence, manages sessions,
+    and handles human escalation via GitHub comments.
+
+    All agent invocations MUST go through this service (single pattern).
+  version: 1.0.0
+  contact:
+    name: Farmer Code Team
+
+servers:
+  - url: http://localhost:8002
+    description: Local development server
+  - url: http://agent-hub:8000
+    description: Docker Compose internal
+
+tags:
+  - name: invoke
+    description: Direct agent invocation
+  - name: ask
+    description: Expert-based question routing
+  - name: escalations
+    description: Human escalation management
+  - name: sessions
+    description: Conversation session management
+
+paths:
+  /invoke/{agent}:
+    post:
+      summary: Invoke a specific agent
+      description: |
+        Directly invokes a specific agent service with a request payload.
+        The agent is identified by name (e.g., "baron", "duc", "marie").
+      operationId: invokeAgent
+      tags: [invoke]
+      parameters:
+        - name: agent
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Agent name (e.g., baron, duc, marie)
+          example: baron
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeRequest'
+            example:
+              workflow_type: specify
+              context:
+                feature_description: Add OAuth2 authentication
+              parameters:
+                priority: P1
+              session_id: null
+      responses:
+        '200':
+          description: Agent invocation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvokeResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '504':
+          description: Agent timeout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ask/{topic}:
+    post:
+      summary: Ask expert by topic
+      description: |
+        Routes a question to the appropriate expert agent based on topic.
+        Validates confidence and creates escalation if below threshold.
+        Returns tentative answer immediately (non-blocking escalation).
+      operationId: askExpert
+      tags: [ask]
+      parameters:
+        - name: topic
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Topic for expert routing
+          example: architecture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskExpertRequest'
+            example:
+              question: What authentication method should we use for the API?
+              context: We need to support both web and mobile clients
+              feature_id: "008-services-architecture"
+              session_id: null
+      responses:
+        '200':
+          description: Expert response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskExpertResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Unknown topic
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /escalations/{escalation_id}:
+    get:
+      summary: Check escalation status
+      description: Returns the current status of an escalation request.
+      operationId: getEscalation
+      tags: [escalations]
+      parameters:
+        - name: escalation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Escalation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationResponse'
+        '404':
+          description: Escalation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Submit human response
+      description: |
+        Submits a human response to an escalation. Actions:
+        - CONFIRM: Accept the tentative answer
+        - CORRECT: Provide a different answer
+        - ADD_CONTEXT: Request re-routing with additional context
+      operationId: submitHumanResponse
+      tags: [escalations]
+      parameters:
+        - name: escalation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitHumanResponseRequest'
+            example:
+              action: correct
+              response: Use OAuth2 with JWT tokens for stateless authentication
+              responder: "@johndoe"
+      responses:
+        '200':
+          description: Response submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EscalationResponse'
+        '400':
+          description: Invalid action or missing response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Escalation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Escalation already resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /sessions:
+    post:
+      summary: Create new session
+      description: Creates a new conversation session for multi-turn interactions.
+      operationId: createSession
+      tags: [sessions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+            example:
+              agent_id: "@duc"
+              feature_id: "008-services-architecture"
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+
+  /sessions/{session_id}:
+    get:
+      summary: Get session history
+      description: Returns the full message history for a session.
+      operationId: getSession
+      tags: [sessions]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session details with messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionWithMessagesResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Close session
+      description: Closes a session, preserving history for audit.
+      operationId: closeSession
+      tags: [sessions]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session closed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  schemas:
+    InvokeRequest:
+      type: object
+      required:
+        - workflow_type
+        - context
+      properties:
+        workflow_type:
+          type: string
+          description: Type of workflow (for Baron) or task type
+        context:
+          type: object
+          additionalProperties: true
+          description: Context for the agent
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Additional parameters
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID for multi-turn conversations
+
+    InvokeResponse:
+      type: object
+      required:
+        - success
+        - result
+        - confidence
+      properties:
+        success:
+          type: boolean
+        result:
+          type: object
+          additionalProperties: true
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+        metadata:
+          type: object
+          properties:
+            duration_ms:
+              type: integer
+            model_used:
+              type: string
+        error:
+          type: string
+          nullable: true
+        escalation_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    AskExpertRequest:
+      type: object
+      required:
+        - question
+        - feature_id
+      properties:
+        question:
+          type: string
+          minLength: 10
+          description: Question to ask the expert
+        context:
+          type: string
+          nullable: true
+          description: Additional context for the question
+        feature_id:
+          type: string
+          description: Feature ID for logging and grouping
+        session_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Session ID for multi-turn conversations
+
+    AskExpertResponse:
+      type: object
+      required:
+        - answer
+        - confidence
+        - status
+        - session_id
+      properties:
+        answer:
+          type: string
+        rationale:
+          type: string
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+        uncertainty_reasons:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [resolved, pending_human, needs_reroute]
+        session_id:
+          type: string
+          format: uuid
+        escalation_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    EscalationResponse:
+      type: object
+      required:
+        - id
+        - status
+        - question
+        - tentative_answer
+        - confidence
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, resolved, expired]
+        question:
+          type: string
+        tentative_answer:
+          type: string
+        confidence:
+          type: integer
+        human_action:
+          type: string
+          enum: [confirm, correct, add_context]
+          nullable: true
+        human_response:
+          type: string
+          nullable: true
+        human_responder:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SubmitHumanResponseRequest:
+      type: object
+      required:
+        - action
+        - responder
+      properties:
+        action:
+          type: string
+          enum: [confirm, correct, add_context]
+        response:
+          type: string
+          nullable: true
+          description: Required for 'correct', optional for 'add_context'
+        responder:
+          type: string
+          description: Identifier of the human responder
+
+    CreateSessionRequest:
+      type: object
+      required:
+        - agent_id
+      properties:
+        agent_id:
+          type: string
+          description: Agent identifier (e.g., "@duc")
+        feature_id:
+          type: string
+          nullable: true
+
+    SessionResponse:
+      type: object
+      required:
+        - id
+        - agent_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+        feature_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, closed, expired]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SessionWithMessagesResponse:
+      allOf:
+        - $ref: '#/components/schemas/SessionResponse'
+        - type: object
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    Message:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, human]
+        content:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: string
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime_seconds:
+          type: integer
+        connected_agents:
+          type: array
+          items:
+            type: string

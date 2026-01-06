@@ -1,5 +1,7 @@
 # Agent Hub Module
 
+> **⚠️ DEPRECATED**: This module-based documentation is deprecated. See [docs/services/agent-hub.md](../services/agent-hub.md) for the new services-based architecture.
+
 Central coordination layer for AI agent interactions, session management, and human escalation.
 
 ## Overview
@@ -193,7 +195,14 @@ python -m agent_hub.mcp_server
 | `ask_expert` | Route question to expert | topic, question, context, session_id |
 | `check_escalation` | Check escalation status | escalation_id |
 
-### Claude Agent SDK Integration
+### Optional: Claude Code SDK Integration
+
+The MCP server can optionally be consumed by Claude Code SDK agents. This is an
+**alternative integration pattern**, not the core agent dispatch mechanism.
+
+> **Note**: The core Agent Hub dispatches agents via **Claude CLI subprocess calls**,
+> not the SDK. The example below shows how external SDK-based agents could consume
+> the Agent Hub as an MCP server if needed.
 
 ```python
 from claude_code_sdk import query, ClaudeCodeOptions

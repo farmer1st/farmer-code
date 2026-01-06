@@ -30,7 +30,7 @@ Complete list of environment variables used by Farmer Code.
 |----------|-------------|---------|
 | `ANTHROPIC_API_KEY` | Anthropic API key for Claude | None |
 
-**Used by**: Knowledge Router for agent dispatch
+**Used by**: Agent Hub for agent dispatch
 
 ### Debugging
 
@@ -41,7 +41,49 @@ Complete list of environment variables used by Farmer Code.
 
 **Log Levels**: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
 
-## Variable Reference by Module
+## Variable Reference by Service
+
+### Orchestrator Service (port 8000)
+
+```env
+DATABASE_URL=sqlite:///./data/orchestrator.db
+AGENT_HUB_URL=http://localhost:8001
+PYTHONUNBUFFERED=1
+```
+
+### Agent Hub Service (port 8001)
+
+```env
+DATABASE_URL=sqlite:///./data/agent-hub.db
+BARON_URL=http://localhost:8002
+DUC_URL=http://localhost:8003
+MARIE_URL=http://localhost:8004
+GITHUB_TOKEN=ghp_xxxx
+GITHUB_REPO=farmer1st/farmer-code
+CONFIDENCE_THRESHOLD=70
+PYTHONUNBUFFERED=1
+```
+
+### Baron Agent Service (port 8002)
+
+```env
+ANTHROPIC_API_KEY=sk-ant-xxxx  # Required for LLM calls
+PYTHONUNBUFFERED=1
+```
+
+### Duc Agent Service (port 8003)
+
+```env
+PYTHONUNBUFFERED=1
+```
+
+### Marie Agent Service (port 8004)
+
+```env
+PYTHONUNBUFFERED=1
+```
+
+## Variable Reference by Module (Legacy)
 
 ### github_integration
 
@@ -50,7 +92,7 @@ GITHUB_TOKEN=ghp_xxxx    # Required
 GITHUB_REPO=owner/repo   # Required
 ```
 
-### knowledge_router
+### agent_hub
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-xxxx  # Optional (for agent dispatch)
@@ -70,7 +112,7 @@ In addition to environment variables, some modules use configuration files:
 
 | File | Module | Purpose |
 |------|--------|---------|
-| `config/routing.yaml` | knowledge_router | Agent routing rules |
+| `config/routing.yaml` | agent_hub | Agent routing rules |
 
 ## Example `.env` File
 
@@ -83,16 +125,26 @@ In addition to environment variables, some modules use configuration files:
 GITHUB_TOKEN=ghp_your_personal_access_token_here
 GITHUB_REPO=farmer1st/farmer-code
 
+# Claude AI (for Baron agent LLM calls)
+ANTHROPIC_API_KEY=sk-ant-your_key_here
+
 # ===================
 # Optional
 # ===================
 
-# Claude AI (for Knowledge Router agent dispatch)
-ANTHROPIC_API_KEY=sk-ant-your_key_here
-
 # Debugging
 DEBUG=false
 LOG_LEVEL=INFO
+
+# ===================
+# Docker Compose Defaults
+# ===================
+# These are set in docker-compose.yml but can be overridden:
+# DATABASE_URL=sqlite:///./data/orchestrator.db
+# AGENT_HUB_URL=http://agent-hub:8001
+# BARON_URL=http://baron:8002
+# DUC_URL=http://duc:8003
+# MARIE_URL=http://marie:8004
 ```
 
 ## Loading Environment Variables

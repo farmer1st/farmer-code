@@ -8,6 +8,7 @@ Welcome to the Farmer Code documentation. This project implements an AI-driven o
 |---------|-------------|
 | [Getting Started](./getting-started/README.md) | Setup, installation, and first steps |
 | [Architecture](./architecture/README.md) | System design, module interactions, diagrams |
+| [Services](./services/README.md) | Microservices architecture (Feature 008) |
 | [Modules](./modules/README.md) | Detailed module documentation |
 | [API Reference](./api/README.md) | REST API and library documentation |
 | [User Journeys](./user-journeys/JOURNEYS.md) | End-to-end workflow documentation |
@@ -32,7 +33,25 @@ Farmer Code is an AI-orchestrated development system that:
 | `worktree_manager` | Git worktree creation and management | [Module Docs](./modules/worktree-manager.md) |
 | `orchestrator` | SDLC workflow state machine | [Module Docs](./modules/orchestrator.md) |
 | `agent_hub` | Central coordination for agent interactions | [Module Docs](./modules/agent-hub.md) |
-| `knowledge_router` | AI agent Q&A routing and validation (legacy) | [Module Docs](./modules/knowledge-router.md) |
+
+## Services Architecture
+
+Farmer Code uses a microservices architecture with independent HTTP services:
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Orchestrator | 8000 | Workflow state machine |
+| Agent Hub | 8001 | Agent routing, sessions, escalation |
+| Baron | 8002 | PM Agent (specs, plans, tasks) |
+| Duc | 8003 | Architecture Expert |
+| Marie | 8004 | Testing Expert |
+
+```bash
+# Start all services
+docker-compose up -d
+```
+
+See [Services Documentation](./services/README.md) for details.
 
 ## Architecture Overview
 
@@ -92,9 +111,9 @@ Farmer Code implements an 8-phase SDLC workflow:
 7. **Human Review** - Final approval (Gate 4)
 8. **Merge & Deploy** - Integration to main
 
-### Knowledge Routing
+### Agent Hub Routing
 
-Questions are routed to specialist AI agents based on topic:
+Questions are routed to specialist AI agents via Agent Hub based on topic:
 
 - **@duc** - Architecture, design patterns
 - **@gustave** - DevOps, infrastructure

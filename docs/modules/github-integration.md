@@ -86,7 +86,7 @@ Required GitHub token permissions:
 ### Used By
 
 - **Orchestrator**: Issue creation, label sync, comment posting
-- **Knowledge Router**: Escalation comment posting (optional)
+- **Agent Hub**: Escalation comment posting (optional)
 
 ### Dependencies
 

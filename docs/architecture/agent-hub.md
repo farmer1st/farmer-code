@@ -4,7 +4,7 @@ This document describes the architecture of the Agent Hub module, the central co
 
 ## Overview
 
-The Agent Hub is the evolution of the Knowledge Router, providing a unified interface for:
+The Agent Hub provides a unified interface for:
 
 1. **Routing questions** to appropriate expert agents
 2. **Managing sessions** for multi-turn conversations
@@ -213,11 +213,14 @@ Message:
 
 ## MCP Server Architecture
 
-The Agent Hub exposes functionality via MCP for Claude Agent SDK integration.
+The Agent Hub can optionally be exposed as an MCP server for external consumers.
+
+> **Note**: The core Agent Hub dispatches agents via **Claude CLI subprocess calls**.
+> The MCP server is an optional alternative interface for SDK-based agents.
 
 ```
 ┌─────────────────────────────────────┐
-│           Claude Agent              │
+│    External Claude Agent            │
 │   (using claude_code_sdk)           │
 └──────────────────┬──────────────────┘
                    │
@@ -292,9 +295,9 @@ AgentHubError (base)
 - **Sufficient**: 5-10 concurrent sessions is the target
 - **Replaceable**: Interface allows future persistence layer
 
-### Why MCP over REST?
+### Why MCP (for optional server interface)?
 
-- **Agent SDK Integration**: MCP is native to Claude Agent SDK
+- **SDK Compatibility**: MCP is native to Claude Code SDK for external integrations
 - **Standard Protocol**: Follows Anthropic's Model Context Protocol
 - **Tool-Based**: Agents naturally understand tools
 

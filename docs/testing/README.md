@@ -49,7 +49,7 @@ uv run pytest -m journey
 Test individual functions/classes in isolation.
 
 ```python
-# tests/unit/knowledge_router/test_validator.py
+# tests/unit/agent_hub/test_validator.py
 def test_high_confidence_is_accepted():
     validator = ConfidenceValidator(default_threshold=80)
     result = validator.validate(answer_with_confidence(85))
@@ -66,11 +66,11 @@ def test_high_confidence_is_accepted():
 Test module interactions with mocked externals.
 
 ```python
-# tests/integration/knowledge_router/test_dispatch.py
+# tests/integration/agent_hub/test_dispatch.py
 def test_agent_dispatch_with_mock_cli(mock_subprocess):
     mock_subprocess.return_value.stdout = '{"answer": "Use OAuth2"}'
-    dispatcher = AgentDispatcher()
-    handle = dispatcher.dispatch(config, question)
+    router = AgentRouter(config)
+    handle = router.dispatch_question(question, agent_id="architect")
     assert handle.status == AgentStatus.COMPLETED
 ```
 
@@ -84,7 +84,7 @@ def test_agent_dispatch_with_mock_cli(mock_subprocess):
 Validate data schemas and API contracts.
 
 ```python
-# tests/contract/knowledge_router/test_question_schema.py
+# tests/contract/agent_hub/test_question_schema.py
 def test_question_schema_matches_contract():
     with open("specs/.../contracts/question.json") as f:
         schema = json.load(f)
@@ -103,18 +103,18 @@ def test_question_schema_matches_contract():
 Test full user journeys with real systems.
 
 ```python
-# tests/e2e/knowledge_router/test_route_question.py
+# tests/e2e/agent_hub/test_route_question.py
 @pytest.mark.e2e
-@pytest.mark.journey("KR-001")
+@pytest.mark.journey("AH-001")
 def test_route_question_to_architect_e2e():
-    """Test KR-001: Route Question to Knowledge Agent."""
-    router = KnowledgeRouter(config_path)
-    question = Question(topic="architecture", ...)
+    """Test AH-001: Route Question to Expert Agent."""
+    config = ConfigLoader.load_from_file("config/routing.yaml")
+    hub = AgentHub(config)
 
-    handle = router.route_question(question)
+    response = hub.ask_expert(topic="architecture", question="...")
 
-    assert handle.agent_name == "@duc"
-    assert handle.status == AgentStatus.DISPATCHED
+    assert response.status.value == "resolved"
+    assert response.confidence >= 80
 ```
 
 **Characteristics**:
@@ -129,7 +129,7 @@ E2E tests MUST be tagged with journey markers:
 
 ```python
 @pytest.mark.e2e
-@pytest.mark.journey("KR-001")
+@pytest.mark.journey("AH-001")
 def test_something_e2e():
     ...
 ```
@@ -141,7 +141,7 @@ Run journey tests:
 uv run pytest -m journey
 
 # Specific journey
-uv run pytest -m "journey and KR-001"
+uv run pytest -m "journey and AH-001"
 ```
 
 ## Coverage Requirements

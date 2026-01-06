@@ -33,16 +33,16 @@ Farmer Code automates the mundane aspects of software development while ensuring
            │                    │                      │
            ▼                    ▼                      ▼
 ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────────────┐
-│ GitHub           │  │ Worktree         │  │ Knowledge Router         │
+│ GitHub           │  │ Worktree         │  │ Agent Hub                │
 │ Integration      │  │ Manager          │  │                          │
 │                  │  │                  │  │ ┌──────────────────────┐ │
 │ - Issues         │  │ - Create/Delete  │  │ │ Question Routing     │ │
 │ - Comments       │  │ - Branch Mgmt    │  │ ├──────────────────────┤ │
-│ - Labels         │  │ - Plans Setup    │  │ │ Answer Validation    │ │
+│ - Labels         │  │ - Plans Setup    │  │ │ Session Management   │ │
 │ - PRs            │  │ - Git Operations │  │ ├──────────────────────┤ │
-└──────────────────┘  └──────────────────┘  │ │ Human Escalation     │ │
+└──────────────────┘  └──────────────────┘  │ │ Answer Validation    │ │
          │                    │              │ ├──────────────────────┤ │
-         ▼                    ▼              │ │ Q&A Logging          │ │
+         ▼                    ▼              │ │ Human Escalation     │ │
 ┌──────────────────┐  ┌──────────────────┐  │ └──────────────────────┘ │
 │ GitHub API       │  │ Git Repository   │  └──────────────────────────┘
 └──────────────────┘  └──────────────────┘             │
@@ -88,16 +88,17 @@ Central workflow coordination:
 
 **Key Classes**: `OrchestratorService`, `StateMachine`, `PhaseExecutor`
 
-### 4. Knowledge Router (`src/knowledge_router/`)
+### 4. Agent Hub (`src/agent_hub/`)
 
-Intelligent Q&A routing and validation:
+Central coordination for agent interactions:
 
-- **Routing**: Direct questions to appropriate agents
+- **Routing**: Direct questions to appropriate expert agents
+- **Sessions**: Maintain conversation context across interactions
 - **Validation**: Check answer confidence against thresholds
 - **Escalation**: Package low-confidence for human review
 - **Logging**: Immutable Q&A audit trail
 
-**Key Classes**: `KnowledgeRouter`, `ConfidenceValidator`, `EscalationHandler`, `QALogger`
+**Key Classes**: `AgentHub`, `AgentRouter`, `SessionManager`, `ConfidenceValidator`, `EscalationHandler`
 
 ## Data Flow
 
@@ -109,7 +110,7 @@ sequenceDiagram
     participant Orchestrator
     participant GitHub
     participant Worktree
-    participant KnowledgeRouter
+    participant AgentHub
 
     User->>Orchestrator: Create Feature Request
     Orchestrator->>GitHub: Create Issue
@@ -118,8 +119,8 @@ sequenceDiagram
     Worktree-->>Orchestrator: /worktrees/123-feature
     Orchestrator->>Worktree: Initialize .plans
     Orchestrator->>GitHub: Add Labels (status:phase-1)
-    Orchestrator->>KnowledgeRouter: Route Architecture Questions
-    KnowledgeRouter-->>Orchestrator: Answers
+    Orchestrator->>AgentHub: Route Architecture Questions
+    AgentHub-->>Orchestrator: Answers
 ```
 
 ### Question Routing Flow
@@ -127,23 +128,23 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Orchestrator
-    participant Router as KnowledgeRouter
-    participant Agent as Claude Agent
+    participant Hub as AgentHub
+    participant Agent as Claude CLI Agent
     participant Validator
     participant Human
 
-    Orchestrator->>Router: Route Question
-    Router->>Agent: Dispatch to Specialist
-    Agent-->>Router: Answer (with confidence)
-    Router->>Validator: Validate Confidence
+    Orchestrator->>Hub: ask_expert(topic, question)
+    Hub->>Agent: Dispatch via subprocess
+    Agent-->>Hub: Answer (with confidence)
+    Hub->>Validator: Validate Confidence
     alt High Confidence (>=80%)
-        Validator-->>Router: ACCEPTED
-        Router-->>Orchestrator: Final Answer
+        Validator-->>Hub: ACCEPTED
+        Hub-->>Orchestrator: Final Answer
     else Low Confidence (<80%)
-        Validator-->>Router: ESCALATE
-        Router->>Human: Request Review
-        Human-->>Router: CONFIRM/CORRECT/CONTEXT
-        Router-->>Orchestrator: Final Answer
+        Validator-->>Hub: ESCALATE
+        Hub->>Human: Request Review
+        Human-->>Hub: CONFIRM/CORRECT/CONTEXT
+        Hub-->>Orchestrator: Final Answer
     end
 ```
 
@@ -194,3 +195,51 @@ This enables:
 - **GitHub Operations**: Network-bound (~100-500ms)
 - **Agent Dispatch**: Variable (5s-120s depending on task)
 - **Git Operations**: Local (~50-200ms)
+
+## Services Architecture
+
+> **Status**: Implemented (Feature 008)
+
+The system uses a services-based architecture with independent HTTP services:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Orchestrator  │────▶│   Agent Hub     │────▶│  Agent Services │
+│   Service       │     │   Service       │     │ (Baron/Duc/...) │
+│   :8000         │     │   :8001         │     │   :8002-8004    │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+   ┌─────────┐            ┌─────────┐            ┌─────────┐
+   │ SQLite  │            │ SQLite  │            │Claude SDK│
+   │Workflows│            │Sessions │            │  Query   │
+   └─────────┘            └─────────┘            └─────────┘
+```
+
+### Service Ports
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Orchestrator | 8000 | Workflow state machine |
+| Agent Hub | 8001 | Agent routing, sessions |
+| Baron | 8002 | PM Agent |
+| Duc | 8003 | Architecture Expert |
+| Marie | 8004 | Testing Expert |
+
+### Architecture Comparison
+
+| Aspect | Previous (Modules) | Current (Services) |
+|--------|-------------------|-------------------|
+| Communication | Direct imports | REST APIs |
+| State | File-based JSON | SQLite databases |
+| Agent Invocation | CLI subprocess | Claude Code SDK |
+| Deployment | Single process | Docker Compose |
+| Scaling | Vertical | Horizontal |
+
+### Services
+
+- **Orchestrator Service**: Workflow state machine, phase execution
+- **Agent Hub Service**: Agent routing, sessions, escalation, audit logging
+- **Agent Services**: Stateless SDK-based agents (Baron, Duc, Marie)
+
+For details, see [Services Architecture](../services/README.md).

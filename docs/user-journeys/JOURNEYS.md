@@ -8,9 +8,9 @@ Complete list of all user journeys for Farmer Code orchestrator.
 |--------|-------------|
 | **ORC** | Orchestrator - AI agent workflow orchestration and SDLC management |
 | **WT**  | Worktree - Git worktree and branch management for isolated development |
-| **KR**  | Knowledge Router - Question routing, validation, and escalation (legacy) |
-| **AH**  | Agent Hub - Central coordination layer for agent interactions (replaces KR) |
+| **AH**  | Agent Hub - Central coordination layer for agent interactions (legacy) |
 | **BRN** | Baron PM Agent - Product management agent for speckit workflows |
+| **SVC** | Services Architecture - Microservices-based agent orchestration |
 | **GH**  | GitHub - Direct GitHub integration operations (future) |
 | **UI**  | User Interface - Web/TUI user interactions (future) |
 
@@ -27,10 +27,6 @@ Complete list of all user journeys for Farmer Code orchestrator.
 | [WT-002](./WT-002-init-plans.md) | Initialize Plans Folder Structure | P1 | ✅ Implemented | ✅ 100% | 1/1 passing |
 | [WT-003](./WT-003-commit-push.md) | Commit and Push Feature Changes | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
 | [WT-004](./WT-004-cleanup-worktree.md) | Cleanup Worktree After Feature Completion | P2 | ✅ Implemented | ✅ 100% | 1/1 passing |
-| [KR-001](./KR-001-route-question.md) | Route Question to Knowledge Agent | P1 | ✅ Implemented | ✅ 100% | 2/2 passing |
-| [KR-002](./KR-002-validate-confidence.md) | Validate Answer Confidence | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
-| [KR-003](./KR-003-escalate-human.md) | Escalate Low-Confidence to Human | P1 | ✅ Implemented | ✅ 100% | 5/5 passing |
-| [KR-004](./KR-004-log-qa.md) | Log Q&A Exchange for Retrospectives | P1 | ✅ Implemented | ✅ 100% | 4/4 passing |
 | [AH-001](./AH-001-route-question.md) | Route Question to Expert Agent | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
 | [AH-002](./AH-002-session-management.md) | Maintain Conversation Sessions | P1 | ✅ Implemented | ✅ 100% | 6/6 passing |
 | [AH-003](./AH-003-confidence-escalation.md) | Validate Confidence and Escalate | P2 | ✅ Implemented | ✅ 100% | 5/5 passing |
@@ -42,10 +38,13 @@ Complete list of all user journeys for Farmer Code orchestrator.
 | BRN-004 | Handle Pending Escalations | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | BRN-005 | Expert Consultation Flow | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
 | BRN-006 | Constitution Compliance | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
-| KR-005 | Dispatch Execution Tasks to Specialists | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
-| KR-006 | Configure Routing Rules | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
-| KR-007 | Generate Retrospective Report | P2 | 📋 Planned | ⏳ 0% | 0/0 tests |
-| KR-008 | Handle Agent Unavailability | P3 | 📋 Planned | ⏳ 0% | 0/0 tests |
+| SVC-001 | Orchestrator Workflow Execution | P1 | ✅ Implemented | ✅ 100% | 3/3 passing |
+| SVC-002 | Expert Agent Consultation | P1 | ✅ Implemented | ✅ 100% | 5/5 passing |
+| SVC-003 | Human Review Escalation | P1 | ✅ Implemented | ✅ 100% | 4/4 passing |
+| SVC-004 | Multi-Turn Session | P2 | ✅ Implemented | ✅ 100% | 6/6 passing |
+| SVC-005 | Stateless Agent Invocation | P1 | ✅ Implemented | ✅ 100% | 8/8 passing |
+| SVC-006 | Local Development Setup | P2 | ✅ Implemented | ✅ 100% | 2/2 passing |
+| SVC-007 | Audit Log Query | P3 | ✅ Implemented | ✅ 100% | 5/5 passing |
 
 ## Status Legend
 
@@ -64,15 +63,15 @@ Complete list of all user journeys for Farmer Code orchestrator.
 | ORC-005 | Complete 8-Phase SDLC Workflow | ✅ Implemented | 100% (partial) |
 | WT-001 | Create Worktree for Feature Development | ✅ Implemented | 100% |
 | WT-002 | Initialize Plans Folder Structure | ✅ Implemented | 100% |
-| KR-001 | Route Question to Knowledge Agent | ✅ Implemented | 100% |
-| KR-002 | Validate Answer Confidence | ✅ Implemented | 100% |
-| KR-003 | Escalate Low-Confidence to Human | ✅ Implemented | 100% |
-| KR-004 | Log Q&A Exchange for Retrospectives | ✅ Implemented | 100% |
 | AH-001 | Route Question to Expert Agent | ✅ Implemented | 100% |
 | AH-002 | Maintain Conversation Sessions | ✅ Implemented | 100% |
 | BRN-001 | Create Feature Specification | ✅ Implemented | 100% |
 | BRN-002 | Generate Implementation Plan | ✅ Implemented | 100% |
 | BRN-003 | Generate Task List | ✅ Implemented | 100% |
+| SVC-001 | Orchestrator Workflow Execution | ✅ Implemented | 100% |
+| SVC-002 | Expert Agent Consultation | ✅ Implemented | 100% |
+| SVC-003 | Human Review Escalation | ✅ Implemented | 100% |
+| SVC-005 | Stateless Agent Invocation | ✅ Implemented | 100% |
 
 **P1 Coverage**: 13/13 implemented (100%)
 
@@ -85,22 +84,22 @@ Complete list of all user journeys for Farmer Code orchestrator.
 | WT-004 | Cleanup Worktree After Feature Completion | ✅ Implemented | 100% |
 | AH-003 | Validate Confidence and Escalate | ✅ Implemented | 100% |
 | AH-004 | Track Pending Escalations | ✅ Implemented | 100% |
-| KR-005 | Dispatch Execution Tasks to Specialists | 📋 Planned | 0% |
-| KR-006 | Configure Routing Rules | 📋 Planned | 0% |
-| KR-007 | Generate Retrospective Report | 📋 Planned | 0% |
 | BRN-004 | Handle Pending Escalations | 📋 Planned | 0% |
 | BRN-005 | Expert Consultation Flow | 📋 Planned | 0% |
 | BRN-006 | Constitution Compliance | 📋 Planned | 0% |
+| SVC-004 | Multi-Turn Session | ✅ Implemented | 100% |
+| SVC-006 | Local Development Setup | ✅ Implemented | 100% |
 
-**P2 Coverage**: 4/12 implemented (33%)
+**P2 Coverage**: 6/11 implemented (55%)
 
 ### P3 Journeys (Nice to Have)
 | ID | Name | Status | Coverage |
 |----|------|--------|----------|
 | ORC-004 | Link Pull Request to Feature Issue | 📋 Planned | 0% |
-| KR-008 | Handle Agent Unavailability | 📋 Planned | 0% |
+| AH-005 | Audit Trail Logging | ✅ Implemented | 100% |
+| SVC-007 | Audit Log Query | ✅ Implemented | 100% |
 
-**P3 Coverage**: 1/2 implemented (50%)
+**P3 Coverage**: 2/3 implemented (67%)
 
 ## Test Coverage Visualization
 
@@ -115,10 +114,6 @@ WT-001:  ████████████████████ 100% (1/1 
 WT-002:  ████████████████████ 100% (1/1 E2E tests passing)
 WT-003:  ████████████████████ 100% (1/1 E2E tests passing)
 WT-004:  ████████████████████ 100% (1/1 E2E tests passing)
-KR-001:  ████████████████████ 100% (2/2 E2E tests passing)
-KR-002:  ████████████████████ 100% (3/3 E2E tests passing)
-KR-003:  ████████████████████ 100% (5/5 E2E tests passing)
-KR-004:  ████████████████████ 100% (4/4 E2E tests passing)
 AH-001:  ████████████████████ 100% (3/3 E2E tests passing)
 AH-002:  ████████████████████ 100% (6/6 E2E tests passing)
 AH-003:  ████████████████████ 100% (5/5 E2E tests passing)
@@ -130,15 +125,18 @@ BRN-003: ████████████████████ 100% (7/7 
 BRN-004: ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 BRN-005: ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
 BRN-006: ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
-KR-005:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
-KR-006:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
-KR-007:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
-KR-008:  ░░░░░░░░░░░░░░░░░░░░   0% (not yet implemented)
+SVC-001: ████████████████████ 100% (3/3 E2E tests passing)
+SVC-002: ████████████████████ 100% (5/5 E2E tests passing)
+SVC-003: ████████████████████ 100% (4/4 E2E tests passing)
+SVC-004: ████████████████████ 100% (6/6 E2E tests passing)
+SVC-005: ████████████████████ 100% (8/8 E2E tests passing)
+SVC-006: ████████████████████ 100% (2/2 E2E tests passing)
+SVC-007: ████████████████████ 100% (5/5 E2E tests passing)
 
-Total: 18/28 journeys implemented (64%)
+Total: 21/27 journeys implemented (78%)
 P1 Journeys: 13/13 implemented (100%) ✅
-P2 Journeys: 4/12 implemented (33%)
-P3 Journeys: 1/3 implemented (33%)
+P2 Journeys: 6/11 implemented (55%)
+P3 Journeys: 2/3 implemented (67%)
 ```
 
 ## Journeys by Feature
@@ -168,20 +166,7 @@ P3 Journeys: 1/3 implemented (33%)
 |------------|----------|--------|
 | US1-3: State Machine Phases | ORC-005 | ✅ Implemented |
 
-### Feature 004: Knowledge Router
-
-| User Story | Journeys | Status |
-|------------|----------|--------|
-| US1: Route Questions | KR-001 | ✅ Implemented |
-| US2: Validate Answers | KR-002 | ✅ Implemented |
-| US3: Escalate to Human | KR-003 | ✅ Implemented |
-| US4: Log Q&A | KR-004 | ✅ Implemented |
-| US5: Dispatch Execution | KR-005 | 📋 Planned |
-| US6: Configure Routing | KR-006 | 📋 Planned |
-| US7: Retrospective Report | KR-007 | 📋 Planned |
-| US8: Handle Unavailability | KR-008 | 📋 Planned |
-
-### Feature 005: Agent Hub Refactor
+### Feature 005: Agent Hub
 
 | User Story | Journeys | Status |
 |------------|----------|--------|
@@ -201,6 +186,18 @@ P3 Journeys: 1/3 implemented (33%)
 | US4: Handle Pending Escalations | BRN-004 | 📋 Planned |
 | US5: Expert Consultation Flow | BRN-005 | 📋 Planned |
 | US6: Constitution Compliance | BRN-006 | 📋 Planned |
+
+### Feature 008: Services Architecture
+
+| User Story | Journeys | Status |
+|------------|----------|--------|
+| US1: Orchestrator Workflow Execution | SVC-001 | ✅ Implemented |
+| US2: Expert Agent Consultation | SVC-002 | ✅ Implemented |
+| US3: Human Review Escalation | SVC-003 | ✅ Implemented |
+| US4: Multi-Turn Session | SVC-004 | ✅ Implemented |
+| US5: Stateless Agent Invocation | SVC-005 | ✅ Implemented |
+| US6: Local Development Setup | SVC-006 | ✅ Implemented |
+| US7: Audit Log Query | SVC-007 | ✅ Implemented |
 
 ### Future Features
 
@@ -244,5 +241,5 @@ pytest --co -m journey
 ## Last Updated
 
 **Date**: 2026-01-05
-**By**: Baron PM Agent (Feature 006) - User Stories 1-3 Complete (P1 MVP)
+**By**: Feature 008 Services Architecture - All User Stories Complete (P1 MVP)
 **Next Review**: After implementing Baron P2 features (US4-6)

@@ -1,0 +1,87 @@
+# Docker Compose for Farmer Code Development
+# Usage: docker-compose -f docker-compose.dev.yml up
+#
+# This configuration adds:
+# - Volume mounts for hot reload
+# - uvicorn --reload flag
+# - Debug logging
+
+services:
+  # Orchestrator Service - Workflow state management
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/orchestrator.db
+      - AGENT_HUB_URL=http://agent-hub:8001
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./services/orchestrator/src:/app/src:ro
+      - orchestrator-data:/app/data
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    depends_on:
+      agent-hub:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # Agent Hub Service - Central agent coordination
+  agent-hub:
+    build:
+      context: ./services/agent-hub
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=sqlite:///./data/agent-hub.db
+      - BARON_URL=http://baron:8002
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GITHUB_REPO=${GITHUB_REPO:-farmer1st/farmer-code}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./services/agent-hub/src:/app/src:ro
+      - agent-hub-data:/app/data
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]
+    depends_on:
+      baron:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # Baron Agent Service - PM Agent
+  baron:
+    build:
+      context: ./services/agents/baron
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./services/agents/baron/src:/app/src:ro
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  orchestrator-data:
+  agent-hub-data:
