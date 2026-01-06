@@ -12,11 +12,13 @@ from uuid import UUID
 import pytest
 from httpx import AsyncClient
 
-# Skip if services not running
-pytestmark = pytest.mark.skipif(
-    os.getenv("RUN_E2E_TESTS") != "1",
-    reason="Requires RUN_E2E_TESTS=1 and running services",
-)
+# Skip reason for when services are not running
+SKIP_REASON = "Requires RUN_E2E_TESTS=1 and running services"
+
+
+def _should_skip() -> bool:
+    """Check if tests should be skipped."""
+    return os.getenv("RUN_E2E_TESTS") != "1"
 
 
 @pytest.mark.e2e
@@ -28,6 +30,8 @@ class TestOrchestratorWorkflow:
     @pytest.fixture
     def orchestrator_url(self) -> str:
         """Orchestrator service URL."""
+        if _should_skip():
+            pytest.skip(SKIP_REASON)
         return "http://localhost:8001"
 
     @pytest.fixture

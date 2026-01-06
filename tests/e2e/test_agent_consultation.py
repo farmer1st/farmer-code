@@ -4,10 +4,22 @@ Journey ID: SVC-002 - Expert Agent Consultation
 
 These tests verify the complete flow of asking an expert question
 through Agent Hub, routing to the correct agent, and receiving an answer.
+
+Requires: RUN_E2E_TESTS=1 and services running on localhost.
 """
+
+import os
 
 import pytest
 from httpx import AsyncClient
+
+# Skip reason for when services are not running
+SKIP_REASON = "Requires RUN_E2E_TESTS=1 and running services"
+
+
+def _should_skip() -> bool:
+    """Check if tests should be skipped."""
+    return os.getenv("RUN_E2E_TESTS") != "1"
 
 
 @pytest.mark.e2e
@@ -28,6 +40,8 @@ class TestAgentConsultationE2E:
 
         In E2E tests, this connects to the actual running service.
         """
+        if _should_skip():
+            pytest.skip(SKIP_REASON)
         async with AsyncClient(
             base_url="http://localhost:8002",
             timeout=300.0,

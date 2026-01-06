@@ -32,6 +32,10 @@ class TestDockerComposeSetup:
         This fixture starts all services and waits for them to be healthy
         before running tests.
         """
+        # Skip if not running E2E tests
+        if os.getenv("RUN_E2E_TESTS") != "1":
+            pytest.skip("Requires RUN_E2E_TESTS=1 and Docker running")
+
         # Skip if Docker is not available
         try:
             result = subprocess.run(
@@ -45,9 +49,7 @@ class TestDockerComposeSetup:
             pytest.skip("Docker not available")
 
         # Start services
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         compose_file = os.path.join(project_root, "docker-compose.yml")
 
         if not os.path.exists(compose_file):
@@ -225,51 +227,35 @@ class TestDockerComposeWithoutDocker:
 
     def test_docker_compose_file_exists(self) -> None:
         """Test that docker-compose.yml exists."""
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         compose_file = os.path.join(project_root, "docker-compose.yml")
 
         assert os.path.exists(compose_file), "docker-compose.yml should exist"
 
     def test_env_example_file_exists(self) -> None:
         """Test that .env.example exists."""
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         env_file = os.path.join(project_root, ".env.example")
 
         assert os.path.exists(env_file), ".env.example should exist"
 
     def test_orchestrator_dockerfile_exists(self) -> None:
         """Test that Orchestrator Dockerfile exists."""
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        dockerfile = os.path.join(
-            project_root, "services", "orchestrator", "Dockerfile"
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        dockerfile = os.path.join(project_root, "services", "orchestrator", "Dockerfile")
 
         assert os.path.exists(dockerfile), "Orchestrator Dockerfile should exist"
 
     def test_agent_hub_dockerfile_exists(self) -> None:
         """Test that Agent Hub Dockerfile exists."""
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        dockerfile = os.path.join(
-            project_root, "services", "agent-hub", "Dockerfile"
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        dockerfile = os.path.join(project_root, "services", "agent-hub", "Dockerfile")
 
         assert os.path.exists(dockerfile), "Agent Hub Dockerfile should exist"
 
     def test_baron_dockerfile_exists(self) -> None:
         """Test that Baron Dockerfile exists."""
-        project_root = os.path.dirname(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        )
-        dockerfile = os.path.join(
-            project_root, "services", "agents", "baron", "Dockerfile"
-        )
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        dockerfile = os.path.join(project_root, "services", "agents", "baron", "Dockerfile")
 
         assert os.path.exists(dockerfile), "Baron Dockerfile should exist"
