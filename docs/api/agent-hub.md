@@ -4,7 +4,7 @@ Agent routing, sessions, and human escalations.
 
 **Port:** 8001
 
-[**Open Full API Documentation →**](../agent-hub.html){target="_blank" .md-button .md-button--primary}
+[**Open Full API Documentation →**](./agent-hub.html){target="_blank" .md-button .md-button--primary}
 
 ## Quick Reference
 

@@ -4,7 +4,7 @@ PM agent for SpecKit workflows: specify, plan, tasks, implement.
 
 **Port:** 8002
 
-[**Open Full API Documentation →**](../../baron.html){target="_blank" .md-button .md-button--primary}
+[**Open Full API Documentation →**](../baron.html){target="_blank" .md-button .md-button--primary}
 
 ## Quick Reference
 

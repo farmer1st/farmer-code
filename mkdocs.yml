@@ -55,6 +55,10 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - R&D:
+    - Architecture Proposal: rd/r-and-d-architecture.md
+    - Agent Delegation Proposals: rd/agent-delegation-proposals.md
+    - A2A Protocol Proposal: rd/a2a-protocol-proposal.md
   - Getting Started:
     - getting-started/index.md
     - Installation: getting-started/installation.md

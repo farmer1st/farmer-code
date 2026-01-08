@@ -4,7 +4,7 @@ Workflow state machine and phase execution.
 
 **Port:** 8000
 
-[**Open Full API Documentation →**](../orchestrator.html){target="_blank" .md-button .md-button--primary}
+[**Open Full API Documentation →**](./orchestrator.html){target="_blank" .md-button .md-button--primary}
 
 ## Quick Reference
 

@@ -4,7 +4,7 @@ Testing expert: test strategy, edge cases, quality assurance.
 
 **Port:** 8004
 
-[**Open Full API Documentation →**](../../marie.html){target="_blank" .md-button .md-button--primary}
+[**Open Full API Documentation →**](../marie.html){target="_blank" .md-button .md-button--primary}
 
 ## Quick Reference
 
