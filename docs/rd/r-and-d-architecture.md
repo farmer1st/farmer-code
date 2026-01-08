@@ -248,45 +248,75 @@ class FutureProviderRuntime(AgentRuntime):
 
 ### 2.5 Agent Pod Architecture
 
-**Single pod per agent, multiple versions cached:**
+**Single pod per agent, single version (operator-injected):**
+
+The Kubernetes Operator (Section 4.3) spawns agent pods with a specific version defined
+in environment variables. Each pod loads only that version at startup—no multi-version
+caching or hot-reload complexity.
 
 ```
-baron-pod
+baron-pod (spawned by operator for feature-auth-123)
+├── Environment:
+│   AGENT_NAME=baron
+│   AGENT_VERSION=2.0.0
+│   WORKTREE_PATH=/volumes/worktrees/feature-auth-123
+│
 ├── Startup:
-│   1. Fetch last 5 tags matching baron@* from GitHub API
-│   2. Download each version's config to /versions/baron@X.Y.Z/
+│   1. Fetch baron@2.0.0 config from GitHub (single version)
+│   2. Load config to /agent/config/
 │   3. Ready to serve
 │
-├── Periodic refresh (every 5 min):
-│   - Check for new tags
-│   - Download new versions (no restart needed)
-│
 └── Request handling:
-    POST /invoke/baron/2.0.0
-    → Load config from /versions/baron@2.0.0/
+    POST /invoke
+    → Load config from /agent/config/ (pre-loaded at startup)
     → Execute via SDK abstraction
     → Return response with confidence score
 ```
 
-**Request routing:**
+**Why single-version pods?**
+
+| Multi-Version (rejected) | Single-Version (adopted) |
+|--------------------------|--------------------------|
+| Complex version routing | Simple: one pod = one version |
+| Memory overhead for cached versions | Minimal footprint |
+| Race conditions on refresh | Immutable after startup |
+| Harder to debug | Clear lineage per feature |
+
+**Pod lifecycle:**
 
 ```python
-@app.post("/invoke/{agent}/{version}")
-async def invoke_agent(
-    agent: str,
-    version: str,
-    request: InvokeRequest,
-    session_id: str = Header(...)
-):
-    config = load_agent_config(agent, version)  # From cached versions
-    runtime = ClaudeAgentRuntime(config, credentials_path="/secrets/credentials.json")
-    response = await runtime.invoke(
-        prompt=request.prompt,
-        context=request.context,
-        session_id=session_id
-    )
-    return response
+class AgentPod:
+    """Agent pod loads a single version at startup."""
+
+    def __init__(self):
+        self.agent_name = os.environ["AGENT_NAME"]
+        self.agent_version = os.environ["AGENT_VERSION"]
+        self.worktree_path = os.environ["WORKTREE_PATH"]
+        self.config = None
+
+    async def startup(self):
+        """Load agent config once at startup."""
+        self.config = await fetch_agent_config(
+            agent=self.agent_name,
+            version=self.agent_version,
+        )
+        self.runtime = ClaudeAgentRuntime(
+            config=self.config,
+            credentials_path="/secrets/credentials.json",
+        )
+
+    @app.post("/invoke")
+    async def invoke(self, request: InvokeRequest, session_id: str = Header(...)):
+        """Invoke agent with pre-loaded config."""
+        return await self.runtime.invoke(
+            prompt=request.prompt,
+            context=request.context,
+            session_id=session_id,
+        )
 ```
+
+When a new agent version is needed, the Operator terminates the old pod and spawns
+a new one with the updated `AGENT_VERSION` environment variable.
 
 ---
 
@@ -312,36 +342,59 @@ Feature Request → Spec → Plan → Tasks → Tests → Code → Verify → Re
 
 ### 3.3 Workflow Phases
 
+The workflow is **not linear**—it supports feedback loops as defined in Section 10.
+Agents can trigger transitions back to earlier phases when issues are discovered.
+
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           Feature Workflow                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Phase 1        Phase 2        Phase 3        Phase 4        Phase 5       │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐  │
-│  │  Baron   │   │  Baron   │   │  Baron   │   │  Marie   │   │  Dede    │  │
-│  │ specify  │──▶│  plan    │──▶│  tasks   │──▶│  tests   │──▶│  code    │  │
-│  │ .feature │   │          │   │          │   │ (write)  │   │          │  │
-│  └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘  │
-│       │              │              │              │              │         │
-│       │              ▼              │              │              │         │
-│       │         ┌──────────┐       │              │              │         │
-│       │         │   Duc    │       │              │              │         │
-│       │         │ (consult)│       │              │              │         │
-│       │         └──────────┘       │              │              │         │
-│       │                            │              │              │         │
-│       ▼                            ▼              ▼              ▼         │
-│  .specify/spec.md          .specify/tasks.md   tests/        src/         │
-│  .specify/plan.md                                                          │
-│                                                                             │
-│  Phase 6        Phase 7                                                    │
-│  ┌──────────┐   ┌──────────┐                                               │
-│  │  Marie   │   │ Reviewer │                                               │
-│  │ (verify) │──▶│  review  │──▶ Done                                       │
-│  └──────────┘   └──────────┘                                               │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                        Feature Workflow (with Feedback Loops)                     │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                   │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐        │
+│  │  Baron   │   │  Baron   │   │  Baron   │   │  Marie   │   │  Dede    │        │
+│  │ SPECIFY  │──▶│   PLAN   │──▶│  TASKS   │──▶│  TESTS   │──▶│IMPLEMENT │        │
+│  └──────────┘   └──────────┘   └──────────┘   └──────────┘   └──────────┘        │
+│       ▲              ▲                                            │              │
+│       │              │                                            ▼              │
+│       │              │         ┌──────────────────────────────────────────┐      │
+│       │              │         │           FEEDBACK TRIGGERS              │      │
+│       │              │         ├──────────────────────────────────────────┤      │
+│       │              │         │ • spec_ambiguity    → back to SPECIFY    │      │
+│       │              │         │ • plan_infeasible   → back to PLAN       │      │
+│       │              │         │ • test_failure      → back to IMPLEMENT  │      │
+│       │              │         │ • security_issue    → back to PLAN       │      │
+│       │              │         │ • minor_changes     → back to IMPLEMENT  │      │
+│       │              │         └──────────────────────────────────────────┘      │
+│       │              │                                            │              │
+│       │              │                                            ▼              │
+│       │              │                             ┌──────────┐   ┌──────────┐   │
+│       │              │                             │  Marie   │   │ Reviewer │   │
+│       │              │                             │  VERIFY  │──▶│  REVIEW  │──▶│ Done
+│       │              │                             └──────────┘   └──────────┘   │
+│       │              │                                  │              │         │
+│       │              │    feedback:test_failure         │              │         │
+│       │              │◀─────────────────────────────────┘              │         │
+│       │              │                                                 │         │
+│       │              │    feedback:architectural_rework                │         │
+│       │              │◀────────────────────────────────────────────────┘         │
+│       │                                                                │         │
+│       │              feedback:spec_ambiguity (from IMPLEMENT)          │         │
+│       │◀───────────────────────────────────────────────────────────────┘         │
+│                                                                                   │
+│  ┌────────────────────────────────────────────────────────────────────────────┐  │
+│  │  Duc (Architecture Advisor) - consulted on-demand during PLAN, IMPLEMENT  │  │
+│  └────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                   │
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Feedback Loop Constraints (from Section 10.4):**
+
+| Constraint | Value | Purpose |
+|------------|-------|---------|
+| Max total loops | 5 | Prevent runaway workflows |
+| Max same transition | 2 | Detect oscillation patterns |
+| Escalation on breach | Human | Workflow pauses for intervention |
 
 **Agent Roles:**
 
@@ -355,44 +408,148 @@ Feature Request → Spec → Plan → Tasks → Tests → Code → Verify → Re
 
 ### 3.4 Orchestrator Per Feature
 
-Each feature gets its own orchestrator pod:
+Each feature gets its own orchestrator Job (not a long-running pod). The orchestrator
+implements the **Stop-and-Go pattern** (Section 11.2) and **Event Sourcing** (Section 9):
+
+- **No `await` for human input** — checkpoint and exit instead
+- **State from events** — rehydrate on restart, never store mutable state
+- **Idempotent execution** — safe to restart at any point
 
 ```python
-# Simplified orchestrator logic
 class FeatureOrchestrator:
-    def __init__(self, feature_id: str, workflow_config: dict):
+    """Event-sourced orchestrator with stop-and-go semantics."""
+
+    def __init__(
+        self,
+        feature_id: str,
+        workflow_config: WorkflowDefinition,
+        event_store: EventStore,
+        projection: WorkflowProjection,
+    ):
         self.feature_id = feature_id
-        self.agents = workflow_config['agents']
-        self.phases = workflow_config['phases']
-        self.current_phase = 0
+        self.workflow_config = workflow_config
+        self.event_store = event_store
+        self.projection = projection
+        # No self.current_phase — state comes from events
 
-    async def run(self):
-        # Create worktree
-        worktree_path = await self.create_worktree()
+    async def run(self) -> OrchestratorResult:
+        """
+        Run workflow with automatic recovery and stop-and-go semantics.
 
-        # Spawn agent pods
-        await self.spawn_agent_pods(worktree_path)
+        This method is designed to be called by a Kubernetes Job. It will:
+        1. Rehydrate state from the event store
+        2. Resume from wherever we left off
+        3. Exit (not wait) if human input is required
+        4. Be restarted by a new Job when input arrives
+        """
+        # === REHYDRATE STATE FROM EVENTS (Section 9.4) ===
+        state = await self.projection.get_state(self.feature_id)
 
-        # Execute phases
-        for phase in self.phases:
-            agent = self.get_agent(phase.agent)
-            result = await self.invoke_agent_a2a(agent, phase.skill, phase.input)
+        # Already done? Exit immediately.
+        if state.status == "completed":
+            return OrchestratorResult(status="already_completed")
 
-            if result.status == "input-required":
-                # Human escalation in progress, wait
-                result = await self.wait_for_human_response(result.task_id)
+        # Already failed? Exit with failure.
+        if state.status == "failed":
+            return OrchestratorResult(status="already_failed", error=state.error)
 
-            if result.status == "failed":
-                await self.fail_workflow(result.error)
-                return
+        # === HANDLE PENDING ESCALATION (Stop-and-Go) ===
+        if state.pending_escalation:
+            # Check if human responded (don't wait!)
+            response = await self._check_escalation_response(state.pending_escalation)
+            if response is None:
+                # Still waiting — exit, will be resumed by webhook
+                return OrchestratorResult(status="waiting_human")
 
-            # Update GitHub issue with progress
-            await self.post_progress(phase, result)
+            # Human responded — record and continue
+            await self.event_store.append(EscalationResolved(
+                feature_id=self.feature_id,
+                agent=state.pending_escalation["agent"],
+                human_response=response.text,
+                responded_by=response.user,
+            ))
+            state = await self.projection.get_state(self.feature_id)
 
-        # Cleanup
-        await self.terminate_agent_pods()
-        await self.archive_worktree()
+        # === EXECUTE REMAINING PHASES ===
+        phases_to_run = self._get_remaining_phases(state)
+
+        for phase in phases_to_run:
+            # Record phase start
+            await self.event_store.append(PhaseStarted(
+                feature_id=self.feature_id,
+                phase=phase.name,
+                agent=phase.agent,
+            ))
+
+            # Execute phase
+            result = await self._execute_phase(phase)
+
+            # === STOP-AND-GO: Exit on input-required (Section 11.2) ===
+            if result.status == "input_required":
+                await self.event_store.append(EscalationRequested(
+                    feature_id=self.feature_id,
+                    agent=phase.agent,
+                    question=result.question,
+                    confidence=result.confidence,
+                ))
+                # EXIT — do NOT await. Job terminates here.
+                # A new Job will be spawned when human responds.
+                return OrchestratorResult(status="waiting_human", checkpoint=phase.name)
+
+            # === HANDLE FEEDBACK LOOPS (Section 10) ===
+            if result.feedback_trigger:
+                next_phase = self.workflow_config.get_feedback_target(
+                    from_phase=phase.name,
+                    trigger=result.feedback_trigger,
+                )
+                if next_phase:
+                    await self.event_store.append(FeedbackRequested(
+                        feature_id=self.feature_id,
+                        from_phase=phase.name,
+                        to_phase=next_phase,
+                        reason=result.feedback_trigger,
+                    ))
+                    # Loop back — re-run from earlier phase
+                    continue
+
+            # === RECORD SUCCESS ===
+            await self.event_store.append(PhaseCompleted(
+                feature_id=self.feature_id,
+                phase=phase.name,
+                agent=phase.agent,
+                confidence=result.confidence,
+                commit_sha=result.commit_sha,
+            ))
+
+        # === WORKFLOW COMPLETE ===
+        await self.event_store.append(WorkflowCompleted(feature_id=self.feature_id))
+        return OrchestratorResult(status="completed")
+
+    def _get_remaining_phases(self, state: WorkflowState) -> list[Phase]:
+        """Determine which phases still need to run."""
+        if state.pending_feedback:
+            # Feedback loop: restart from target phase
+            return self.workflow_config.get_phases_from(state.pending_feedback["to_phase"])
+        # Normal: skip completed phases
+        return [p for p in self.workflow_config.phases if p.name not in state.phases_completed]
 ```
+
+**Job lifecycle (Stop-and-Go):**
+
+```
+Job 1: Rehydrate → SPECIFY → PLAN → TASKS → needs human input → CHECKPOINT → EXIT
+                                                    ↓
+                                        (hours/days pass)
+                                                    ↓
+                                        Human responds via GitHub
+                                                    ↓
+                                        Webhook triggers new Job
+                                                    ↓
+Job 2: Rehydrate → Skip completed → IMPLEMENT → VERIFY → REVIEW → Done
+```
+
+This pattern eliminates idle resource consumption while maintaining full auditability
+through the event store.
 
 ---
 
