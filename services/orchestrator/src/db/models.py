@@ -91,9 +91,7 @@ class Workflow(Base):
             "error": self.error,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "completed_at": (
-                self.completed_at.isoformat() if self.completed_at else None
-            ),
+            "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
         }
 
 
@@ -107,7 +105,8 @@ class WorkflowHistory(Base):
     from_status = Column(String, nullable=False)
     to_status = Column(String, nullable=False)
     trigger = Column(String, nullable=False)
-    transition_metadata = Column(Text, nullable=True)  # JSON string (renamed from 'metadata' which is reserved)
+    # JSON string (renamed from 'metadata' which is reserved)
+    transition_metadata = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationship to workflow

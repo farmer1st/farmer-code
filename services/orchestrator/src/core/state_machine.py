@@ -31,9 +31,7 @@ class InvalidStateTransitionError(Exception):
         self.from_status = from_status
         self.to_status = to_status
         self.trigger = trigger
-        super().__init__(
-            f"Invalid transition from {from_status} to {to_status} via {trigger}"
-        )
+        super().__init__(f"Invalid transition from {from_status} to {to_status} via {trigger}")
 
 
 class WorkflowNotFoundError(Exception):
@@ -298,11 +296,7 @@ class WorkflowStateMachine:
         Example: "Add user authentication" -> "009-add-user-auth"
         """
         # Get next feature number
-        max_num = (
-            self.db.query(Workflow)
-            .with_entities(Workflow.feature_id)
-            .all()
-        )
+        max_num = self.db.query(Workflow).with_entities(Workflow.feature_id).all()
         existing_nums = []
         for (fid,) in max_num:
             if fid and fid[:3].isdigit():

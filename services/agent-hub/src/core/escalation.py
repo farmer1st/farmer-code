@@ -94,9 +94,7 @@ class EscalationManager:
         Raises:
             EscalationNotFoundError: If escalation not found
         """
-        escalation = (
-            self.db.query(Escalation).filter(Escalation.id == escalation_id).first()
-        )
+        escalation = self.db.query(Escalation).filter(Escalation.id == escalation_id).first()
         if not escalation:
             raise EscalationNotFoundError(escalation_id)
         return escalation

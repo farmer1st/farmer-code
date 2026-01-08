@@ -32,9 +32,7 @@ class TestAuditLogWriting:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
@@ -44,9 +42,7 @@ class TestAuditLogWriting:
             with tempfile.TemporaryDirectory() as tmpdir:
                 log_path = os.path.join(tmpdir, "audit.jsonl")
 
-                with patch(
-                    "src.api.ask.get_audit_logger"
-                ) as mock_get_logger:
+                with patch("src.api.ask.get_audit_logger") as mock_get_logger:
                     from src.logging.audit import AuditLogger
 
                     logger = AuditLogger(log_path)
@@ -86,9 +82,7 @@ class TestAuditLogWriting:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.invoke.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.invoke.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
@@ -98,15 +92,13 @@ class TestAuditLogWriting:
             with tempfile.TemporaryDirectory() as tmpdir:
                 log_path = os.path.join(tmpdir, "audit.jsonl")
 
-                with patch(
-                    "src.api.invoke.get_audit_logger"
-                ) as mock_get_logger:
+                with patch("src.api.invoke.get_audit_logger") as mock_get_logger:
                     from src.logging.audit import AuditLogger
 
                     logger = AuditLogger(log_path)
                     mock_get_logger.return_value = logger
 
-                    response = await test_client.post(
+                    await test_client.post(
                         "/invoke/baron",
                         json={
                             "workflow_type": "specify",
@@ -120,8 +112,10 @@ class TestAuditLogWriting:
                             lines = f.readlines()
                             if lines:
                                 entry = json.loads(lines[-1])
-                                assert "baron" in entry.get("topic", "").lower() or \
-                                       "baron" in entry.get("metadata", {}).get("agent", "").lower()
+                                assert (
+                                    "baron" in entry.get("topic", "").lower()
+                                    or "baron" in entry.get("metadata", {}).get("agent", "").lower()
+                                )
 
     async def test_audit_log_includes_duration(
         self,
@@ -135,9 +129,7 @@ class TestAuditLogWriting:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
@@ -147,9 +139,7 @@ class TestAuditLogWriting:
             with tempfile.TemporaryDirectory() as tmpdir:
                 log_path = os.path.join(tmpdir, "audit.jsonl")
 
-                with patch(
-                    "src.api.ask.get_audit_logger"
-                ) as mock_get_logger:
+                with patch("src.api.ask.get_audit_logger") as mock_get_logger:
                     from src.logging.audit import AuditLogger
 
                     logger = AuditLogger(log_path)
@@ -182,9 +172,7 @@ class TestAuditLogWriting:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
@@ -194,9 +182,7 @@ class TestAuditLogWriting:
             with tempfile.TemporaryDirectory() as tmpdir:
                 log_path = os.path.join(tmpdir, "audit.jsonl")
 
-                with patch(
-                    "src.api.ask.get_audit_logger"
-                ) as mock_get_logger:
+                with patch("src.api.ask.get_audit_logger") as mock_get_logger:
                     from src.logging.audit import AuditLogger
 
                     logger = AuditLogger(log_path)
@@ -234,9 +220,7 @@ class TestAuditLogWriting:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
@@ -246,9 +230,7 @@ class TestAuditLogWriting:
             with tempfile.TemporaryDirectory() as tmpdir:
                 log_path = os.path.join(tmpdir, "audit.jsonl")
 
-                with patch(
-                    "src.api.ask.get_audit_logger"
-                ) as mock_get_logger:
+                with patch("src.api.ask.get_audit_logger") as mock_get_logger:
                     from src.logging.audit import AuditLogger
 
                     logger = AuditLogger(log_path)
@@ -269,12 +251,8 @@ class TestAuditLogWriting:
                         with open(log_path) as f:
                             entries = [json.loads(line) for line in f]
 
-                        feature_a_logs = [
-                            e for e in entries if e["feature_id"] == "008-feature-a"
-                        ]
-                        feature_b_logs = [
-                            e for e in entries if e["feature_id"] == "008-feature-b"
-                        ]
+                        feature_a_logs = [e for e in entries if e["feature_id"] == "008-feature-a"]
+                        feature_b_logs = [e for e in entries if e["feature_id"] == "008-feature-b"]
 
                         assert len(feature_a_logs) == 2
                         assert len(feature_b_logs) == 1

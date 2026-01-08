@@ -196,8 +196,12 @@ class BaronAgent:
         #
         # return self._parse_sdk_result(result)
 
+        truncated_prompt = user_prompt[:200]
         return {
-            "output": f"# {workflow_type.title()} Output\n\nProcessed workflow: {workflow_type}\n\n{user_prompt[:200]}...",
+            "output": (
+                f"# {workflow_type.title()} Output\n\n"
+                f"Processed workflow: {workflow_type}\n\n{truncated_prompt}..."
+            ),
             "files_created": [],
             "files_read": [],
         }

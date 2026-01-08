@@ -27,8 +27,10 @@ def mock_agent_client() -> Generator[AsyncMock, None, None]:
         "metadata": {},
     }
 
-    with patch("src.api.ask.AgentServiceClient") as mock_ask, \
-         patch("src.api.invoke.AgentServiceClient") as mock_invoke:
+    with (
+        patch("src.api.ask.AgentServiceClient") as mock_ask,
+        patch("src.api.invoke.AgentServiceClient") as mock_invoke,
+    ):
         # Setup mock for ask endpoint
         mock_agent_ask = AsyncMock()
         mock_agent_ask.invoke.return_value = mock_response
@@ -63,9 +65,7 @@ def test_db() -> Generator[Session, None, None]:
         connect_args={"check_same_thread": False},
     )
     Base.metadata.create_all(bind=engine)
-    TestingSessionLocal = sessionmaker(
-        autocommit=False, autoflush=False, bind=engine
-    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
     db = TestingSessionLocal()
     try:

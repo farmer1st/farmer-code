@@ -4,7 +4,7 @@ Implements POST /sessions, GET /sessions/{id}, DELETE /sessions/{id}
 per contracts/agent-hub.yaml.
 """
 
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -87,7 +87,7 @@ class ErrorResponse(BaseModel):
 )
 async def create_session(
     request: CreateSessionRequest,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> SessionResponse:
     """Create a new session for multi-turn conversations.
 
@@ -117,7 +117,7 @@ async def create_session(
 )
 async def get_session(
     session_id: str,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> SessionWithMessagesResponse:
     """Get session with message history.
 
@@ -152,9 +152,7 @@ async def get_session(
         session_dict = session.to_dict(include_messages=True)
 
         # Convert messages to response format
-        messages = [
-            MessageResponse(**msg) for msg in session_dict.get("messages", [])
-        ]
+        messages = [MessageResponse(**msg) for msg in session_dict.get("messages", [])]
 
         return SessionWithMessagesResponse(
             id=session_dict["id"],
@@ -187,7 +185,7 @@ async def get_session(
 )
 async def close_session(
     session_id: str,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> SessionResponse:
     """Close a session, preserving history for audit.
 

@@ -4,6 +4,7 @@ Implements GET /escalations/{id}, POST /escalations/{id}
 per contracts/agent-hub.yaml.
 """
 
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -83,7 +84,7 @@ class ErrorResponse(BaseModel):
 )
 async def get_escalation(
     escalation_id: str,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> EscalationResponse:
     """Get escalation by ID.
 
@@ -141,7 +142,7 @@ async def get_escalation(
 async def submit_human_response(
     escalation_id: str,
     request: SubmitHumanResponseRequest,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> EscalationResponse:
     """Submit human response to an escalation.
 

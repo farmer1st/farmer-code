@@ -4,7 +4,6 @@ Tests that session context is preserved across multiple exchanges.
 Success Criteria SC-006: Session preserves context across 5 consecutive exchanges.
 """
 
-
 import pytest
 from httpx import AsyncClient
 
@@ -55,7 +54,9 @@ class TestSessionContextPreservation:
         assistant_messages = [m for m in messages if m["role"] == "assistant"]
 
         assert len(user_messages) >= 5, f"Expected 5 user messages, got {len(user_messages)}"
-        assert len(assistant_messages) >= 5, f"Expected 5 assistant messages, got {len(assistant_messages)}"
+        assert len(assistant_messages) >= 5, (
+            f"Expected 5 assistant messages, got {len(assistant_messages)}"
+        )
 
     async def test_session_messages_ordered_chronologically(
         self,

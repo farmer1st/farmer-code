@@ -110,10 +110,7 @@ def get_system_prompt(topic: str) -> str:
     }
 
     if topic not in prompts:
-        raise ValueError(
-            f"Unknown topic: {topic}. "
-            f"Valid topics: {list(prompts.keys())}"
-        )
+        raise ValueError(f"Unknown topic: {topic}. Valid topics: {list(prompts.keys())}")
 
     return prompts[topic]
 

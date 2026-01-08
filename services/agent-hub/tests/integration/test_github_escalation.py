@@ -30,18 +30,14 @@ class TestGitHubEscalation:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent
             mock_agent.__aexit__.return_value = None
             mock_agent_class.return_value = mock_agent
 
-            with patch(
-                "src.clients.github.GitHubClient"
-            ) as mock_github_class:
+            with patch("src.clients.github.GitHubClient") as mock_github_class:
                 mock_github = AsyncMock()
                 mock_github.post_escalation_comment.return_value = 12345  # comment ID
                 mock_github_class.return_value = mock_github
@@ -116,9 +112,7 @@ class TestGitHubEscalation:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_agent_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_agent_class:
             mock_agent = AsyncMock()
             mock_agent.invoke.return_value = mock_agent_response
             mock_agent.__aenter__.return_value = mock_agent

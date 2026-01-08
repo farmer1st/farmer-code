@@ -190,9 +190,7 @@ Reply to this comment with one of the following:
             raise RuntimeError("Client not initialized. Use async with statement.")
 
         try:
-            response = await self._client.get(
-                f"/repos/{self.repo}/issues/{issue_number}"
-            )
+            response = await self._client.get(f"/repos/{self.repo}/issues/{issue_number}")
 
             if response.status_code == 200:
                 return response.json()

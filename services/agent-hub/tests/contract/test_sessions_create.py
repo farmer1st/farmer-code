@@ -3,7 +3,6 @@
 Tests the create session API contract per contracts/agent-hub.yaml.
 """
 
-
 import pytest
 from httpx import AsyncClient
 

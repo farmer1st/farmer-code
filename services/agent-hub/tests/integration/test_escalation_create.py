@@ -37,9 +37,7 @@ class TestEscalationCreation:
             "metadata": {"duration_ms": 1000},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_client_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.invoke.return_value = mock_response
             mock_client.__aenter__.return_value = mock_client
@@ -74,9 +72,7 @@ class TestEscalationCreation:
             "metadata": {"duration_ms": 1000},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_client_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.invoke.return_value = mock_response
             mock_client.__aenter__.return_value = mock_client
@@ -111,9 +107,7 @@ class TestEscalationCreation:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_client_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.invoke.return_value = mock_response
             mock_client.__aenter__.return_value = mock_client
@@ -157,9 +151,7 @@ class TestEscalationCreation:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_client_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.invoke.return_value = mock_response
             mock_client.__aenter__.return_value = mock_client
@@ -194,9 +186,7 @@ class TestEscalationCreation:
             "metadata": {},
         }
 
-        with patch(
-            "src.api.ask.AgentServiceClient"
-        ) as mock_client_class:
+        with patch("src.api.ask.AgentServiceClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.invoke.return_value = mock_response
             mock_client.__aenter__.return_value = mock_client
@@ -204,7 +194,7 @@ class TestEscalationCreation:
             mock_client_class.return_value = mock_client
 
             # Security should escalate at 85% (threshold 90%)
-            security_response = await test_client.post(
+            await test_client.post(
                 "/ask/security",
                 json={
                     "question": "Security question about authentication",

@@ -125,8 +125,7 @@ class MarieAgent:
         if "conversation_history" in context:
             history = context["conversation_history"]
             history_text = "\n".join(
-                f"**{msg['role'].title()}**: {msg['content']}"
-                for msg in history
+                f"**{msg['role'].title()}**: {msg['content']}" for msg in history
             )
             parts.append(f"## Conversation History\n\n{history_text}")
 

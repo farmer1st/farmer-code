@@ -25,9 +25,14 @@ import pytest
 from github_integration import Issue
 
 
-def wait_for_issue_in_list(service, issue_number: int, state: str | None = None,
-                           labels: list[str] | None = None, timeout: float = 10.0,
-                           interval: float = 0.5) -> bool:
+def wait_for_issue_in_list(
+    service,
+    issue_number: int,
+    state: str | None = None,
+    labels: list[str] | None = None,
+    timeout: float = 10.0,
+    interval: float = 0.5,
+) -> bool:
     """Poll until issue appears in list_issues results."""
     start_time = time.time()
     while time.time() - start_time < timeout:

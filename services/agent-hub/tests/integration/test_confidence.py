@@ -4,7 +4,6 @@ These tests verify Agent Hub validates confidence against thresholds
 and creates escalations when confidence is below threshold.
 """
 
-
 import pytest
 from httpx import AsyncClient
 

@@ -4,7 +4,7 @@ Implements POST /workflows, GET /workflows/{id}, POST /workflows/{id}/advance
 per contracts/orchestrator.yaml.
 """
 
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -118,7 +118,7 @@ def error_response(
 )
 async def create_workflow(
     request: CreateWorkflowRequest,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> WorkflowResponse:
     """Create and start a new workflow.
 
@@ -166,7 +166,7 @@ async def create_workflow(
 )
 async def get_workflow(
     workflow_id: str,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> WorkflowResponse:
     """Get workflow by ID.
 
@@ -184,9 +184,7 @@ async def get_workflow(
     try:
         UUID(workflow_id)
     except ValueError:
-        return error_response(
-            400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}"
-        )
+        return error_response(400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}")
 
     state_machine = WorkflowStateMachine(db)
 
@@ -209,7 +207,7 @@ async def get_workflow(
 async def advance_workflow(
     workflow_id: str,
     request: AdvanceWorkflowRequest,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> WorkflowResponse:
     """Advance workflow to next state.
 
@@ -228,9 +226,7 @@ async def advance_workflow(
     try:
         UUID(workflow_id)
     except ValueError:
-        return error_response(
-            400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}"
-        )
+        return error_response(400, "INVALID_UUID", f"Invalid workflow ID format: {workflow_id}")
 
     # Validate trigger
     valid_triggers = ["agent_complete", "human_approved", "human_rejected"]

@@ -1,6 +1,6 @@
 # Farmer1st Architecture Proposal
 
-**Version:** 0.1.0-draft
+**Version:** 0.2.0-draft
 **Status:** R&D Discussion
 **Last Updated:** 2025-01-08
 
@@ -32,10 +32,13 @@ Key design principles:
 6. [Human Escalation](#6-human-escalation)
 7. [GitHub Integration](#7-github-integration)
 8. [Persistence (DynamoDB)](#8-persistence-dynamodb)
-9. [CI/CD Pipeline](#9-cicd-pipeline)
-10. [Observability](#10-observability)
-11. [Future: Chat Portal](#11-future-chat-portal)
-12. [Open Questions](#12-open-questions)
+9. [Event Sourcing](#9-event-sourcing)
+10. [Feedback Loops](#10-feedback-loops)
+11. [Resilience Patterns](#11-resilience-patterns)
+12. [CI/CD Pipeline](#12-cicd-pipeline)
+13. [Observability](#13-observability)
+14. [Future: Chat Portal](#14-future-chat-portal)
+15. [Open Questions](#15-open-questions)
 
 ---
 
@@ -895,38 +898,63 @@ async def cleanup_worktree(path: str):
 
 ## 8. Persistence (DynamoDB)
 
-### 8.1 Single-Table Design
+### 8.1 Single-Table Design with Event Store
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DynamoDB Table: farmercode                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  PK                      SK                           Attributes            │
-│  ─────────────────────────────────────────────────────────────────────────  │
-│  feature#auth-123        metadata                     status, repo, branch  │
-│  feature#auth-123        workflow#2024-01-08T10:00    phase, agents         │
-│  feature#auth-123        conversation#baron#001      messages[]            │
-│  feature#auth-123        conversation#duc#002        messages[]            │
-│  feature#auth-123        confidence#001              score, question...    │
-│  feature#auth-123        artifact#spec.md            path, version         │
-│                                                                             │
-│  template#sdlc-standard  metadata                     phases[], agents[]    │
-│                                                                             │
-│  GSI1 (status-index):                                                       │
-│  GSI1PK=status           GSI1SK=created_at            For kanban queries    │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        DynamoDB Table: farmercode                                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  PK                      SK                              Attributes              │
+│  ───────────────────────────────────────────────────────────────────────────    │
+│                                                                                  │
+│  # Events (append-only, immutable) - PRIMARY DATA                                │
+│  feature#auth-123        event#00001#2024-01-08T10:00:00  {type: WorkflowCreated}│
+│  feature#auth-123        event#00002#2024-01-08T10:00:01  {type: PhaseStarted}   │
+│  feature#auth-123        event#00003#2024-01-08T10:05:32  {type: AgentInvoked}   │
+│  feature#auth-123        event#00004#2024-01-08T10:05:45  {type: CommitCreated}  │
+│  feature#auth-123        event#00005#2024-01-08T10:05:46  {type: PhaseCompleted} │
+│  feature#auth-123        event#00006#2024-01-08T10:47:30  {type: FeedbackRequested}
+│  ...                                                                             │
+│                                                                                  │
+│  # Projections (computed views, can be rebuilt from events)                      │
+│  feature#auth-123        projection#current_state        {phase, status, last_sha}
+│  feature#auth-123        projection#timeline             {phases: [...]}        │
+│  feature#auth-123        projection#metrics              {tokens, duration, ...}│
+│                                                                                  │
+│  # Conversations                                                                 │
+│  feature#auth-123        conversation#baron#001          messages[]             │
+│  feature#auth-123        conversation#duc#002            messages[]             │
+│                                                                                  │
+│  # Templates                                                                     │
+│  template#sdlc-standard  metadata                        phases[], transitions[]│
+│                                                                                  │
+│  GSI1 (status-index):                                                           │
+│  GSI1PK=status           GSI1SK=created_at               For kanban queries     │
+│                                                                                  │
+│  GSI2 (event-type-index):                                                       │
+│  GSI2PK=event_type       GSI2SK=timestamp                For "show all feedback"│
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Key Design Decisions:**
+
+- **Events are immutable** — append-only, never updated or deleted
+- **Projections are computed** — can be rebuilt from events at any time
+- **Version in SK** — enables lexicographic sorting and range queries
+- **GSI for analytics** — query events by type across all features
 
 ### 8.2 Access Patterns
 
 | Access Pattern | Key Condition |
 |----------------|---------------|
-| Get feature metadata | `PK = feature#X, SK = metadata` |
+| Get all events for feature | `PK = feature#X, SK begins_with event#` |
+| Get events from version N | `PK = feature#X, SK >= event#N` |
+| Get current state projection | `PK = feature#X, SK = projection#current_state` |
 | List all conversations for feature | `PK = feature#X, SK begins_with conversation#` |
-| Get workflow history | `PK = feature#X, SK begins_with workflow#` |
 | List features by status (kanban) | `GSI1PK = status, GSI1SK between dates` |
+| List all feedback events | `GSI2PK = FeedbackRequested, GSI2SK between dates` |
 | Get workflow template | `PK = template#X, SK = metadata` |
 
 ### 8.3 Local Development
@@ -960,9 +988,434 @@ def get_dynamodb():
 
 ---
 
-## 9. CI/CD Pipeline
+## 9. Event Sourcing
 
-### 9.1 Repository Structure
+### 9.1 Why Event Sourcing?
+
+The state-based persistence model (storing `phase: planning`) has critical limitations:
+
+| Issue | Impact |
+|-------|--------|
+| Lost history | "How did we get to this state?" is unanswerable |
+| No replay | Can't debug by replaying what happened |
+| Recovery gaps | If crash at T=5, what was state at T=4? |
+| Audit weakness | Compliance needs full trail, not snapshots |
+| Debugging nightmare | "Why did Baron produce this spec?" — no context |
+
+**Event sourcing** stores the sequence of events that produced the state, enabling full replay and recovery:
+
+```
+State = fold(initialState, events)
+```
+
+### 9.2 Event Schema
+
+```python
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Literal
+from uuid import UUID
+
+@dataclass
+class WorkflowEvent:
+    event_id: UUID
+    feature_id: str
+    timestamp: datetime
+    version: int
+
+@dataclass
+class WorkflowCreated(WorkflowEvent):
+    repo: str
+    branch: str
+    issue_number: int
+    requested_by: str
+    agent_versions: dict[str, str]
+
+@dataclass
+class PhaseStarted(WorkflowEvent):
+    phase: str
+    agent: str
+    agent_version: str
+    input_context: dict
+
+@dataclass
+class PhaseCompleted(WorkflowEvent):
+    phase: str
+    agent: str
+    confidence: int
+    artifacts_created: list[str]
+    commit_sha: str
+    tokens_used: int
+    duration_ms: int
+
+@dataclass
+class PhaseFailed(WorkflowEvent):
+    phase: str
+    agent: str
+    error_code: str
+    error_message: str
+    retryable: bool
+
+@dataclass
+class EscalationRequested(WorkflowEvent):
+    agent: str
+    question: str
+    confidence: int
+    options: list[str]
+    github_comment_id: int
+
+@dataclass
+class EscalationResolved(WorkflowEvent):
+    agent: str
+    human_response: str
+    responded_by: str
+    response_time_ms: int
+
+@dataclass
+class FeedbackRequested(WorkflowEvent):
+    from_phase: str
+    to_phase: str
+    reason: str
+    feedback_details: dict
+
+@dataclass
+class CommitCreated(WorkflowEvent):
+    commit_sha: str
+    files_changed: list[str]
+    agent: str
+    message: str
+
+@dataclass
+class WorkflowCompleted(WorkflowEvent):
+    total_duration_ms: int
+    total_tokens: int
+    phases_completed: int
+    escalations_count: int
+    feedback_loops_count: int
+
+@dataclass
+class WorkflowFailed(WorkflowEvent):
+    reason: str
+    failed_phase: str
+    recoverable: bool
+```
+
+### 9.3 Event Store Implementation
+
+```python
+class EventStore:
+    """Append-only event store backed by DynamoDB."""
+
+    async def append(self, event: WorkflowEvent) -> int:
+        """Append event and return new version number."""
+        current_version = await self._get_current_version(event.feature_id)
+        new_version = current_version + 1
+
+        await self.table.put_item(
+            Item={
+                'PK': f'feature#{event.feature_id}',
+                'SK': f'event#{str(new_version).zfill(8)}#{event.timestamp.isoformat()}',
+                'event_type': event.__class__.__name__,
+                'version': new_version,
+                'data': self._serialize_event(event),
+            },
+            ConditionExpression='attribute_not_exists(SK)'
+        )
+        return new_version
+
+    async def get_events(
+        self,
+        feature_id: str,
+        from_version: int = 0,
+        event_types: list[str] | None = None
+    ) -> list[WorkflowEvent]:
+        """Retrieve events for replay or projection."""
+        response = await self.table.query(
+            KeyConditionExpression=Key('PK').eq(f'feature#{feature_id}') &
+                                  Key('SK').begins_with('event#')
+        )
+        return [self._deserialize_event(item) for item in response['Items']]
+```
+
+### 9.4 State Projection
+
+```python
+@dataclass
+class WorkflowState:
+    """Current state computed from events."""
+    feature_id: str
+    status: Literal["pending", "running", "paused", "completed", "failed"]
+    current_phase: str | None
+    phases_completed: list[str]
+    last_commit_sha: str | None
+    pending_escalation: dict | None
+    pending_feedback: dict | None
+    total_tokens: int
+
+class WorkflowProjection:
+    """Projects events into current state."""
+
+    async def get_state(self, feature_id: str) -> WorkflowState:
+        events = await self.event_store.get_events(feature_id)
+        state = WorkflowState.initial(feature_id)
+        for event in events:
+            state = self._apply_event(state, event)
+        return state
+
+    def _apply_event(self, state: WorkflowState, event: WorkflowEvent) -> WorkflowState:
+        match event:
+            case PhaseCompleted():
+                return replace(state,
+                    phases_completed=[*state.phases_completed, event.phase],
+                    last_commit_sha=event.commit_sha,
+                    total_tokens=state.total_tokens + event.tokens_used,
+                )
+            case EscalationRequested():
+                return replace(state, status="paused", pending_escalation={...})
+            case FeedbackRequested():
+                return replace(state, pending_feedback={...})
+            # ... other event handlers
+```
+
+### 9.5 Crash Recovery
+
+```python
+class FeatureOrchestrator:
+    async def run(self):
+        """Run workflow with automatic recovery."""
+        state = await self.projection.get_state(self.feature_id)
+
+        if state.status == "completed":
+            return
+
+        if state.pending_escalation:
+            await self._wait_for_escalation(state.pending_escalation)
+            state = await self.projection.get_state(self.feature_id)
+
+        phases_to_run = [p for p in self.phases if p not in state.phases_completed]
+        for phase in phases_to_run:
+            await self._run_phase(phase)
+```
+
+---
+
+## 10. Feedback Loops
+
+### 10.1 The Problem with Linear Pipelines
+
+A linear workflow assumes everything succeeds first time:
+
+```
+Baron(specify) → Baron(plan) → Baron(tasks) → Marie(tests) → Dede(code) → Marie(verify) → Review → Done
+```
+
+In reality, software development is iterative:
+
+| Scenario | Required Handling |
+|----------|-------------------|
+| Reviewer finds security issue | Loop back to Dede or Baron |
+| Tests fail in verify phase | Loop back to Dede |
+| Dede discovers spec is ambiguous | Loop back to Baron |
+| Plan is too complex mid-implementation | Revise plan |
+
+### 10.2 State Machine Model
+
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                │
+│   SPECIFY ──▶ PLAN ──▶ TASKS ──▶ TEST_DESIGN ──▶ IMPLEMENT ──▶ VERIFY ──▶ REVIEW
+│      ▲          ▲                                    ▲           │         │   │
+│      │          │         feedback:plan_infeasible   │           │         │   │
+│      │          └────────────────────────────────────┤           │         │   │
+│      │                                               │           │         │   │
+│      │          feedback:spec_ambiguity              │           │         │   │
+│      └───────────────────────────────────────────────┤           │         │   │
+│                                                      │           │         │   │
+│                         feedback:test_failure        │           │         │   │
+│                         ─────────────────────────────┴───────────┘         │   │
+│                                                                            │   │
+│                         feedback:minor_changes                             │   │
+│                         ◀──────────────────────────────────────────────────┘   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 10.3 Workflow Definition with Feedback Edges
+
+```python
+class Phase(str, Enum):
+    SPECIFY = "specify"
+    PLAN = "plan"
+    TASKS = "tasks"
+    TEST_DESIGN = "test_design"
+    IMPLEMENT = "implement"
+    VERIFY = "verify"
+    REVIEW = "review"
+    DONE = "done"
+
+@dataclass
+class Transition:
+    from_phase: Phase
+    to_phase: Phase
+    trigger: str  # "success", "feedback:test_failure", etc.
+    condition: Callable | None = None
+    priority: int = 0
+
+SDLC_WORKFLOW = WorkflowDefinition(
+    transitions=[
+        # Happy path
+        Transition(Phase.SPECIFY, Phase.PLAN, "success"),
+        Transition(Phase.PLAN, Phase.TASKS, "success"),
+        Transition(Phase.VERIFY, Phase.REVIEW, "success"),
+        Transition(Phase.REVIEW, Phase.DONE, "success"),
+
+        # Feedback loops
+        Transition(Phase.REVIEW, Phase.IMPLEMENT, "feedback:minor_changes", priority=10),
+        Transition(Phase.REVIEW, Phase.PLAN, "feedback:architectural_rework", priority=10),
+        Transition(Phase.VERIFY, Phase.IMPLEMENT, "feedback:test_failure", priority=10),
+        Transition(Phase.IMPLEMENT, Phase.SPECIFY, "feedback:spec_ambiguity", priority=10),
+    ],
+    max_feedback_loops=5,
+)
+```
+
+### 10.4 Infinite Loop Protection
+
+```python
+class FeedbackLoopProtection:
+    def __init__(self, max_total_loops: int = 5, max_same_transition: int = 2):
+        self.max_total_loops = max_total_loops
+        self.max_same_transition = max_same_transition
+        self.transition_counts: dict[str, int] = {}
+
+    def check_transition(self, from_phase: str, to_phase: str, reason: str) -> bool:
+        transition_key = f"{from_phase}->{to_phase}:{reason}"
+        if self.total_loops >= self.max_total_loops:
+            return False
+        if self.transition_counts.get(transition_key, 0) >= self.max_same_transition:
+            return False
+        return True
+```
+
+### 10.5 GitHub Notifications
+
+```python
+async def post_feedback_comment(issue_number: int, from_phase: str, to_phase: str, result: PhaseResult):
+    comment = f"""
+## 🔄 Feedback Loop Detected
+
+**From:** `{from_phase}` → **To:** `{to_phase}`
+**Reason:** {result.feedback_type}
+
+### Suggested Changes
+{chr(10).join(f"- {change}" for change in result.suggested_changes)}
+
+*Workflow is automatically retrying.*
+"""
+    await github.post_comment(issue_number, comment)
+```
+
+---
+
+## 11. Resilience Patterns
+
+### 11.1 Git Optimistic Lock (Race Condition Handling)
+
+**Problem:** Multiple agents on the same branch can have push conflicts.
+
+**Solution:** Push-rebase-retry loop with idempotency.
+
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+class GitWorkspaceManager:
+    @retry(stop=stop_after_attempt(5), wait=wait_exponential(min=2, max=10))
+    async def _push_with_rebase_loop(self, workspace_path: str, branch: str) -> str:
+        try:
+            await run(f"git -C {workspace_path} push origin HEAD")
+        except Exception as e:
+            if "non-fast-forward" in str(e):
+                await run(f"git -C {workspace_path} fetch origin {branch}")
+                await run(f"git -C {workspace_path} rebase origin/{branch}")
+                raise GitPushConflictError("Rebased, retrying...")
+            raise
+        return (await run(f"git -C {workspace_path} rev-parse HEAD")).stdout.strip()
+```
+
+### 11.2 Stop-and-Go Workflow (Sleeping Orchestrator)
+
+**Problem:** Jobs waiting for human input waste resources.
+
+**Solution:** Checkpoint state and exit. Resume with new Job when human responds.
+
+```
+Job 1: Phase 1 → Phase 2 → needs input → CHECKPOINT → EXIT
+                                ↓
+                    (hours/days pass)
+                                ↓
+                    Human responds via GitHub
+                                ↓
+Job 2: Load state → Skip 1,2 → Resume Phase 3 → ... → Done
+```
+
+```python
+class FeatureOrchestrator:
+    async def run(self):
+        state = await self.projection.get_state(self.feature_id)
+
+        for phase in phases_to_run:
+            result = await self._execute_phase(phase)
+
+            if result.status == "input_required":
+                await self._suspend_for_human_input(phase, result)
+                return  # Job exits, will be resumed later
+
+            await self.event_store.append(PhaseCompleted(...))
+```
+
+### 11.3 Idempotency Keys
+
+```python
+async def commit_and_push(workspace_path: str, message: str, idempotency_key: str):
+    # Check if already committed
+    existing = await run(f"git log --grep='Idempotency-Key: {idempotency_key}'")
+    if existing.stdout.strip():
+        return existing.stdout.split()[0]
+
+    full_message = f"{message}\n\nIdempotency-Key: {idempotency_key}"
+    await run(f"git commit -m '{full_message}'")
+    ...
+```
+
+### 11.4 Circuit Breakers
+
+```python
+from circuitbreaker import circuit
+
+class AgentClient:
+    @circuit(failure_threshold=3, recovery_timeout=60)
+    async def invoke(self, agent: str, skill: str, context: dict) -> AgentResponse:
+        response = await httpx.post(f"http://{agent}.agents.svc/a2a/invoke", ...)
+        return AgentResponse(**response.json())
+```
+
+### 11.5 Watchdog for Missed Webhooks
+
+```python
+async def check_stale_escalations():
+    """Cron job to catch missed webhook responses."""
+    waiting = await dynamodb.query(status="waiting_human", updated_at__lt=threshold)
+    for workflow in waiting:
+        response = await github.check_for_response(workflow.comment_id)
+        if response:
+            await resume_workflow(workflow.feature_id, response)
+```
+
+---
+
+## 12. CI/CD Pipeline
+
+### 12.1 Repository Structure
 
 | Repository | Purpose | CI Output |
 |------------|---------|-----------|
@@ -970,7 +1423,7 @@ def get_dynamodb():
 | `farmcode` | Farmer Code app | Container images |
 | `farmer1st-gitops` | K8s manifests | ArgoCD sync |
 
-### 9.2 GitHub Actions Workflows
+### 12.2 GitHub Actions Workflows
 
 **farmcode CI/CD:**
 
@@ -1051,7 +1504,7 @@ jobs:
           directory: pwa/dist
 ```
 
-### 9.3 ArgoCD Image Updater
+### 12.3 ArgoCD Image Updater
 
 ```yaml
 # argocd/apps/farmercode.yaml
@@ -1077,9 +1530,9 @@ spec:
 
 ---
 
-## 10. Observability
+## 13. Observability
 
-### 10.1 Stack
+### 13.1 Stack
 
 | Component | Tool | Purpose |
 |-----------|------|---------|
@@ -1089,7 +1542,7 @@ spec:
 | Frontend | Grafana Faro | PWA performance, errors |
 | Collection | Grafana Alloy | OTEL collector in cluster |
 
-### 10.2 Key Metrics
+### 13.2 Key Metrics
 
 | Metric | Description |
 |--------|-------------|
@@ -1101,7 +1554,7 @@ spec:
 | `escalation.count` | Human escalations per feature |
 | `escalation.response_time` | Human response latency |
 
-### 10.3 Tracing
+### 13.3 Tracing
 
 ```python
 from opentelemetry import trace
@@ -1124,18 +1577,18 @@ async def invoke_agent(agent: str, version: str, prompt: str):
 
 ---
 
-## 11. Future: Chat Portal
+## 14. Future: Chat Portal
 
 A separate application for direct human-agent interaction:
 
-### 11.1 Purpose
+### 14.1 Purpose
 
 - Chat with any agent (not just SDLC agents)
 - Update agent KB and prompts
 - Review/approve KB changes (commits to GitHub)
 - No worktree needed (not tied to features)
 
-### 11.2 Architecture Differences
+### 14.2 Architecture Differences
 
 | Aspect | Farmer Code | Chat Portal |
 |--------|-------------|-------------|
@@ -1145,7 +1598,7 @@ A separate application for direct human-agent interaction:
 | Worktree | Required | Not needed |
 | Context | Feature-scoped | User session-scoped |
 
-### 11.3 MkDocs Integration (Concept)
+### 14.3 MkDocs Integration (Concept)
 
 Custom MkDocs plugin for KB editing via chat:
 
@@ -1170,7 +1623,7 @@ Merged → Agent picks up new version on next refresh
 
 ---
 
-## 12. Open Questions
+## 15. Open Questions
 
 | # | Question | Options | Decision |
 |---|----------|---------|----------|
@@ -1209,10 +1662,19 @@ Merged → Agent picks up new version on next refresh
 |------|------------|
 | **A2A** | Agent-to-Agent protocol for inter-agent communication |
 | **Agent Card** | JSON descriptor of agent capabilities and skills |
+| **Circuit Breaker** | Pattern to prevent cascade failures by failing fast when a service is unhealthy |
 | **Confidence Score** | 0-100 rating of agent's certainty in its response |
 | **CRD** | Custom Resource Definition (Kubernetes) |
 | **Escalation** | Routing low-confidence decisions to humans |
+| **Event Sourcing** | Storing state changes as immutable events; state computed via replay |
 | **Feature Workflow** | K8s custom resource representing a feature in progress |
+| **Feedback Loop** | Workflow transition back to an earlier phase based on agent output |
+| **Git Optimistic Lock** | Push-rebase-retry pattern for handling concurrent git modifications |
+| **Idempotency Key** | Unique identifier to prevent duplicate operations on retry |
 | **kopf** | Kubernetes Operator Pythonic Framework |
+| **Projection** | Computed view of current state derived from event history |
+| **Rehydration** | Rebuilding state by replaying events from the event store |
+| **Stop-and-Go** | Workflow pattern where jobs checkpoint and exit rather than waiting idle |
+| **Watchdog** | Cron job to catch missed webhook responses and resume stale workflows |
 | **Worktree** | Git worktree for isolated feature development |
 | **SpecKit** | Framework for spec-driven development (specify, plan, tasks) |

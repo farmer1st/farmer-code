@@ -4,7 +4,7 @@ This endpoint handles expert question routing per contracts/agent-hub.yaml.
 """
 
 import time
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -89,7 +89,7 @@ class ErrorResponse(BaseModel):
 async def ask_expert(
     topic: str,
     request: AskExpertRequest,
-    db: Session = Depends(get_db),
+    db: Annotated[Session, Depends(get_db)],
 ) -> AskExpertResponse:
     """Ask expert by topic.
 

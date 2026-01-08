@@ -117,8 +117,7 @@ def get_system_prompt(workflow_type: str) -> str:
 
     if workflow_type not in prompts:
         raise ValueError(
-            f"Unknown workflow type: {workflow_type}. "
-            f"Valid types: {list(prompts.keys())}"
+            f"Unknown workflow type: {workflow_type}. Valid types: {list(prompts.keys())}"
         )
 
     return prompts[workflow_type]
