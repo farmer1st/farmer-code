@@ -1,8 +1,13 @@
 # Farmer1st Architecture Proposal
 
-**Version:** 0.3.18-draft
+**Version:** 0.4.0-draft
 **Status:** R&D Discussion
 **Last Updated:** 2026-01-09
+
+> **v0.4.0 Changes:** Simplified architecture - replaced DynamoDB with Git-Journaling,
+> replaced Event Sourcing with simple State Machine, added self-healing rewind (always
+> to SPECIFY), added Brain/Muscle node strategy, added Town Crier for AWAIT states,
+> added Vauban agent for releases, updated workflow phases (MERGE, AWAIT_STAGING, AWAIT_PROD).
 
 ## Executive Summary
 
@@ -31,9 +36,9 @@ Key design principles:
 5. [Agent Communication (A2A)](#5-agent-communication-a2a)
 6. [Human Escalation](#6-human-escalation)
 7. [GitHub Integration](#7-github-integration)
-8. [Persistence (DynamoDB)](#8-persistence-dynamodb)
-9. [Event Sourcing](#9-event-sourcing)
-10. [Feedback Loops](#10-feedback-loops)
+8. [Persistence (Git-Journaling)](#8-persistence-git-journaling)
+9. [Workflow State Machine](#9-workflow-state-machine)
+10. [Self-Healing Rewind](#10-self-healing-rewind)
 11. [Resilience Patterns](#11-resilience-patterns)
 12. [Why Custom Workflow Engine](#12-why-custom-workflow-engine)
 13. [Security](#13-security)
@@ -79,7 +84,7 @@ Key design principles:
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                     Infrastructure Layer                             │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │  k3d (local) / EKS (cloud)  │  DynamoDB  │  GitHub  │  Slack        │   │
+│  │  k3d (local) / EKS (cloud)  │  Git (Journal)  │  GitHub  │  Slack   │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -93,7 +98,7 @@ Key design principles:
 | Agent Platform | Reusable AI agents with A2A communication | Python, Claude SDK |
 | Agent Definitions | KB, prompts, MCP, skills per agent | GitHub monorepo |
 | Operator | Kubernetes operator for issue lifecycle | Python (kopf) |
-| Persistence | Workflow state, conversations, training data | DynamoDB |
+| Persistence | Workflow state in CRD, history in Git journal | K8s CRD, Git |
 | Observability | Metrics, traces, logs | OpenTelemetry, Grafana |
 
 ### 1.2 Monorepo Structure (Apps Built by Farmer Code)
@@ -673,8 +678,14 @@ a new one with the updated `AGENT_VERSION` environment variable.
 Farmer Code automates the software development lifecycle using AI agents:
 
 ```
-Issue Created → READY label → SPECIFY → PLAN → TASKS → TEST_DESIGN → IMPLEMENT → VERIFY → DOCS_QA → REVIEW → RELEASE → RETRO
+Issue → SPECIFY → PLAN → TASKS → TEST_DESIGN → IMPLEMENT → VERIFY → REVIEW → MERGE
+     → AWAIT_STAGING → AWAIT_PROD → RETRO → DONE
 ```
+
+**Key simplifications (v0.5.0):**
+- **Self-healing rewind**: On REJECT at any phase, rewind to SPECIFY (max 5 attempts)
+- **Hibernation states**: AWAIT_STAGING and AWAIT_PROD scale to zero while waiting for CI/CD
+- **Town Crier**: CI/CD wakes hibernating orchestrators via CRD annotation
 
 ### 3.2 Components
 
@@ -696,7 +707,8 @@ Issue Created → READY label → SPECIFY → PLAN → TASKS → TEST_DESIGN →
 | Marie | QA - test design, verification | `test` | HumanTech |
 | Dede | Backend developer | `backend` (includes docs) | HumanTech |
 | Dali | Frontend developer | `frontend` (includes docs) | HumanTech |
-| Gus | DevOps - gitops, releases | `gitops` (includes docs) | HumanTech |
+| Gus | DevOps - gitops, infrastructure | `gitops` (includes docs) | HumanTech |
+| Vauban | Release engineer - staging/prod | `release` | HumanTech |
 | Victor | Docs QA - consistency, product docs | — | Smart (Product or Tech) |
 | General | Code reviewer | — | HumanTech |
 | Socrate | Retro analyst - learning loop, RAG | — | Smart (Product or Tech) |
@@ -756,8 +768,8 @@ Issue Created → READY label → SPECIFY → PLAN → TASKS → TEST_DESIGN →
 
 ### 3.5 Workflow Phases
 
-The workflow is **strictly linear** with feedback loops for error recovery (Section 10).
-Each phase has **one owner agent**. Agents can consult any other agent during their phase.
+The workflow is **strictly linear** with self-healing rewind on failure (Section 10).
+Each phase has **one owner agent**. On REJECT, workflow rewinds to SPECIFY.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
@@ -768,71 +780,94 @@ Each phase has **one owner agent**. Agents can consult any other agent during th
 │  │  Baron   │   │  Baron   │   │  Baron   │   │  Marie   │                       │
 │  │ SPECIFY  │──▶│   PLAN   │──▶│  TASKS   │──▶│TEST_DESIGN│                      │
 │  └──────────┘   └──────────┘   └──────────┘   └──────────┘                       │
-│                                                     │                             │
-│                                                     ▼                             │
-│  ┌────────────────────────────────────────────────────────────────────────────┐  │
-│  │                    IMPLEMENT (sequential by domain)                         │  │
-│  │  ┌──────────┐   ┌──────────┐   ┌──────────┐                                │  │
-│  │  │  Dede    │──▶│  Dali    │──▶│   Gus    │  Each agent scans tasks.md    │  │
-│  │  │ backend  │   │ frontend │   │  gitops  │  and does their domain tasks   │  │
-│  │  └──────────┘   └──────────┘   └──────────┘  (no-op if no matching tasks)  │  │
-│  └────────────────────────────────────────────────────────────────────────────┘  │
-│                                                     │                             │
-│                                                     ▼                             │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐       │
-│  │  Marie   │   │  Victor  │   │ General  │   │   Gus    │   │   Gus    │       │
-│  │  VERIFY  │──▶│ DOCS_QA  │──▶│  REVIEW  │──▶│ RELEASE  │──▶│ RELEASE  │       │
-│  └──────────┘   └──────────┘   └──────────┘   │ STAGING  │   │  PROD    │       │
-│                                                └──────────┘   └──────────┘       │
-│                                                                    │              │
-│                                                                    ▼              │
-│  ┌────────────────────────────────────────────────────────────────────────────┐  │
-│  │                           RETRO (Learning Loop)                             │  │
-│  │  ┌──────────┐                                                              │  │
-│  │  │ Socrate  │  Analyzes: confidence scores, escalations, A2A conversations │  │
-│  │  │  RETRO   │  Outputs: PRs for prompt/KB improvements + reports           │  │
-│  │  └──────────┘  Human approves changes via Slack (approve/change/reject)    │  │
-│  └────────────────────────────────────────────────────────────────────────────┘  │
-│                                                     │                             │
-│                                                     ▼                             │
-│                                                   Done                            │
-│                                                                                   │
-│  ┌────────────────────────────────────────────────────────────────────────────┐  │
-│  │                         FEEDBACK TRIGGERS                                   │  │
-│  │  • spec_ambiguity    → back to SPECIFY                                     │  │
-│  │  • plan_infeasible   → back to PLAN                                        │  │
-│  │  • test_failure      → back to IMPLEMENT                                   │  │
-│  │  • docs_inconsistent → back to IMPLEMENT                                   │  │
-│  │  • review_changes    → back to IMPLEMENT                                   │  │
-│  └────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                   │
-│  Note: RELEASE_DEV is automated (CI/CD), no agent involved                       │
+│       ▲                                              │                            │
+│       │                                              ▼                            │
+│       │    ┌────────────────────────────────────────────────────────────────┐    │
+│       │    │                IMPLEMENT (sequential by domain)                 │    │
+│       │    │  ┌──────────┐   ┌──────────┐   ┌──────────┐                    │    │
+│       │    │  │  Dede    │──▶│  Dali    │──▶│   Gus    │  Each agent scans  │    │
+│       │    │  │ backend  │   │ frontend │   │  gitops  │  tasks.md for their │    │
+│       │    │  └──────────┘   └──────────┘   └──────────┘  domain tasks       │    │
+│       │    └────────────────────────────────────────────────────────────────┘    │
+│       │                                              │                            │
+│       │                                              ▼                            │
+│       │    ┌──────────┐   ┌──────────┐   ┌──────────┐                            │
+│       │    │  Marie   │   │ General  │   │ General  │                            │
+│  REJECT    │  VERIFY  │──▶│  REVIEW  │──▶│  MERGE   │                            │
+│       │    └──────────┘   └──────────┘   └──────────┘                            │
+│       │                                        │                                  │
+│       │                                        ▼                                  │
+│       │    ┌──────────────────────────────────────────────────────────────────┐  │
+│       │    │                    AWAIT_STAGING (Hibernation)                    │  │
+│       │    │  Orchestrator scales to 0. CI deploys via ArgoCD.                │  │
+│       │    │  Town Crier annotates CRD when staging tests pass.               │  │
+│       │    │  Vauban wakes to verify staging health.                          │  │
+│       │    └──────────────────────────────────────────────────────────────────┘  │
+│       │                                        │                                  │
+│       │                         ◀──── REJECT ──┤                                  │
+│       │                                        ▼                                  │
+│       │    ┌──────────────────────────────────────────────────────────────────┐  │
+│       │    │                    AWAIT_PROD (Hibernation)                       │  │
+│       │    │  Manual approval → CI deploys to production.                     │  │
+│       │    │  Town Crier annotates CRD when prod verification passes.         │  │
+│       │    │  Vauban wakes to verify production health.                       │  │
+│       │    └──────────────────────────────────────────────────────────────────┘  │
+│       │                                        │                                  │
+│       │                         ◀──── REJECT ──┤                                  │
+│       │                                        ▼                                  │
+│       │    ┌──────────────────────────────────────────────────────────────────┐  │
+│       │    │                       RETRO (Learning Loop)                       │  │
+│       │    │  ┌──────────┐                                                    │  │
+│       │    │  │ Socrate  │  Analyzes: confidence, escalations, conversations  │  │
+│       │    │  │  RETRO   │  Outputs: PRs for prompt/KB improvements + reports │  │
+│       │    │  └──────────┘  Human approves changes via Slack                  │  │
+│       │    └──────────────────────────────────────────────────────────────────┘  │
+│       │                                        │                                  │
+│       │                         ◀──── REJECT ──┤                                  │
+│       │                                        ▼                                  │
+│       │                                      DONE                                 │
+│       │                                                                           │
+│  ┌────┴──────────────────────────────────────────────────────────────────────┐   │
+│  │                      SELF-HEALING REWIND (Section 10)                      │   │
+│  │  Any phase can return outcome: REJECT with a rejection_reason              │   │
+│  │  → Workflow rewinds to SPECIFY (max 5 attempts)                            │   │
+│  │  → Rejection reason becomes context for Baron to improve the spec          │   │
+│  │  → After 5 failures, escalate to human                                     │   │
+│  └────────────────────────────────────────────────────────────────────────────┘   │
 │                                                                                   │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **Phase Details:**
 
-| Phase | Owner | Input | Output |
-|-------|-------|-------|--------|
-| SPECIFY | Baron | GitHub issue | `.specify/spec.md` |
-| PLAN | Baron | spec.md | `.specify/plan.md` |
-| TASKS | Baron | plan.md | `.specify/tasks.md` (with domain tags) |
-| TEST_DESIGN | Marie | tasks.md | Test cases in `tests/` |
-| IMPLEMENT | Dede, Dali, Gus | tasks.md | Code + docs (each does their domain) |
-| VERIFY | Marie | Code + tests | Test results, integrity check |
-| DOCS_QA | Victor | All docs | Consistency check, product docs update |
-| REVIEW | General | PR | Review comments, approval |
-| RELEASE_STAGING | Gus | Approved PR | Deployed to staging |
-| RELEASE_PROD | Gus | Staging verified | Deployed to production |
-| RETRO | Socrate | All events + conversations | PRs for improvements + reports |
+| Phase | Owner | Input | Output | Outcome |
+|-------|-------|-------|--------|---------|
+| SPECIFY | Baron | GitHub issue | `.specify/spec.md` | PASS / REJECT |
+| PLAN | Baron | spec.md | `.specify/plan.md` | PASS / REJECT |
+| TASKS | Baron | plan.md | `.specify/tasks.md` | PASS / REJECT |
+| TEST_DESIGN | Marie | tasks.md | Test cases in `tests/` | PASS / REJECT |
+| IMPLEMENT | Dede, Dali, Gus | tasks.md | Code + docs | PASS / REJECT |
+| VERIFY | Marie | Code + tests | Test results | PASS / REJECT |
+| REVIEW | General | PR | Review comments | PASS / REJECT |
+| MERGE | General | Approved review | Merged PR | PASS / REJECT |
+| AWAIT_STAGING | Vauban | Merged PR | Staging verification | PASS / REJECT / WAITING_FOR_CI |
+| AWAIT_PROD | Vauban | Staging passed | Prod verification | PASS / REJECT / WAITING_FOR_CI |
+| RETRO | Socrate | All journal files | PRs for improvements | PASS / REJECT |
+| DONE | — | — | Issue closed | — |
 
-**Feedback Loop Constraints (from Section 10.4):**
+**Hibernation Phases:**
+
+| Phase | Hibernation Trigger | Wake Trigger | Agent on Wake |
+|-------|--------------------|--------------|--------------|
+| AWAIT_STAGING | MERGE completes | Town Crier annotation (staging tests pass) | Vauban |
+| AWAIT_PROD | AWAIT_STAGING passes | Town Crier annotation (prod deploy success) | Vauban |
+
+**Rewind Constraints (from Section 10):**
 
 | Constraint | Value | Purpose |
 |------------|-------|---------|
-| Max total loops | 5 | Prevent runaway workflows |
-| Max same transition | 2 | Detect oscillation patterns |
+| Max rewinds | 5 | Prevent infinite retry loops |
+| Rewind target | Always SPECIFY | Simplicity over targeted feedback |
 | Escalation on breach | Human | Workflow pauses for intervention |
 
 ### 3.6 Domain-Based Task Routing
@@ -1364,37 +1399,103 @@ spec:
 status:
   phase: implement
   workflowNamespace: fc-issue-auth-123   # Ephemeral namespace for this workflow
-  worktreePath: /volumes/worktrees/issue-auth-123
-  pods:                                   # Simple names within workflow namespace
-    - name: orchestrator
-      status: Running
-    - name: baron
-      status: Running
-    - name: marie
-      status: Running
-    - name: dede
-      status: Running
-    - name: dali
-      status: Running
-    - name: gus
-      status: Running
-    - name: victor
-      status: Running
-    - name: general
-      status: Running
-    - name: socrate
-      status: Running
-    - name: veuve
-      status: Running
-    - name: duc
-      status: Running
-    - name: human-product
-      status: Running
-    - name: human-tech
-      status: Running
+  currentPhaseIndex: 4
+  currentJobId: "job-uuid-1234"
+  rewindCount: 0
+  lastOutcome: "PASS"
 ```
 
-### 4.4 Kubernetes Operator (kopf)
+### 4.4 Hybrid Node Strategy (Brain vs Muscle)
+
+To optimize costs (~$138/month target), we use a **hybrid infrastructure** with Reserved and Spot instances:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        EKS Node Strategy                                         │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  ┌─────────────────────────────────────┐  ┌─────────────────────────────────┐  │
+│  │    BRAIN NODE (Reserved EC2)        │  │    MUSCLE NODE (Spot EC2)       │  │
+│  │    t3.large (~$60/mo)               │  │    t3.xlarge (~$50/mo)          │  │
+│  ├─────────────────────────────────────┤  ├─────────────────────────────────┤  │
+│  │                                     │  │                                  │  │
+│  │  "Always On" Stable Infrastructure  │  │  "Scale-to-Zero" Workers         │  │
+│  │                                     │  │                                  │  │
+│  │  • Kopf Operator                    │  │  • Orchestrator pods             │  │
+│  │  • ARC Listener                     │  │  • Baron, Dede, Dali             │  │
+│  │  • ARC Runner Controller            │  │  • Marie, Victor, General        │  │
+│  │                                     │  │  • Vauban, Socrate               │  │
+│  │                                     │  │                                  │  │
+│  │  nodeSelector:                      │  │  nodeSelector:                   │  │
+│  │    role: brain                      │  │    role: muscle                  │  │
+│  │                                     │  │  tolerations:                    │  │
+│  │                                     │  │    - key: spot                   │  │
+│  │                                     │  │      value: "true"               │  │
+│  │                                     │  │                                  │  │
+│  └─────────────────────────────────────┘  └─────────────────────────────────┘  │
+│                                                                                  │
+│  Network: fck-nat (t4g.nano) instead of AWS NAT Gateway (~$28/mo savings)       │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Node Group Configuration:**
+
+| Node Group | Instance | Pricing | Purpose | Pods |
+|------------|----------|---------|---------|------|
+| Brain | t3.large | Reserved | Always-on infrastructure | Operator, ARC |
+| Muscle | t3.xlarge | Spot | Compute-heavy, interruptible | Orchestrators, Agents |
+
+**Scale-to-Zero Pattern:**
+
+Agent pods are deployed with `replicas=0`. The orchestrator:
+1. Scales agent to 1 replica before dispatching work
+2. Polls `GET /jobs/{id}` until completion
+3. Scales agent back to 0 immediately (cost savings)
+
+```yaml
+# Agent Deployment (scale-to-zero)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: baron
+spec:
+  replicas: 0  # Orchestrator wakes when needed
+  selector:
+    matchLabels:
+      app: baron
+  template:
+    metadata:
+      labels:
+        app: baron
+    spec:
+      nodeSelector:
+        role: muscle
+      tolerations:
+        - key: spot
+          operator: Equal
+          value: "true"
+      containers:
+        - name: baron
+          image: ghcr.io/farmer1st/baron:latest
+          resources:
+            requests:
+              cpu: "1000m"  # Beefy for LLM inference
+              memory: "2Gi"
+```
+
+**Cost Breakdown (Target ~$138/mo):**
+
+| Item | Monthly Cost |
+|------|--------------|
+| Brain Node (t3.large Reserved) | ~$60 |
+| Muscle Node (t3.xlarge Spot, avg utilization) | ~$50 |
+| fck-nat (t4g.nano) | ~$8 |
+| EBS Storage | ~$10 |
+| Data Transfer | ~$10 |
+| **Total** | **~$138** |
+
+### 4.5 Kubernetes Operator (kopf)
 
 ```python
 import kopf
@@ -1575,6 +1676,129 @@ spec:
     - name: baron
       version: latest
 EOF
+```
+
+### 4.6 Scale-to-Zero and Town Crier
+
+**Scale-to-Zero Pattern:**
+
+Agent deployments start with `replicas: 0`. The orchestrator scales agents up before dispatch
+and back to zero after completion. This minimizes compute costs during idle periods.
+
+```python
+async def dispatch_to_agent(agent: str, job: Job) -> str:
+    """Scale agent to 1, send job, then scale back to 0."""
+    apps_v1 = client.AppsV1Api()
+
+    # 1. Scale up
+    await scale_deployment(agent, replicas=1)
+    await wait_for_ready(agent, timeout=60)
+
+    # 2. Post job
+    job_id = await post_job(agent, job)
+
+    # 3. Poll until done (agent does work, commits to journal)
+    while True:
+        status = await get_job_status(agent, job_id)
+        if status.outcome in ("pass", "reject", "waiting_for_ci"):
+            break
+        await asyncio.sleep(5)
+
+    # 4. Scale down
+    await scale_deployment(agent, replicas=0)
+
+    return status.outcome
+```
+
+**Town Crier Pattern:**
+
+During AWAIT_STAGING and AWAIT_PROD phases, the orchestrator hibernates (scales to 0).
+CI/CD pipelines use the "Town Crier" script to wake hibernating orchestrators when
+deployments succeed.
+
+```yaml
+# .github/workflows/deploy-staging.yml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to staging
+        run: kubectl apply -k overlays/staging
+
+      - name: Run smoke tests
+        run: ./scripts/smoke-test.sh staging
+
+      - name: Town Crier - Wake Orchestrator
+        if: success()
+        run: |
+          # Find orchestrators waiting for staging
+          WORKFLOWS=$(kubectl get issueworkflow -o json | jq -r '
+            .items[] |
+            select(.status.phase == "await_staging") |
+            select(.status.outcome == "waiting_for_ci") |
+            .metadata.name
+          ')
+
+          # Annotate each to trigger wake
+          for WF in $WORKFLOWS; do
+            kubectl annotate issueworkflow $WF \
+              farmercode.io/wake="true" \
+              farmercode.io/wake-reason="staging-deploy-success" \
+              farmercode.io/wake-timestamp="$(date -Iseconds)" \
+              --overwrite
+          done
+```
+
+**Operator Watches for Wake Annotation:**
+
+```python
+@kopf.on.field('farmercode.io', 'v1', 'issueworkflows', field='metadata.annotations')
+async def on_wake_annotation(old, new, spec, name, namespace, logger, **kwargs):
+    """Wake hibernating orchestrator when CI annotates the CRD."""
+    if new.get('farmercode.io/wake') == 'true' and old.get('farmercode.io/wake') != 'true':
+        logger.info(f"Town Crier waking orchestrator for {name}")
+
+        # Scale orchestrator back up
+        workflow_ns = f"fc-{name}"
+        await scale_deployment(f"{workflow_ns}/orchestrator", replicas=1)
+
+        # Clear the wake annotation
+        await patch_crd_annotations(name, {
+            'farmercode.io/wake': None,
+            'farmercode.io/wake-reason': None,
+            'farmercode.io/wake-timestamp': None,
+        })
+```
+
+**Hibernation Flow:**
+
+```
+MERGE phase completes
+    │
+    ▼
+Orchestrator sets: phase=await_staging, outcome=waiting_for_ci
+    │
+    ▼
+Orchestrator scales itself to 0 (hibernation)
+    │
+    ▼
+ArgoCD deploys to staging (independent of Farmer Code)
+    │
+    ▼
+CI pipeline runs smoke tests
+    │
+    ▼
+Town Crier script annotates CRD: farmercode.io/wake=true
+    │
+    ▼
+Operator detects annotation, scales orchestrator to 1
+    │
+    ▼
+Orchestrator resumes, dispatches Vauban to verify staging
+    │
+    ▼
+If Vauban returns PASS → advance to AWAIT_PROD
+If Vauban returns REJECT → rewind to SPECIFY
 ```
 
 ---
@@ -2464,531 +2688,131 @@ This separation ensures infrastructure changes get appropriate scrutiny.
 
 ---
 
-## 8. Persistence (DynamoDB)
+## 8. Persistence (Git-Journaling)
 
-### 8.1 Single-Table Design with Event Store
+We use **"Git as the Database"** for workflow persistence. This eliminates DynamoDB costs and leverages the fact that agents already clone the repository.
+
+### 8.1 Two Sources of Truth
+
+| Source | What It Holds | Why |
+|--------|---------------|-----|
+| **Kubernetes CRD** | Current state pointer (phase index, job ID) | Crash-recoverable, kubectl-editable |
+| **Git Journal** | Phase results, logs, metrics | Immutable, auditable, versioned |
+
+**No DynamoDB in the critical path.** DynamoDB is optional for analytics only (fire-and-forget).
+
+### 8.2 Journal Location
+
+Agents write JSON journals directly to the Git repository in a hidden folder:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        DynamoDB Table: farmercode                                │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│  PK                      SK                              Attributes              │
-│  ───────────────────────────────────────────────────────────────────────────    │
-│                                                                                  │
-│  # Events (append-only, immutable) - PRIMARY DATA                                │
-│  # SK format: event#{version} — version-only for uniqueness, timestamp as attr  │
-│  issue#auth-123        event#00000001  {type: WorkflowCreated, ts: 2024-01-08T10:00:00}
-│  issue#auth-123        event#00000002  {type: PhaseStarted, ts: 2024-01-08T10:00:01}
-│  issue#auth-123        event#00000003  {type: AgentInvoked, ts: 2024-01-08T10:05:32}
-│  issue#auth-123        event#00000004  {type: CommitCreated, ts: 2024-01-08T10:05:45}
-│  issue#auth-123        event#00000005  {type: PhaseCompleted, ts: 2024-01-08T10:05:46}
-│  issue#auth-123        event#00000006  {type: FeedbackRequested, ts: 2024-01-08T10:47:30}
-│  ...                                                                             │
-│                                                                                  │
-│  # Projections (computed views, can be rebuilt from events)                      │
-│  issue#auth-123        projection#current_state        {phase, status, last_sha}
-│  issue#auth-123        projection#timeline             {phases: [...]}        │
-│  issue#auth-123        projection#metrics              {tokens, duration, ...}│
-│                                                                                  │
-│  # Conversations                                                                 │
-│  issue#auth-123        conversation#baron#001          messages[]             │
-│  issue#auth-123        conversation#duc#002            messages[]             │
-│                                                                                  │
-│  # Templates                                                                     │
-│  template#sdlc-standard  metadata                        phases[], transitions[]│
-│                                                                                  │
-│  GSI1 (status-index):                                                           │
-│  GSI1PK=status           GSI1SK=created_at               For kanban queries     │
-│                                                                                  │
-│  GSI2 (event-type-index):                                                       │
-│  GSI2PK=event_type       GSI2SK=timestamp                For "show all feedback"│
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
+.farmercode/
+└── issue-{id}/
+    ├── baron.json          # Baron's journal (SPECIFY, PLAN, TASKS)
+    ├── marie.json          # Marie's journal (TEST_DESIGN, VERIFY)
+    ├── dede.json           # Dede's journal (IMPLEMENT_BACKEND)
+    ├── dali.json           # Dali's journal (IMPLEMENT_FRONTEND)
+    ├── gus.json            # Gus's journal (IMPLEMENT_GITOPS)
+    ├── victor.json         # Victor's journal (DOCS_QA)
+    ├── general.json        # General's journal (REVIEW, MERGE)
+    ├── vauban.json         # Vauban's journal (RELEASE_STAGING, RELEASE_PROD)
+    └── socrate.json        # Socrate's journal (RETRO)
 ```
 
-**Key Design Decisions:**
+### 8.3 Journal Schema
 
-- **Events are immutable** — append-only, never updated or deleted
-- **Projections are computed** — can be rebuilt from events at any time
-- **Version in SK** — enables lexicographic sorting and range queries
-- **GSI for analytics** — query events by type across all features
-
-### 8.2 Access Patterns
-
-| Access Pattern | Key Condition |
-|----------------|---------------|
-| Get all events for feature | `PK = issue#X, SK begins_with event#` |
-| Get events from version N | `PK = issue#X, SK >= event#N` |
-| Get current state projection | `PK = issue#X, SK = projection#current_state` |
-| List all conversations for feature | `PK = issue#X, SK begins_with conversation#` |
-| List features by status (kanban) | `GSI1PK = status, GSI1SK between dates` |
-| List all feedback events | `GSI2PK = FeedbackRequested, GSI2SK between dates` |
-| Get workflow template | `PK = template#X, SK = metadata` |
-
-### 8.3 Local Development
-
-```yaml
-# docker-compose.yaml (or k3d deployment)
-services:
-  dynamodb-local:
-    image: amazon/dynamodb-local
-    ports:
-      - "8000:8000"
-    command: "-jar DynamoDBLocal.jar -sharedDb"
+```json
+{
+  "meta": {
+    "agent": "marie",
+    "phase": "VERIFY",
+    "job_id": "job-uuid-1234",
+    "started_at": "2026-01-09T10:00:00Z",
+    "last_updated": "2026-01-09T10:05:30Z"
+  },
+  "status": {
+    "phase": "COMPLETED",
+    "outcome": "PASS",
+    "reject_reason": null,
+    "error_msg": null
+  },
+  "context": {
+    "trigger_reason": "Verification after IMPLEMENT_BACKEND",
+    "rewind_attempt": 0
+  },
+  "output": {
+    "commit_sha": "abc1234",
+    "files_modified": ["src/auth.py", "tests/test_auth.py"],
+    "metrics": {
+      "tests_run": 47,
+      "tests_passed": 47,
+      "coverage_percent": 87.3
+    }
+  },
+  "logs": [
+    { "ts": "10:01:00", "level": "INFO", "msg": "Starting verification..." },
+    { "ts": "10:03:00", "level": "THOUGHT", "msg": "All tests passing" }
+  ]
+}
 ```
 
-```python
-# Configuration
-import boto3
+### 8.4 Status and Outcome Fields
 
-def get_dynamodb():
-    if os.environ.get("LOCAL_DEV"):
-        return boto3.resource(
-            'dynamodb',
-            endpoint_url='http://localhost:8000',
-            region_name='us-east-1',
-            aws_access_key_id='local',
-            aws_secret_access_key='local'
-        )
-    else:
-        return boto3.resource('dynamodb', region_name='us-east-1')
-```
+| Field | Values | Purpose |
+|-------|--------|---------|
+| `status.phase` | `PENDING`, `RUNNING`, `COMPLETED`, `FAILED` | Job lifecycle state |
+| `status.outcome` | `PENDING`, `PASS`, `REJECT`, `WAITING_FOR_CI` | Business result |
 
-### 8.4 Schema Evolution Strategy
+**Outcome meanings:**
+- `PASS` → Advance to next phase
+- `REJECT` → Trigger rewind to SPECIFY (self-healing)
+- `WAITING_FOR_CI` → Stay in phase, wait for CI result
+- `FAILED` → Workflow fails, human intervention required
 
-DynamoDB is schemaless, but our application layer has implicit schemas. Strategy for
-handling evolution:
+### 8.5 Why Git-Journaling?
 
-**1. Event Schema Versioning:**
+| Aspect | DynamoDB (rejected) | Git-Journaling (adopted) |
+|--------|---------------------|--------------------------|
+| Cost | ~$25/mo minimum | $0 (repo already exists) |
+| Audit trail | Query GSI | `git log .farmercode/` |
+| Debugging | Read DynamoDB console | `cat .farmercode/issue-42/marie.json` |
+| Backup | Point-in-time recovery | Git history (free) |
+| Local dev | Run DynamoDB Local | Just use filesystem |
+| Recovery | Replay events | Journal already in repo |
 
-Events are immutable, so we version the schema within the event data:
+### 8.6 Access Patterns
 
-```python
-@dataclass
-class PhaseCompleted(WorkflowEvent):
-    schema_version: int = 2  # Increment when structure changes
-    phase: str
-    agent: str
-    confidence: int
-    # v2 additions:
-    tokens_used: int = 0      # New field with default
-    duration_ms: int = 0      # New field with default
-```
-
-**2. Projection Rebuilding:**
-
-Since projections are derived from events, schema changes only affect the projection
-code. Old events are transformed on read:
-
-```python
-def _apply_event(self, state: WorkflowState, event: WorkflowEvent) -> WorkflowState:
-    match event:
-        case PhaseCompleted():
-            # Handle both v1 and v2 events
-            tokens = getattr(event, 'tokens_used', 0)  # Default for v1 events
-            ...
-```
-
-**3. Migration Script Pattern:**
-
-For breaking changes, run a one-time migration that re-serializes events:
-
-```bash
-# migration_20260115_add_tokens.py
-# - Read all events
-# - Add missing fields with defaults
-# - Write back (same PK/SK, just updated data)
-```
-
-**4. GSI Changes:**
-
-Adding new GSIs is safe (background build). Removing GSIs requires application
-changes first (stop querying the index before deletion).
-
-| Change Type | Strategy |
-|-------------|----------|
-| Add optional field | Default in code, no migration needed |
-| Add required field | Migration script to backfill |
-| Add GSI | Create async, no downtime |
-| Rename field | Dual-read period, then migration |
-| Remove field | Stop reading first, then ignore |
+| Pattern | Implementation |
+|---------|---------------|
+| Get phase result | `git show HEAD:.farmercode/issue-42/marie.json` |
+| Get history | `git log --oneline .farmercode/issue-42/` |
+| Check if phase done | Read journal, check `status.phase == "COMPLETED"` |
+| Rebuild state | CRD has current pointer, journal has last outcome |
 
 ---
 
-## 9. Event Sourcing
+## 9. Workflow State Machine
 
-### 9.1 Why Event Sourcing?
+### 9.1 Simplified State Model
 
-The state-based persistence model (storing `phase: planning`) has critical limitations:
+Instead of complex event sourcing, we use a simple state machine approach:
 
-| Issue | Impact |
-|-------|--------|
-| Lost history | "How did we get to this state?" is unanswerable |
-| No replay | Can't debug by replaying what happened |
-| Recovery gaps | If crash at T=5, what was state at T=4? |
-| Audit weakness | Compliance needs full trail, not snapshots |
-| Debugging nightmare | "Why did Baron produce this spec?" — no context |
+| Source of Truth | Purpose | Location |
+|----------------|---------|----------|
+| **CRD status** | Current workflow position | `spec.status.phase`, `spec.status.outcome` |
+| **Git Journal** | Phase execution history | `.farmercode/issue-{id}/{agent}.json` |
+| **Git artifacts** | Work products (code, specs) | Feature branch |
 
-**Event sourcing** stores the sequence of events that produced the state, enabling full replay and recovery:
+**Key insight:** Event replay would reconstruct workflow position but not artifacts (AI outputs
+are non-deterministic). Since we need Git for artifacts anyway, we store phase history there too
+and keep the CRD as the single pointer to "where are we now?"
 
-```
-State = fold(initialState, events)
-```
-
-### 9.2 Event Schema
+### 9.2 State Machine Definition
 
 ```python
-from dataclasses import dataclass
-from datetime import datetime
+from enum import Enum
 from typing import Literal
-from uuid import UUID
 
-@dataclass
-class WorkflowEvent:
-    event_id: UUID
-    issue_id: str
-    timestamp: datetime
-    version: int
-
-@dataclass
-class WorkflowCreated(WorkflowEvent):
-    repo: str
-    branch: str
-    issue_number: int
-    requested_by: str
-    agent_versions: dict[str, str]
-
-@dataclass
-class PhaseStarted(WorkflowEvent):
-    phase: str
-    agent: str
-    agent_version: str
-    input_context: dict
-
-@dataclass
-class PhaseCompleted(WorkflowEvent):
-    phase: str
-    agent: str
-    confidence: int
-    artifacts_created: list[str]
-    commit_sha: str
-    tokens_used: int
-    duration_ms: int
-
-@dataclass
-class PhaseFailed(WorkflowEvent):
-    phase: str
-    agent: str
-    error_code: str
-    error_message: str
-    retryable: bool
-
-@dataclass
-class PhaseInterrupted(WorkflowEvent):
-    """Logged when a phase is interrupted by pod termination (Section 11.7)."""
-    phase: str
-    agent: str
-    reason: str  # "pod_termination", "timeout", etc.
-
-@dataclass
-class EscalationRequested(WorkflowEvent):
-    agent: str
-    question: str
-    confidence: int
-    options: list[str]
-    github_comment_id: int
-
-@dataclass
-class EscalationResolved(WorkflowEvent):
-    agent: str
-    human_response: str
-    responded_by: str
-    response_time_ms: int
-
-@dataclass
-class AgentConsulted(WorkflowEvent):
-    """Logged when one agent consults another via A2A (Section 3.7)."""
-    from_agent: str          # Who asked
-    to_agent: str            # Who answered
-    skill: str               # A2A skill invoked (e.g., "clarify.architecture")
-    question: str            # The question asked
-    response: str            # The response received
-    confidence: int          # Consulted agent's confidence (0-100)
-    escalated_to_human: bool # Did the consulted agent escalate?
-    tokens_used: int
-    duration_ms: int
-
-@dataclass
-class FeedbackRequested(WorkflowEvent):
-    from_phase: str
-    to_phase: str
-    reason: str
-    feedback_details: dict
-
-@dataclass
-class CommitCreated(WorkflowEvent):
-    commit_sha: str
-    files_changed: list[str]
-    agent: str
-    message: str
-
-@dataclass
-class WorkflowCompleted(WorkflowEvent):
-    total_duration_ms: int
-    total_tokens: int
-    phases_completed: int
-    escalations_count: int
-    feedback_loops_count: int
-
-@dataclass
-class WorkflowFailed(WorkflowEvent):
-    reason: str
-    failed_phase: str
-    recoverable: bool
-```
-
-### 9.3 Event Store Implementation
-
-```python
-from botocore.exceptions import ClientError
-
-class EventStore:
-    """Append-only event store backed by DynamoDB with optimistic concurrency."""
-
-    MAX_APPEND_RETRIES = 5
-
-    async def append(self, event: WorkflowEvent) -> int:
-        """
-        Append event with optimistic concurrency control.
-
-        Uses retry loop to handle race conditions where two processes attempt
-        to write the same version simultaneously. DynamoDB's conditional write
-        ensures exactly one succeeds; the other retries with an updated version.
-        """
-        for attempt in range(self.MAX_APPEND_RETRIES):
-            current_version = await self._get_current_version(event.issue_id)
-            new_version = current_version + 1
-
-            try:
-                await self.table.put_item(
-                    Item={
-                        'PK': f'issue#{event.issue_id}',
-                        'SK': f'event#{str(new_version).zfill(8)}',
-                        'event_type': event.__class__.__name__,
-                        'version': new_version,
-                        'timestamp': event.timestamp.isoformat(),
-                        'data': self._serialize_event(event),
-                    },
-                    ConditionExpression='attribute_not_exists(SK)'
-                )
-                return new_version
-            except ClientError as e:
-                if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
-                    # Another process wrote first — retry with fresh version
-                    if attempt < self.MAX_APPEND_RETRIES - 1:
-                        continue
-                    raise EventStoreConflictError(
-                        f"Failed to append event after {self.MAX_APPEND_RETRIES} attempts"
-                    ) from e
-                raise
-
-        raise EventStoreConflictError("Unreachable: retry loop exhausted")
-
-    async def _get_current_version(self, issue_id: str) -> int:
-        """Get the latest event version for an issue."""
-        response = await self.table.query(
-            KeyConditionExpression=Key('PK').eq(f'issue#{issue_id}') &
-                                  Key('SK').begins_with('event#'),
-            ScanIndexForward=False,  # Descending order
-            Limit=1
-        )
-        if response['Items']:
-            return response['Items'][0]['version']
-        return 0
-
-    async def get_events(
-        self,
-        issue_id: str,
-        from_version: int = 0,
-        event_types: list[str] | None = None
-    ) -> list[WorkflowEvent]:
-        """Retrieve events for replay or projection.
-
-        Args:
-            issue_id: The issue to get events for
-            from_version: Only return events with version > from_version
-            event_types: Optional list of event type names to filter by
-        """
-        # Build key condition - use version range if from_version specified
-        if from_version > 0:
-            key_condition = (
-                Key('PK').eq(f'issue#{issue_id}') &
-                Key('SK').gt(f'event#{str(from_version).zfill(8)}')
-            )
-        else:
-            key_condition = (
-                Key('PK').eq(f'issue#{issue_id}') &
-                Key('SK').begins_with('event#')
-            )
-
-        response = await self.table.query(KeyConditionExpression=key_condition)
-        events = [self._deserialize_event(item) for item in response['Items']]
-
-        # Filter by event types if specified
-        if event_types:
-            events = [e for e in events if e.__class__.__name__ in event_types]
-
-        return events
-```
-
-> **Optimistic Concurrency:** The append operation uses a retry loop to handle race
-> conditions. If two processes try to write the same version, DynamoDB's conditional
-> write ensures exactly one succeeds. The losing process catches `ConditionalCheckFailedException`,
-> re-reads the current version, and retries. After 5 failed attempts, it raises an error
-> for investigation (indicates severe contention or a bug).
-
-### 9.4 State Projection
-
-```python
-@dataclass
-class WorkflowState:
-    """Current state computed from events."""
-    issue_id: str
-    status: Literal["pending", "running", "paused", "completed", "failed"]
-    current_phase: str | None
-    phases_completed: list[str]
-    last_commit_sha: str | None
-    pending_escalation: dict | None
-    pending_feedback: dict | None
-    total_tokens: int
-    # Error fields (populated from WorkflowFailed event)
-    error: str | None = None
-    error_code: str | None = None
-    failed_phase: str | None = None
-
-class WorkflowProjection:
-    """Projects events into current state."""
-
-    async def get_state(self, issue_id: str) -> WorkflowState:
-        events = await self.event_store.get_events(issue_id)
-        state = WorkflowState.initial(issue_id)
-        for event in events:
-            state = self._apply_event(state, event)
-        return state
-
-    def _apply_event(self, state: WorkflowState, event: WorkflowEvent) -> WorkflowState:
-        match event:
-            case PhaseCompleted():
-                return replace(state,
-                    phases_completed=[*state.phases_completed, event.phase],
-                    last_commit_sha=event.commit_sha,
-                    total_tokens=state.total_tokens + event.tokens_used,
-                )
-            case EscalationRequested():
-                return replace(state, status="paused", pending_escalation={...})
-            case FeedbackRequested():
-                return replace(state, pending_feedback={...})
-            case WorkflowFailed():
-                return replace(state,
-                    status="failed",
-                    error=event.reason,
-                    error_code=getattr(event, 'error_code', None),
-                    failed_phase=event.failed_phase,
-                )
-            case WorkflowCompleted():
-                return replace(state, status="completed")
-            # ... other event handlers
-```
-
-### 9.5 Crash Recovery
-
-```python
-class IssueOrchestrator:
-    async def run(self):
-        """Run workflow with automatic recovery."""
-        state = await self.projection.get_state(self.issue_id)
-
-        if state.status == "completed":
-            return
-
-        if state.pending_escalation:
-            await self._wait_for_escalation(state.pending_escalation)
-            state = await self.projection.get_state(self.issue_id)
-
-        phases_to_run = [p for p in self.phases if p not in state.phases_completed]
-        for phase in phases_to_run:
-            await self._run_phase(phase)
-```
-
-### 9.6 State Model Clarification
-
-There are three distinct "states" in the system:
-
-| State Type | Location | Purpose | Replay? |
-|------------|----------|---------|---------|
-| **Workflow position** | DynamoDB events + projection | "Where are we in the pipeline?" | Yes (for audit) |
-| **Work product** | Git worktree | "What did agents produce?" | No (AI non-deterministic) |
-| **Conversation history** | DynamoDB conversations | "What was discussed?" | No (context only) |
-
-**Key insight:** Event replay reconstructs **workflow position** (which phases completed,
-what confidence scores were), not the actual **artifacts** (code, specs). The artifacts
-live in Git, and replaying events wouldn't reproduce them anyway because AI outputs are
-non-deterministic.
-
-**Projection vs Replay:**
-- **Normal operations:** Read `projection#current_state` directly (fast)
-- **Audit/debugging:** Replay events to see full history (slow but complete)
-
-The projection is updated after each event, so there's no need to replay events for
-normal workflow operations.
-
----
-
-## 10. Feedback Loops
-
-### 10.1 The Problem with Linear Pipelines
-
-A linear workflow assumes everything succeeds first time:
-
-```
-Baron(specify) → Baron(plan) → Baron(tasks) → Marie(tests) → Dede(code) → Marie(verify) → Review → Done
-```
-
-In reality, software development is iterative:
-
-| Scenario | Required Handling |
-|----------|-------------------|
-| Reviewer finds security issue | Loop back to Dede or Baron |
-| Tests fail in verify phase | Loop back to Dede |
-| Dede discovers spec is ambiguous | Loop back to Baron |
-| Plan is too complex mid-implementation | Revise plan |
-
-### 10.2 State Machine Model
-
-```
-┌────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                │
-│   SPECIFY ──▶ PLAN ──▶ TASKS ──▶ TEST_DESIGN ──▶ IMPLEMENT ──▶ VERIFY ──▶ REVIEW
-│      ▲          ▲                                    ▲           │         │   │
-│      │          │         feedback:plan_infeasible   │           │         │   │
-│      │          └────────────────────────────────────┤           │         │   │
-│      │                                               │           │         │   │
-│      │          feedback:spec_ambiguity              │           │         │   │
-│      └───────────────────────────────────────────────┤           │         │   │
-│                                                      │           │         │   │
-│                         feedback:test_failure        │           │         │   │
-│                         ─────────────────────────────┴───────────┘         │   │
-│                                                                            │   │
-│                         feedback:minor_changes                             │   │
-│                         ◀──────────────────────────────────────────────────┘   │
-│                                                                                │
-└────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 10.3 Workflow Definition with Feedback Edges
-
-```python
 class Phase(str, Enum):
     SPECIFY = "specify"
     PLAN = "plan"
@@ -2996,111 +2820,286 @@ class Phase(str, Enum):
     TEST_DESIGN = "test_design"
     IMPLEMENT = "implement"
     VERIFY = "verify"
-    DOCS_QA = "docs_qa"
     REVIEW = "review"
-    RELEASE_STAGING = "release_staging"
-    RELEASE_PROD = "release_prod"
+    MERGE = "merge"
+    AWAIT_STAGING = "await_staging"
+    AWAIT_PROD = "await_prod"
     RETRO = "retro"
     DONE = "done"
 
+class Outcome(str, Enum):
+    PASS = "pass"           # Phase succeeded, advance to next
+    REJECT = "reject"       # Phase failed, rewind to SPECIFY
+    WAITING_FOR_CI = "waiting_for_ci"  # Hibernating until Town Crier wakes us
+
+# Linear phase order (happy path)
+PHASE_ORDER = [
+    Phase.SPECIFY, Phase.PLAN, Phase.TASKS, Phase.TEST_DESIGN,
+    Phase.IMPLEMENT, Phase.VERIFY, Phase.REVIEW, Phase.MERGE,
+    Phase.AWAIT_STAGING, Phase.AWAIT_PROD, Phase.RETRO, Phase.DONE
+]
+```
+
+### 9.3 Outcome-Based Transitions
+
+The state machine uses a simple outcome-based model:
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  SPECIFY ──▶ PLAN ──▶ TASKS ──▶ TEST_DESIGN ──▶ IMPLEMENT ──▶ VERIFY    │
+│     ▲                                                            │       │
+│     │                                                            ▼       │
+│     │          ◀─────────── outcome: REJECT ◀────────────── REVIEW      │
+│     │                                                            │       │
+│     │                                                   outcome: PASS    │
+│     │                                                            ▼       │
+│     │                                                         MERGE      │
+│     │                                                            │       │
+│     │                                                            ▼       │
+│     │                                                    AWAIT_STAGING   │
+│     │                                                 (hibernate)  │     │
+│     │                                         ◀─ Town Crier wakes  │     │
+│     │          ◀─────────── outcome: REJECT ◀────────────────────┘      │
+│     │                                                            │       │
+│     │                                                            ▼       │
+│     │                                                     AWAIT_PROD     │
+│     │                                                 (hibernate)  │     │
+│     │                                         ◀─ Town Crier wakes  │     │
+│     │          ◀─────────── outcome: REJECT ◀────────────────────┘      │
+│     │                                                            │       │
+│     │                                                            ▼       │
+│     └──────────────────────────────────────────────────────── RETRO ───▶ DONE
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Decision logic:**
+
+```python
+def next_phase(current: Phase, outcome: Outcome, rewind_count: int) -> Phase | None:
+    """Determine next phase based on outcome."""
+    MAX_REWINDS = 5
+
+    match outcome:
+        case Outcome.PASS:
+            # Advance to next phase in linear order
+            idx = PHASE_ORDER.index(current)
+            if idx + 1 < len(PHASE_ORDER):
+                return PHASE_ORDER[idx + 1]
+            return None  # Done
+
+        case Outcome.REJECT:
+            if rewind_count >= MAX_REWINDS:
+                return None  # Escalate to human
+            # Always rewind to SPECIFY with rejection reason
+            return Phase.SPECIFY
+
+        case Outcome.WAITING_FOR_CI:
+            # Stay in current phase, hibernate
+            return current
+```
+
+### 9.4 Rewind Mechanics
+
+On `outcome: REJECT`, the workflow rewinds to SPECIFY phase. The rejection reason becomes
+the new feature description, creating a self-correcting loop:
+
+```python
 @dataclass
-class Transition:
-    from_phase: Phase
-    to_phase: Phase
-    trigger: str  # "success", "feedback:test_failure", etc.
-    condition: Callable | None = None
-    priority: int = 0
+class RewindContext:
+    """Context passed to SPECIFY when rewinding."""
+    original_feature: str           # Original issue description
+    rejection_reason: str           # Why we were rejected
+    rejected_at_phase: str          # Where rejection occurred
+    rewind_attempt: int             # 1, 2, 3... (max 5)
+    previous_artifacts: list[str]   # Commits from prior attempts
 
-SDLC_WORKFLOW = WorkflowDefinition(
-    transitions=[
-        # Happy path (matches Section 3.5 diagram)
-        Transition(Phase.SPECIFY, Phase.PLAN, "success"),
-        Transition(Phase.PLAN, Phase.TASKS, "success"),
-        Transition(Phase.TASKS, Phase.TEST_DESIGN, "success"),
-        Transition(Phase.TEST_DESIGN, Phase.IMPLEMENT, "success"),
-        Transition(Phase.IMPLEMENT, Phase.VERIFY, "success"),
-        Transition(Phase.VERIFY, Phase.DOCS_QA, "success"),
-        Transition(Phase.DOCS_QA, Phase.REVIEW, "success"),
-        Transition(Phase.REVIEW, Phase.RELEASE_STAGING, "success"),
-        Transition(Phase.RELEASE_STAGING, Phase.RELEASE_PROD, "success"),
-        Transition(Phase.RELEASE_PROD, Phase.RETRO, "success"),
-        Transition(Phase.RETRO, Phase.DONE, "success"),
+def create_rewind_prompt(ctx: RewindContext) -> str:
+    """Create the prompt for the SPECIFY phase on rewind."""
+    return f"""
+    Original Feature: {ctx.original_feature}
 
-        # Feedback loops (from Section 3.5)
-        Transition(Phase.REVIEW, Phase.IMPLEMENT, "feedback:minor_changes", priority=10),
-        Transition(Phase.REVIEW, Phase.PLAN, "feedback:architectural_rework", priority=10),
-        Transition(Phase.VERIFY, Phase.IMPLEMENT, "feedback:test_failure", priority=10),
-        Transition(Phase.DOCS_QA, Phase.IMPLEMENT, "feedback:docs_inconsistent", priority=10),
-        Transition(Phase.IMPLEMENT, Phase.SPECIFY, "feedback:spec_ambiguity", priority=10),
-        Transition(Phase.IMPLEMENT, Phase.PLAN, "feedback:plan_infeasible", priority=10),
-    ],
-    max_feedback_loops=5,
-)
+    Previous Attempt #{ctx.rewind_attempt} was REJECTED at {ctx.rejected_at_phase}.
+
+    Rejection Reason: {ctx.rejection_reason}
+
+    Please re-specify this feature addressing the rejection reason.
+    """
 ```
 
-### 10.4 Infinite Loop Protection
+### 9.5 Hibernation States
 
-Loop counts are derived from the event store (FeedbackRequested events), not stored
-in memory. This ensures counts survive pod restarts and are always accurate.
+Two phases involve hibernation while waiting for CI/CD:
 
-```python
-class FeedbackLoopProtection:
-    def __init__(
-        self,
-        event_store: EventStore,
-        issue_id: str,
-        max_total_loops: int = 5,
-        max_same_transition: int = 2,
-    ):
-        self.event_store = event_store
-        self.issue_id = issue_id
-        self.max_total_loops = max_total_loops
-        self.max_same_transition = max_same_transition
+| Phase | Trigger | Wake Condition | Mechanism |
+|-------|---------|----------------|-----------|
+| `AWAIT_STAGING` | ArgoCD deploys to staging | Staging smoke tests pass | Town Crier annotation |
+| `AWAIT_PROD` | Manual approval + deploy | Production verification | Town Crier annotation |
 
-    async def check_transition(self, from_phase: str, to_phase: str, reason: str) -> bool:
-        """Check if transition is allowed based on event history."""
-        # Count from events — survives pod restarts
-        feedback_events = await self.event_store.get_events(
-            self.issue_id,
-            event_types=["FeedbackRequested"]
-        )
+During hibernation:
+1. Orchestrator pod scales to 0 replicas
+2. CRD status shows `outcome: WAITING_FOR_CI`
+3. No compute costs incurred
+4. Town Crier wakes the orchestrator when deployment succeeds
 
-        total_loops = len(feedback_events)
-        if total_loops >= self.max_total_loops:
-            return False
+### 9.6 CRD Status Schema
 
-        transition_key = f"{from_phase}->{to_phase}:{reason}"
-        same_transition_count = sum(
-            1 for e in feedback_events
-            if f"{e.from_phase}->{e.to_phase}:{e.reason}" == transition_key
-        )
-        if same_transition_count >= self.max_same_transition:
-            return False
-
-        return True
+```yaml
+apiVersion: farmercode.io/v1
+kind: IssueWorkflow
+metadata:
+  name: issue-42
+  annotations:
+    farmercode.io/wake: "true"  # Set by Town Crier to wake
+spec:
+  repo: "farmer1st/myapp"
+  issue_number: 42
+status:
+  phase: "await_staging"
+  outcome: "waiting_for_ci"
+  rewind_count: 0
+  last_agent: "vauban"
+  last_job_id: "job-abc123"
+  hibernating_since: "2026-01-09T10:30:00Z"
+  history:
+    - phase: "specify"
+      outcome: "pass"
+      agent: "baron"
+      completed_at: "2026-01-09T09:00:00Z"
+    - phase: "plan"
+      outcome: "pass"
+      agent: "baron"
+      completed_at: "2026-01-09T09:15:00Z"
+    # ... etc
 ```
 
-> **Why derive from events?** The orchestrator pod may restart during a long-running
-> workflow. By counting FeedbackRequested events from the event store, we ensure loop
-> protection is crash-consistent. The event store is the single source of truth.
+### 9.7 Comparison: Event Sourcing vs State Machine
 
-### 10.5 GitHub Notifications
+| Aspect | Event Sourcing (Old) | State Machine (New) |
+|--------|---------------------|---------------------|
+| **Complexity** | High (event store, projections, replay) | Low (CRD + journal files) |
+| **Infrastructure** | DynamoDB required | Just Kubernetes + Git |
+| **Recovery** | Replay events | Read CRD status, resume |
+| **Audit trail** | Event stream | Git commit history |
+| **Debugging** | Query event store | Read journal files |
+| **Cost** | DynamoDB on-demand pricing | Zero (Git is free) |
+
+The simplified approach trades some flexibility (no arbitrary replay) for dramatically
+reduced complexity and infrastructure requirements.
+
+---
+
+## 10. Self-Healing Rewind
+
+### 10.1 Simplified Feedback Model
+
+Instead of complex targeted feedback loops (spec ambiguity → SPECIFY, test failure → IMPLEMENT),
+we use a simple universal rewind:
+
+**Any REJECT → Rewind to SPECIFY**
+
+| Old Model (Complex) | New Model (Simple) |
+|--------------------|-------------------|
+| `VERIFY → IMPLEMENT` on test failure | `REJECT → SPECIFY` |
+| `REVIEW → PLAN` on architectural issue | `REJECT → SPECIFY` |
+| `IMPLEMENT → SPECIFY` on spec ambiguity | `REJECT → SPECIFY` |
+| Targeted transitions, complex routing | Single rewind target |
+
+### 10.2 Why Always SPECIFY?
+
+1. **Simplicity**: One rule is easier to implement and debug
+2. **Context accumulation**: Each rewind includes the full rejection reason
+3. **Self-correcting**: Baron can adjust the spec based on what failed downstream
+4. **Predictable**: No complex state machine with multiple back-edges
+
+The rejection reason carries all context needed:
+
+```
+Rejection at VERIFY: "Tests fail because spec didn't account for edge case X"
+→ Baron rewrites spec to handle edge case X
+→ Full pipeline re-runs with improved spec
+```
+
+### 10.3 Rewind Loop Protection
+
+Maximum 5 rewind attempts before human escalation:
 
 ```python
-async def post_feedback_comment(issue_number: int, from_phase: str, to_phase: str, result: PhaseResult):
+async def handle_rejection(
+    crd: IssueWorkflow,
+    rejected_phase: str,
+    rejection_reason: str
+) -> str:
+    """Handle REJECT outcome from any phase."""
+    MAX_REWINDS = 5
+
+    rewind_count = crd.status.rewind_count + 1
+
+    if rewind_count > MAX_REWINDS:
+        # Too many failures — escalate to human
+        await github.post_comment(
+            crd.spec.issue_number,
+            f"## ⚠️ Human Intervention Required\n\n"
+            f"Workflow failed {MAX_REWINDS} times. "
+            f"Last rejection at **{rejected_phase}**: {rejection_reason}\n\n"
+            f"Please review and provide guidance."
+        )
+        return "escalated"
+
+    # Create rewind context
+    rewind_context = {
+        "original_feature": crd.spec.feature_description,
+        "rejection_reason": rejection_reason,
+        "rejected_at_phase": rejected_phase,
+        "rewind_attempt": rewind_count,
+    }
+
+    # Update CRD and rewind to SPECIFY
+    await update_crd_status(
+        crd.metadata.name,
+        phase="specify",
+        outcome=None,
+        rewind_count=rewind_count,
+        rewind_context=rewind_context
+    )
+
+    return "rewinding"
+```
+
+### 10.4 GitHub Notifications
+
+```python
+async def post_rewind_comment(
+    issue_number: int,
+    rejected_phase: str,
+    rejection_reason: str,
+    rewind_attempt: int
+):
     comment = f"""
-## 🔄 Feedback Loop Detected
+## 🔄 Workflow Rewinding (Attempt {rewind_attempt}/5)
 
-**From:** `{from_phase}` → **To:** `{to_phase}`
-**Reason:** {result.feedback_type}
+**Rejected at:** `{rejected_phase}`
+**Reason:** {rejection_reason}
 
-### Suggested Changes
-{chr(10).join(f"- {change}" for change in result.suggested_changes)}
-
-*Workflow is automatically retrying.*
+The workflow is automatically restarting from SPECIFY to address this issue.
 """
     await github.post_comment(issue_number, comment)
 ```
+
+### 10.5 Comparison: Complex vs Simple
+
+| Aspect | Complex Feedback Loops | Simple Rewind |
+|--------|----------------------|---------------|
+| **Transitions** | N×M possible edges | Always → SPECIFY |
+| **Decision logic** | Which phase to target? | None needed |
+| **Context** | Partial (phase-specific) | Full (rejection reason) |
+| **Recovery** | Resume mid-pipeline | Full re-run |
+| **Debugging** | "Why did it go to PLAN?" | "It rewound to SPECIFY" |
+| **Implementation** | Complex routing table | One `if` statement |
+
+The tradeoff: More compute (full re-run) for dramatically simpler implementation.
+Since agent costs dominate and full re-runs are rare, this is acceptable.
 
 ---
 
