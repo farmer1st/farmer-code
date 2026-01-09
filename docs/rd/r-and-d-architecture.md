@@ -1,6 +1,6 @@
 # Farmer1st Architecture Proposal
 
-**Version:** 0.3.16-draft
+**Version:** 0.3.17-draft
 **Status:** R&D Discussion
 **Last Updated:** 2026-01-09
 
@@ -95,6 +95,222 @@ Key design principles:
 | Operator | Kubernetes operator for issue lifecycle | Python (kopf) |
 | Persistence | Workflow state, conversations, training data | DynamoDB |
 | Observability | Metrics, traces, logs | OpenTelemetry, Grafana |
+
+### 1.2 Monorepo Structure (Apps Built by Farmer Code)
+
+**Foundational Decision**: Farmer Code builds **monorepo applications** containing all code, infrastructure, and deployment manifests in a single repository. This is non-negotiable for AI-first development.
+
+**Why Monorepo?**
+
+| Aspect | Benefit |
+|--------|---------|
+| AI reasoning | Agent sees entire codebase — atomic changes across services, apps, infra |
+| Demo capability | Clone one repo, run `docker compose up` — full stack running |
+| Atomic PRs | Single PR for feature: code + tests + infra + gitops |
+| Simplified onboarding | One repo to clone, one set of patterns to learn |
+| Refactoring | Rename/move across boundaries in single commit |
+
+**Canonical Directory Structure:**
+
+```
+my-app/                                 # Single monorepo per application
+│
+├── apps/                               # Frontend applications
+│   ├── web/                            # Main web PWA (React + Vite)
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   ├── pages/
+│   │   │   ├── hooks/
+│   │   │   └── main.tsx
+│   │   ├── public/
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   └── Dockerfile
+│   │
+│   └── admin/                          # Admin portal (if needed)
+│       └── ...
+│
+├── services/                           # Backend services (domain-organized)
+│   │
+│   ├── [domain]/                       # e.g., user-management, surveys, payments
+│   │   ├── bff/                        # Backend-for-Frontend (optional, GraphQL)
+│   │   │   ├── src/
+│   │   │   │   ├── api/
+│   │   │   │   ├── core/
+│   │   │   │   └── main.py
+│   │   │   ├── tests/
+│   │   │   │   ├── unit/
+│   │   │   │   ├── integration/
+│   │   │   │   └── contract/
+│   │   │   ├── Dockerfile
+│   │   │   └── pyproject.toml
+│   │   │
+│   │   ├── auth-service/               # Domain services
+│   │   │   ├── src/
+│   │   │   ├── tests/
+│   │   │   ├── Dockerfile
+│   │   │   └── pyproject.toml
+│   │   │
+│   │   └── profile-service/
+│   │       └── ...
+│   │
+│   ├── shared/                         # Cross-service shared code
+│   │   ├── src/
+│   │   │   ├── contracts/              # API contracts (Pydantic models)
+│   │   │   ├── clients/                # Service clients
+│   │   │   └── utils/
+│   │   └── pyproject.toml
+│   │
+│   └── tests/                          # Cross-service tests
+│       ├── e2e/
+│       ├── integration/
+│       └── contract/
+│
+├── packages/                           # Shared libraries
+│   ├── shared-types/                   # Cross-language types
+│   ├── api-clients/                    # Generated API clients
+│   └── ui-components/                  # Shared React components (shadcn/ui)
+│
+├── platform/                           # Platform service configs
+│   ├── supertokens/                    # Auth server config
+│   ├── openfga/                        # Authorization model
+│   └── temporal/                       # Workflow definitions (if used)
+│
+├── infra/                              # ALL infrastructure lives here
+│   │
+│   ├── terraform/                      # Infrastructure as Code
+│   │   ├── modules/                    # Reusable modules
+│   │   │   ├── vpc/
+│   │   │   ├── eks/
+│   │   │   ├── rds-postgresql/
+│   │   │   ├── elasticache-redis/
+│   │   │   └── s3-bucket/
+│   │   │
+│   │   └── environments/               # Environment-specific
+│   │       ├── dev/
+│   │       │   ├── main.tf
+│   │       │   ├── variables.tf
+│   │       │   └── terraform.tfvars
+│   │       ├── staging/
+│   │       └── prod/
+│   │
+│   ├── k8s/                            # GitOps manifests (Kustomize)
+│   │   ├── base/                       # Base manifests (shared)
+│   │   │   ├── [domain]/               # Per-domain services
+│   │   │   │   ├── deployment.yaml
+│   │   │   │   ├── service.yaml
+│   │   │   │   └── kustomization.yaml
+│   │   │   └── platform/               # Platform services
+│   │   │
+│   │   └── overlays/                   # Environment overlays
+│   │       ├── local/                  # Local k3d
+│   │       │   └── kustomization.yaml
+│   │       ├── dev/                    # Dev cluster
+│   │       │   ├── kustomization.yaml
+│   │       │   └── patches/
+│   │       ├── staging/
+│   │       └── prod/
+│   │
+│   └── docker/                         # Local dev containers
+│       ├── postgres/
+│       ├── redis/
+│       └── localstack/
+│
+├── tools/                              # Developer tooling
+│   ├── seed-data/                      # Demo/test data
+│   │   ├── scenarios/
+│   │   │   ├── demo-basic/
+│   │   │   └── demo-full/
+│   │   └── seed.py
+│   │
+│   └── scripts/
+│       ├── setup.sh
+│       ├── reset-db.sh
+│       └── generate-clients.sh
+│
+├── docs/                               # Documentation (MkDocs)
+│   ├── index.md
+│   ├── architecture/
+│   ├── api/
+│   └── guides/
+│
+├── specs/                              # Feature specifications (SpecKit)
+│   ├── 001-feature-name/
+│   │   ├── spec.md
+│   │   ├── plan.md
+│   │   └── tasks.md
+│   └── ...
+│
+├── .specify/                           # SpecKit framework
+│   ├── memory/
+│   │   └── constitution.md
+│   └── templates/
+│
+├── .github/                            # GitHub Actions
+│   └── workflows/
+│       ├── ci.yml
+│       ├── build-images.yml
+│       └── deploy.yml
+│
+├── docker-compose.yml                  # Full stack local dev
+├── docker-compose.override.yml         # Local overrides
+├── pyproject.toml                      # Python workspace root
+├── package.json                        # Node workspace root
+├── mkdocs.yml
+├── Makefile
+├── CLAUDE.md                           # AI instructions
+└── README.md
+```
+
+**Service Internal Structure** (consistent pattern):
+
+```
+service-name/
+├── src/
+│   ├── main.py                         # FastAPI entry point
+│   ├── api/                            # Endpoints
+│   │   ├── __init__.py
+│   │   ├── health.py
+│   │   └── [routes].py
+│   ├── core/                           # Business logic
+│   │   └── [domain].py
+│   ├── db/                             # Database (SQLAlchemy)
+│   │   ├── models.py
+│   │   └── repository.py
+│   └── clients/                        # External service clients
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── contract/
+│   └── e2e/
+├── Dockerfile
+├── pyproject.toml
+└── alembic/                            # Migrations (if DB)
+    └── versions/
+```
+
+**Key Conventions:**
+
+| Element | Convention | Example |
+|---------|------------|---------|
+| Domain folders | Kebab-case | `user-management`, `access-control` |
+| Services | Kebab-case | `auth-service`, `profile-service` |
+| Frontend apps | Kebab-case | `web`, `admin`, `mobile` |
+| Container images | `ghcr.io/farmer1st/{app}-{service}:sha-{commit}` | `ghcr.io/farmer1st/myapp-auth-service:sha-abc123` |
+| K8s namespaces | Domain-based | `user-management`, `surveys` |
+
+**What Lives Where:**
+
+| Content | Location | Managed By |
+|---------|----------|------------|
+| Application code | `apps/`, `services/` | Dede, Dali |
+| Shared libraries | `packages/` | Dede |
+| Terraform modules | `infra/terraform/modules/` | Gus |
+| Terraform envs | `infra/terraform/environments/` | Gus |
+| K8s base manifests | `infra/k8s/base/` | Gus |
+| K8s env overlays | `infra/k8s/overlays/{env}/` | Gus (via deploy PRs) |
+| Feature specs | `specs/` | Baron |
+| Documentation | `docs/` | Victor |
 
 ---
 
@@ -2004,31 +2220,55 @@ the workflow expects.
 
 ### 7.5 Release and Deployment Flow
 
-After code passes VERIFY phase and PR is merged to main, features flow through environment
-branches for deployment. This enables feature-scoped rollback and clear promotion gates.
+After code passes VERIFY phase and PR is merged to main, features flow through Kustomize
+overlays for deployment. This enables feature-scoped rollback and clear promotion gates.
 
-**Monorepo Context:**
-
-Farmer Code builds monorepo apps with this structure:
+**GitOps Structure** (see Section 1.2 for full monorepo layout):
 
 ```
-my-app/
-├── frontend/      → frontend:sha-abc123 (image)
-├── backend/       → backend:sha-def456 (image)
-├── worker/        → worker:sha-ghi789 (image)
-└── gitops/        → deployment manifests
-    ├── frontend/deployment.yaml
-    ├── backend/deployment.yaml
-    └── worker/deployment.yaml
+infra/k8s/
+├── base/                               # Shared manifests (all environments)
+│   ├── user-management/
+│   │   ├── auth-service/
+│   │   │   ├── deployment.yaml         # image: ${AUTH_SERVICE_IMAGE}
+│   │   │   ├── service.yaml
+│   │   │   └── kustomization.yaml
+│   │   └── profile-service/
+│   │       └── ...
+│   └── kustomization.yaml
+│
+└── overlays/                           # Environment-specific
+    ├── dev/
+    │   ├── kustomization.yaml          # patches, image tags for dev
+    │   └── patches/
+    │       └── auth-service-image.yaml # image: ghcr.io/.../auth-service:sha-abc123
+    ├── staging/
+    │   └── ...
+    └── prod/
+        └── ...
 ```
 
-**Environment Branches:**
+**ArgoCD Application per Environment:**
 
-```
-main                    # Source code, merged PRs
-├── env/dev            # GitOps: what's deployed to dev
-├── env/staging        # GitOps: what's deployed to staging
-└── env/prod           # GitOps: what's deployed to prod
+```yaml
+# ArgoCD watches different overlay paths
+- name: myapp-dev
+  source:
+    path: infra/k8s/overlays/dev
+  destination:
+    namespace: myapp-dev
+
+- name: myapp-staging
+  source:
+    path: infra/k8s/overlays/staging
+  destination:
+    namespace: myapp-staging
+
+- name: myapp-prod
+  source:
+    path: infra/k8s/overlays/prod
+  destination:
+    namespace: myapp-prod
 ```
 
 **Release Lifecycle:**
@@ -2040,54 +2280,61 @@ main                    # Source code, merged PRs
 │                                                                                  │
 │  1. Code Development (feature branch)                                            │
 │     └── Branch: feature/42-user-avatars                                          │
-│         ├── frontend/src/Avatar.tsx (changed)                                    │
-│         ├── backend/src/avatar.py (changed)                                      │
-│         └── worker/ (unchanged)                                                  │
+│         ├── apps/web/src/Avatar.tsx (changed)                                    │
+│         ├── services/user-management/profile-service/src/avatar.py (changed)    │
+│         └── services/payments/ (unchanged)                                       │
 │                                                                                  │
 │  2. Code PR Merged to Main                                                       │
 │     └── CI triggers:                                                             │
-│         ├── Build frontend:sha-abc123 (new)                                      │
-│         ├── Build backend:sha-def456 (new)                                       │
-│         └── Skip worker (no changes)                                             │
+│         ├── Build web:sha-abc123 (new)                                           │
+│         ├── Build profile-service:sha-def456 (new)                               │
+│         └── Skip payments services (no changes)                                  │
 │                                                                                  │
-│  3. GitOps PR for Dev Deployment                                                 │
-│     └── Branch: deploy/42-to-dev (from env/dev)                                  │
-│         └── Changes:                                                             │
-│             ├── gitops/frontend/deployment.yaml → image: frontend:sha-abc123     │
-│             └── gitops/backend/deployment.yaml → image: backend:sha-def456       │
+│  3. Deploy PR for Dev                                                            │
+│     └── Branch: deploy/42-to-dev (from main)                                     │
+│         └── Changes in infra/k8s/overlays/dev/:                                  │
+│             ├── kustomization.yaml (update image tags)                           │
+│             │   images:                                                          │
+│             │     - name: web                                                    │
+│             │       newTag: sha-abc123                                           │
+│             │     - name: profile-service                                        │
+│             │       newTag: sha-def456                                           │
 │                                                                                  │
-│     └── Merge to env/dev → ArgoCD syncs → Only frontend+backend redeploy         │
-│         (worker unchanged, ArgoCD does nothing to it)                            │
+│     └── Merge to main → ArgoCD syncs dev overlay → Only changed services deploy │
+│         (payments unchanged, ArgoCD does nothing to it)                          │
 │                                                                                  │
 │  4. Promote to Staging (after dev validation)                                    │
-│     └── Branch: deploy/42-to-staging (from env/staging)                          │
-│         └── Same image tags as dev (sha-abc123, sha-def456)                      │
+│     └── Branch: deploy/42-to-staging (from main)                                 │
+│         └── Changes in infra/k8s/overlays/staging/:                              │
+│             └── Same image tags as dev (sha-abc123, sha-def456)                  │
 │                                                                                  │
-│     └── Merge to env/staging → ArgoCD syncs → Only changed services deploy       │
+│     └── Merge to main → ArgoCD syncs staging overlay                             │
 │                                                                                  │
 │  5. Promote to Prod (after staging validation)                                   │
-│     └── Branch: deploy/42-to-prod (from env/prod)                                │
-│         └── Same image tags                                                      │
+│     └── Branch: deploy/42-to-prod (from main)                                    │
+│         └── Changes in infra/k8s/overlays/prod/:                                 │
+│             └── Same image tags                                                  │
 │                                                                                  │
-│     └── Merge to env/prod → ArgoCD syncs → Production deployment                 │
+│     └── Merge to main → ArgoCD syncs prod overlay → Production deployment        │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 **ArgoCD Behavior:**
 
-ArgoCD compares desired state (git) vs actual state (cluster). When a gitops commit only
-changes frontend and backend image tags:
+ArgoCD compares desired state (git) vs actual state (cluster). When an overlay update only
+changes web and profile-service image tags:
 
 | Service | Manifest Changed? | ArgoCD Action |
 |---------|-------------------|---------------|
-| frontend | Yes (new image tag) | Redeploy |
-| backend | Yes (new image tag) | Redeploy |
-| worker | No | No action |
+| web | Yes (new image tag) | Redeploy |
+| profile-service | Yes (new image tag) | Redeploy |
+| auth-service | No | No action |
+| payment-service | No | No action |
 
 This means:
 - **Deployment is surgical** — only affected services redeploy
-- **Rollback is feature-scoped** — reverting the gitops commit only affects services that were part of that feature
+- **Rollback is feature-scoped** — reverting the overlay changes only affects services that were part of that feature
 
 **Deployment Tracking (DynamoDB):**
 
@@ -2097,10 +2344,11 @@ class FeatureDeployment:
     """Track what's deployed where for rollback capability."""
     issue_id: str              # "42"
     environment: str           # "dev", "staging", "prod"
-    gitops_commit_sha: str     # Commit on env/dev that deployed this
-    previous_gitops_sha: str   # For easy rollback
-    services_changed: list[str]  # ["frontend", "backend"]
-    image_tags: dict[str, str]  # {"frontend": "sha-abc123", "backend": "sha-def456"}
+    commit_sha: str            # Commit on main that updated the overlay
+    previous_commit_sha: str   # For easy rollback
+    overlay_path: str          # "infra/k8s/overlays/dev"
+    services_changed: list[str]  # ["web", "profile-service"]
+    image_tags: dict[str, str]  # {"web": "sha-abc123", "profile-service": "sha-def456"}
     deployed_at: datetime
     deployed_by: str           # "gus" (agent) or "human:@john"
 ```
@@ -2110,9 +2358,9 @@ class FeatureDeployment:
 ```
 PK                     SK                              Attributes
 ─────────────────────────────────────────────────────────────────
-deploy#42             env#dev                         {gitops_sha, services, images, ...}
-deploy#42             env#staging                     {gitops_sha, services, images, ...}
-deploy#42             env#prod                        {gitops_sha, services, images, ...}
+deploy#42             env#dev                         {commit_sha, overlay_path, services, images, ...}
+deploy#42             env#staging                     {commit_sha, overlay_path, services, images, ...}
+deploy#42             env#prod                        {commit_sha, overlay_path, services, images, ...}
 deploy#43             env#dev                         {...}
 ```
 
@@ -2127,33 +2375,59 @@ deploy#43             env#dev                         {...}
 │       │                                                                          │
 │       ▼                                                                          │
 │  Gus looks up deployment record:                                                 │
-│    - gitops_commit_sha: "abc123"                                                 │
-│    - previous_gitops_sha: "xyz789"                                               │
-│    - services_changed: ["frontend", "backend"]                                   │
+│    - commit_sha: "abc123"                                                        │
+│    - previous_commit_sha: "xyz789"                                               │
+│    - overlay_path: "infra/k8s/overlays/dev"                                      │
+│    - services_changed: ["web", "profile-service"]                                │
 │       │                                                                          │
 │       ▼                                                                          │
 │  Gus creates revert PR:                                                          │
-│    Branch: rollback/42-from-dev (from env/dev)                                   │
-│    Changes: Revert commit abc123 (restores previous image tags)                  │
+│    Branch: rollback/42-from-dev (from main)                                      │
+│    Changes: Revert image tags in infra/k8s/overlays/dev/kustomization.yaml       │
 │       │                                                                          │
 │       ▼                                                                          │
-│  Merge to env/dev → ArgoCD syncs                                                 │
+│  Merge to main → ArgoCD syncs dev overlay                                        │
 │       │                                                                          │
 │       ▼                                                                          │
-│  Only frontend and backend roll back to previous versions                        │
-│  (worker unaffected — wasn't part of feature #42)                                │
+│  Only web and profile-service roll back to previous versions                     │
+│  (auth-service, payments unaffected — weren't part of feature #42)               │
 │                                                                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Kustomize Image Override Example:**
+
+```yaml
+# infra/k8s/overlays/dev/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  # Feature #42 deployment
+  - name: web
+    newName: ghcr.io/farmer1st/myapp-web
+    newTag: sha-abc123
+  - name: profile-service
+    newName: ghcr.io/farmer1st/myapp-profile-service
+    newTag: sha-def456
+  # Other services at their current versions
+  - name: auth-service
+    newName: ghcr.io/farmer1st/myapp-auth-service
+    newTag: sha-older123
 ```
 
 **Why This Design:**
 
 | Aspect | Benefit |
 |--------|---------|
-| **PRs for gitops** | Audit trail, review, easy revert (not direct commits) |
-| **Env branches** | Clear separation: env/dev, env/staging, env/prod |
+| **PRs for overlay changes** | Audit trail, review, easy revert (not direct commits) |
+| **Kustomize overlays** | DRY base manifests, env-specific patches |
+| **Single main branch** | All config on main, ArgoCD watches different paths |
 | **Feature-scoped deployment** | Only affected services deploy (ArgoCD is smart) |
-| **Feature-scoped rollback** | Revert one feature without affecting others |
+| **Feature-scoped rollback** | Revert overlay changes without affecting other features |
 | **Immutable image tags** | Same sha-abc123 flows dev → staging → prod |
 | **Deployment tracking** | Know exactly what's where, enable safe rollback |
 
@@ -2163,19 +2437,30 @@ The Gus (DevOps) agent handles all release operations:
 
 | Phase | Gus's Actions |
 |-------|---------------|
-| RELEASE_DEV | Create PR to env/dev, merge after CI passes |
-| RELEASE_STAGING | Create PR to env/staging after dev validation |
-| RELEASE_PROD | Create PR to env/prod after staging validation |
-| Rollback | Look up deployment record, create revert PR |
+| RELEASE_DEV | Update `infra/k8s/overlays/dev/` with new image tags, create PR |
+| RELEASE_STAGING | Update `infra/k8s/overlays/staging/` with same tags, create PR |
+| RELEASE_PROD | Update `infra/k8s/overlays/prod/` with same tags, create PR |
+| Rollback | Look up deployment record, revert overlay changes via PR |
 
 **Promotion Triggers:**
 
 | Trigger | Action |
 |---------|--------|
-| PR merge to main | Gus creates deploy PR to env/dev (automatic) |
-| Human approval | Gus creates deploy PR to env/staging |
-| Human approval | Gus creates deploy PR to env/prod |
-| Rollback request | Gus creates revert PR to target env |
+| PR merge to main (code) | Gus creates deploy PR updating `overlays/dev/` (automatic) |
+| Human approval | Gus creates deploy PR updating `overlays/staging/` |
+| Human approval | Gus creates deploy PR updating `overlays/prod/` |
+| Rollback request | Gus creates revert PR for target overlay |
+
+**Terraform vs GitOps Separation:**
+
+| Change Type | Location | Approval | Applied By |
+|-------------|----------|----------|------------|
+| App code | `apps/`, `services/` | Code review | CI/CD |
+| K8s manifests | `infra/k8s/overlays/` | Deploy PR | ArgoCD |
+| Infrastructure | `infra/terraform/` | Separate PR + human | Terraform (Atlantis or manual) |
+
+Terraform changes (VPC, RDS, EKS) follow a separate approval workflow and are not auto-applied.
+This separation ensures infrastructure changes get appropriate scrutiny.
 
 ---
 
