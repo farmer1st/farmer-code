@@ -1,6 +1,6 @@
 # Farmer1st Architecture Proposal
 
-**Version:** 0.3.17-draft
+**Version:** 0.3.18-draft
 **Status:** R&D Discussion
 **Last Updated:** 2026-01-09
 
@@ -3907,28 +3907,295 @@ jobs:
           directory: pwa/dist
 ```
 
-### 15.3 ArgoCD Image Updater
+### 15.3 ArgoCD Configuration
 
 ```yaml
-# argocd/apps/farmercode.yaml
+# ArgoCD Application per environment (not using Image Updater for Farmer Code apps)
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: farmercode
-  annotations:
-    argocd-image-updater.argoproj.io/image-list: |
-      api=ghcr.io/farmer1st/farmercode-api,
-      operator=ghcr.io/farmer1st/farmercode-operator,
-      runtime=ghcr.io/farmer1st/agent-runtime
-    argocd-image-updater.argoproj.io/api.update-strategy: latest
-    argocd-image-updater.argoproj.io/write-back-method: git
+  name: myapp-dev
 spec:
   source:
-    repoURL: https://github.com/farmer1st/farmer1st-gitops.git
-    path: apps/farmercode
+    repoURL: https://github.com/farmer1st/myapp.git
+    path: infra/k8s/overlays/dev
+    targetRevision: main
   destination:
     server: https://kubernetes.default.svc
-    namespace: farmercode
+    namespace: myapp-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+### 15.4 Branching Strategy and Farmer Code Integration
+
+**Foundational Principle**: Farmer Code automates the SDLC, but respects Git as the source of truth.
+All changes flow through PRs — agents never push directly to main (except for their feature branch work).
+
+**Branch Types:**
+
+```
+main                                    # Protected, requires PR
+├── feature/{issue-id}-{slug}          # Agent work happens here
+├── deploy/{issue-id}-to-{env}         # Overlay update PRs
+└── rollback/{issue-id}-from-{env}     # Rollback PRs
+```
+
+**Complete Flow: Issue to Production**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                        Issue #42: Add User Avatars — Complete Flow                       │
+├─────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                          │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 1: SPECIFICATION & PLANNING (Baron)                                       │    │
+│  │  Branch: feature/42-user-avatars (created from main)                             │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Baron creates branch → SPECIFY → PLAN → TASKS                                   │    │
+│  │  Commits: specs/042-user-avatars/spec.md, plan.md, tasks.md                      │    │
+│  │  Pushes to feature/42-user-avatars                                               │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 2: IMPLEMENTATION (Marie → Dede → Dali → Gus)                             │    │
+│  │  Branch: feature/42-user-avatars (continues)                                      │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Marie: TEST_DESIGN → writes test files                                          │    │
+│  │  Dede: IMPLEMENT backend → services/user-management/profile-service/...          │    │
+│  │  Dali: IMPLEMENT frontend → apps/web/src/components/Avatar.tsx                   │    │
+│  │  Gus: IMPLEMENT gitops → infra/k8s/base/user-management/... (if needed)          │    │
+│  │  Marie: VERIFY → runs tests, all pass                                            │    │
+│  │  Victor: DOCS_QA → updates docs/                                                 │    │
+│  │  General: REVIEW → code review pass                                              │    │
+│  │                                                                                  │    │
+│  │  All commits pushed to feature/42-user-avatars                                   │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 3: CODE PR TO MAIN                                                        │    │
+│  │  PR: feature/42-user-avatars → main                                              │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  General (or Gus) creates PR:                                                    │    │
+│  │    Title: "feat(#42): Add user avatars"                                          │    │
+│  │    Body: Summary of changes, test results, screenshots                           │    │
+│  │                                                                                  │    │
+│  │  CI runs: tests, lint, type check, build                                         │    │
+│  │  Human reviews (optional based on confidence)                                    │    │
+│  │  PR merged to main                                                               │    │
+│  │                                                                                  │    │
+│  │  CI triggers on main:                                                            │    │
+│  │    → Build ghcr.io/farmer1st/myapp-web:sha-abc123                                │    │
+│  │    → Build ghcr.io/farmer1st/myapp-profile-service:sha-def456                    │    │
+│  │    → Push to registry                                                            │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 4: RELEASE_DEV (Gus)                                                      │    │
+│  │  PR: deploy/42-to-dev → main                                                     │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Gus creates deploy/42-to-dev branch from main                                   │    │
+│  │  Gus updates infra/k8s/overlays/dev/kustomization.yaml:                          │    │
+│  │    images:                                                                       │    │
+│  │      - name: web                                                                 │    │
+│  │        newTag: sha-abc123                                                        │    │
+│  │      - name: profile-service                                                     │    │
+│  │        newTag: sha-def456                                                        │    │
+│  │                                                                                  │    │
+│  │  Gus creates PR, CI validates overlay syntax                                     │    │
+│  │  PR auto-merged (dev is automated)                                               │    │
+│  │                                                                                  │    │
+│  │  ArgoCD detects change to overlays/dev/ → syncs → deploys to dev cluster         │    │
+│  │  Gus records deployment in DynamoDB                                              │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 5: DEV VALIDATION                                                         │    │
+│  │  (Automated + Human)                                                             │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Automated: E2E tests run against dev environment                                │    │
+│  │  Human: Manual QA, stakeholder preview (optional)                                │    │
+│  │                                                                                  │    │
+│  │  If issues found → fix on feature branch → new PR → repeat from Phase 3          │    │
+│  │  If OK → human approves promotion to staging                                     │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 6: RELEASE_STAGING (Gus)                                                  │    │
+│  │  PR: deploy/42-to-staging → main                                                 │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Triggered by: Human approval (Slack command or GitHub comment)                  │    │
+│  │                                                                                  │    │
+│  │  Gus creates deploy/42-to-staging branch                                         │    │
+│  │  Gus updates infra/k8s/overlays/staging/kustomization.yaml                       │    │
+│  │    (same image tags as dev — immutable images)                                   │    │
+│  │                                                                                  │    │
+│  │  PR requires human approval                                                      │    │
+│  │  PR merged → ArgoCD syncs staging                                                │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 7: STAGING VALIDATION → RELEASE_PROD                                      │    │
+│  │  PR: deploy/42-to-prod → main                                                    │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Same pattern as staging:                                                        │    │
+│  │    - Human approval required                                                     │    │
+│  │    - Gus creates deploy/42-to-prod branch                                        │    │
+│  │    - Updates infra/k8s/overlays/prod/kustomization.yaml                          │    │
+│  │    - PR requires 2 approvals (stricter for prod)                                 │    │
+│  │    - Merge → ArgoCD syncs prod                                                   │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                           │                                              │
+│                                           ▼                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────┐    │
+│  │  PHASE 8: RETRO (Socrate)                                                        │    │
+│  ├─────────────────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                                  │    │
+│  │  Socrate analyzes the issue lifecycle:                                           │    │
+│  │    - Confidence scores, escalations, A2A conversations                           │    │
+│  │    - Proposes prompt/KB improvements                                             │    │
+│  │    - Creates PR to farmer1st-ai-agents repo                                      │    │
+│  │                                                                                  │    │
+│  │  Workflow complete, namespace fc-42 deleted                                      │    │
+│  │                                                                                  │    │
+│  └─────────────────────────────────────────────────────────────────────────────────┘    │
+│                                                                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Branch Protection Rules:**
+
+| Branch | Protection | Rationale |
+|--------|------------|-----------|
+| `main` | Require PR, CI pass, 1 approval (code), auto-merge OK for deploy PRs | Source of truth |
+| `feature/*` | None (agents work freely) | Agent workspace |
+| `deploy/*-to-dev` | CI pass only, auto-merge allowed | Fast iteration |
+| `deploy/*-to-staging` | CI pass, 1 human approval | QA gate |
+| `deploy/*-to-prod` | CI pass, 2 human approvals | Production safety |
+
+**Who Creates What:**
+
+| Branch/PR | Created By | Merged By |
+|-----------|------------|-----------|
+| `feature/{issue}-*` | Baron (at workflow start) | General (code PR) |
+| Code PR to main | General | Human or auto (if high confidence) |
+| `deploy/*-to-dev` | Gus | Auto-merge |
+| `deploy/*-to-staging` | Gus | Human |
+| `deploy/*-to-prod` | Gus | Human (2 approvals) |
+| `rollback/*` | Gus | Human |
+
+**Git Commit Conventions:**
+
+```
+# Feature branch commits (by agents)
+[Baron] specify: create spec for user avatars
+[Baron] plan: create implementation plan
+[Marie] test: add avatar component tests
+[Dede] feat: implement avatar upload endpoint
+[Dali] feat: add avatar component to profile page
+[Gus] infra: add avatar service deployment manifest
+[Victor] docs: update API documentation for avatars
+
+# Code PR title
+feat(#42): Add user avatars
+
+# Deploy PR title
+deploy(#42): Release user avatars to dev
+deploy(#42): Promote user avatars to staging
+deploy(#42): Release user avatars to prod
+
+# Rollback PR title
+rollback(#42): Revert user avatars from dev
+```
+
+**Farmer Code Workflow Phases vs Git Operations:**
+
+| Phase | Agent | Git Operation |
+|-------|-------|---------------|
+| SPECIFY | Baron | Commit to feature branch |
+| PLAN | Baron | Commit to feature branch |
+| TASKS | Baron | Commit to feature branch |
+| TEST_DESIGN | Marie | Commit to feature branch |
+| IMPLEMENT | Dede/Dali/Gus | Commits to feature branch |
+| VERIFY | Marie | Commit test results |
+| DOCS_QA | Victor | Commit to feature branch |
+| REVIEW | General | Create PR to main |
+| (CI) | — | Build images on main merge |
+| RELEASE_DEV | Gus | Create deploy PR, update overlay |
+| RELEASE_STAGING | Gus | Create deploy PR (human approval) |
+| RELEASE_PROD | Gus | Create deploy PR (2 approvals) |
+| RETRO | Socrate | PR to ai-agents repo |
+
+**Why No Direct Pushes to Main:**
+
+1. **Audit trail** — Every change has a PR with context
+2. **CI validation** — Tests run before merge
+3. **Rollback simplicity** — Revert a PR, not hunt for commits
+4. **Human gates** — Staging/prod require approval
+5. **Feature isolation** — Bad feature doesn't block others
+
+**Handling Concurrent Features:**
+
+```
+main ─────●─────────●─────────●─────────●─────────→
+          │         │         │         │
+          │    feature/42     │    feature/43
+          │    (avatars)      │    (notifications)
+          │         │         │         │
+          │         ▼         │         ▼
+          │    PR merged      │    PR merged
+          │         │         │         │
+          ▼         ▼         ▼         ▼
+    overlays/dev updated   overlays/dev updated
+    (avatars)              (notifications)
+```
+
+Each feature updates its own image tags in the overlay. ArgoCD handles the merge — if both
+features are deployed, both image tags are present. No conflicts because each service has
+its own image entry.
+
+**Rollback Scenario:**
+
+```
+Feature #42 broke prod. Rollback:
+
+1. Human: "/rollback #42 from prod"
+
+2. Gus looks up deployment record:
+   - commit_sha: "abc123" (the deploy commit)
+   - services: ["web", "profile-service"]
+   - previous tags: {"web": "sha-old1", "profile-service": "sha-old2"}
+
+3. Gus creates rollback/42-from-prod branch
+   - Reverts image tags in overlays/prod/kustomization.yaml
+
+4. PR created, requires 2 approvals (prod)
+
+5. Merge → ArgoCD syncs → services rolled back
+
+6. Feature #43 (notifications) unaffected — different services
 ```
 
 ---
