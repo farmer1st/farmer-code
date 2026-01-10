@@ -1,8 +1,10 @@
-# Farmer1st Architecture Proposal
+# Farmer Code Proposal
 
 **Version:** 0.4.0-draft
 **Status:** R&D Discussion
-**Last Updated:** 2026-01-09
+**Last Updated:** 2026-01-10
+
+> **Related:** For agent definitions, A2A protocol, and Chat Portal, see [agents-proposal.md](./agents-proposal.md).
 
 > **v0.4.0 Changes:** Simplified architecture - replaced DynamoDB with Git-Journaling,
 > replaced Event Sourcing with simple State Machine, added self-healing rewind (always
@@ -12,42 +14,45 @@
 
 ## Executive Summary
 
-This document proposes a unified architecture for the Farmer1st agent ecosystem, covering:
+**Farmer Code** is an SDLC automation system that uses AI agents to implement features
+from GitHub Issues. It orchestrates a workflow through phases: SPECIFY → PLAN → TASKS →
+TEST_DESIGN → IMPLEMENT → VERIFY → REVIEW → MERGE → RELEASE → RETRO.
 
-- **Farmer Code**: SDLC automation with AI agents (specify, plan, code, test, review)
-- **Agent Platform**: Reusable agents across multiple applications
-- **Future Chat Portal**: Direct human-agent interaction for KB management
+**Key characteristics:**
 
-Key design principles:
+- **Ephemeral agents**: Scale-to-zero, spawned per issue, destroyed on completion
+- **Git-Journaling**: Phase results stored in `.farmercode/issue-{id}/` (no DynamoDB)
+- **Self-healing rewind**: On REJECT at any phase, rewind to SPECIFY (max 5 attempts)
+- **Town Crier**: CI/CD wakes hibernating orchestrators after deployments
+- **Brain/Muscle nodes**: Reserved EC2 for infra, Spot for compute
 
-1. **Agents are independent, reusable units** - not tied to Farmer Code
-2. **GitHub is the source of truth** - agent definitions, KB, prompts all in Git
-3. **Local-first, cloud-ready** - same architecture runs on laptop or EKS
-4. **SDK abstraction** - swap Claude for another provider without rewrites
-5. **Human-in-the-loop** - confidence-based escalation with audit trail
+**What Farmer Code is NOT:**
+
+- Not a chat system (see Chat Portal in [agents-proposal.md](./agents-proposal.md))
+- Not an agent definition system (agents defined in `farmer1st-ai-agents` repo)
+- Not always-on (agents are ephemeral, scale to zero when idle)
 
 ---
 
 ## Table of Contents
 
 1. [System Overview](#1-system-overview)
-2. [Agent Architecture](#2-agent-architecture)
-3. [Farmer Code (SDLC App)](#3-farmer-code-sdlc-app)
-4. [Kubernetes Infrastructure](#4-kubernetes-infrastructure)
-5. [Agent Communication (A2A REST Binding)](#5-agent-communication-a2a-rest-binding)
-6. [Human Escalation](#6-human-escalation)
-7. [GitHub Integration](#7-github-integration)
-8. [Persistence (Git-Journaling)](#8-persistence-git-journaling)
-9. [Workflow State Machine](#9-workflow-state-machine)
-10. [Self-Healing Rewind](#10-self-healing-rewind)
-11. [Resilience Patterns](#11-resilience-patterns)
-12. [Why Custom Workflow Engine](#12-why-custom-workflow-engine)
-13. [Security](#13-security)
-14. [Testing Strategy](#14-testing-strategy)
-15. [CI/CD Pipeline](#15-cicd-pipeline)
-16. [Observability](#16-observability)
-17. [Future: Chat Portal](#17-future-chat-portal)
-18. [Open Questions](#18-open-questions)
+2. [Workflow & Phases](#2-workflow--phases)
+3. [Kubernetes Infrastructure](#3-kubernetes-infrastructure)
+4. [Orchestrator Loop](#4-orchestrator-loop)
+5. [Persistence (Git-Journaling)](#5-persistence-git-journaling)
+6. [Workflow State Machine](#6-workflow-state-machine)
+7. [Self-Healing Rewind](#7-self-healing-rewind)
+8. [Resilience Patterns](#8-resilience-patterns)
+9. [GitHub Integration](#9-github-integration)
+10. [Why Custom Workflow Engine](#10-why-custom-workflow-engine)
+11. [Security](#11-security)
+12. [Testing Strategy](#12-testing-strategy)
+13. [CI/CD Pipeline](#13-cicd-pipeline)
+14. [Observability](#14-observability)
+15. [Open Questions](#15-open-questions)
+
+**See also:** [agents-proposal.md](./agents-proposal.md) for Agent Architecture, A2A Protocol, Human Escalation, and Chat Portal.
 
 ---
 
@@ -443,357 +448,35 @@ nav:
 
 ## 2. Agent Architecture
 
-### 2.1 Agent Definitions Repository
+> **Moved to [agents-proposal.md](./agents-proposal.md)**
+>
+> Agent definitions, versioning, SDK abstraction, and A2A protocol are now documented
+> in the Agent Platform proposal. This section provides a brief summary for context.
 
-All agent definitions live in a single monorepo (`farmer1st-ai-agents`):
+**Key points:**
 
-```
-farmer1st-ai-agents/
-├── agents/
-│   │
-│   │  # Workflow Agents (participate in SDLC phases)
-│   ├── baron/                   # PM - specify, plan, tasks
-│   │   ├── agent-card.json      # A2A agent card
-│   │   ├── config.yaml          # Runtime configuration (incl. escalation target)
-│   │   ├── prompt.md            # System prompt
-│   │   ├── bio.md               # Agent persona
-│   │   ├── knowledge/           # KB files
-│   │   │   ├── 01-workflow.md
-│   │   │   └── 02-best-practices.md
-│   │   ├── skills/              # Skill definitions
-│   │   ├── mcp/                 # MCP server configs
-│   │   └── scripts/             # Custom scripts
-│   ├── marie/                   # QA - test design, verification
-│   ├── dede/                    # Backend developer
-│   ├── dali/                    # Frontend developer
-│   ├── gus/                     # DevOps - gitops, releases
-│   ├── victor/                  # Docs QA - consistency, product docs
-│   ├── general/                 # Code reviewer
-│   ├── socrate/                 # Retro analyst - learning loop, RAG
-│   │
-│   │  # Issue Creators & Consultants
-│   ├── veuve/                   # Product Owner - features, roadmap
-│   ├── duc/                     # Tech Owner - architecture, tech debt
-│   │
-│   │  # Human Bridges (deterministic, not AI)
-│   ├── human-product/           # Bridge to product human
-│   └── human-tech/              # Bridge to technical human
-│
-└── shared/
-    └── prompts/                 # Shared prompt fragments
-```
+- Agents defined in `farmer1st-ai-agents` repo (prompts, KB, skills, MCP configs)
+- Each agent has `config.yaml`, `prompt.md`, `agent-card.json`
+- A2A REST API: `POST /jobs`, `GET /jobs/{id}`
+- SDK abstraction allows provider swaps (Claude → OpenAI → local)
 
-**Agent config.yaml example:**
+**Farmer Code uses agents in ephemeral mode:**
 
-```yaml
-# agents/dede/config.yaml
-name: dede
-domain: backend
-escalation_target: human-tech
-skills:
-  - implement.backend
-  - document.api
-```
-
-### 2.2 Agent Card (Google A2A Protocol)
-
-We adopt the [Google A2A Protocol](https://github.com/google/A2A) — an open standard for agent-to-agent communication.
-Each agent publishes an agent card at `/.well-known/agent.json`:
-
-```json
-{
-  "name": "baron",
-  "description": "PM Agent - Creates specifications, plans, and task lists",
-  "url": "http://baron:8002",
-  "version": "2.1.0",
-  "capabilities": {
-    "streaming": true,
-    "pushNotifications": false,
-    "stateTransitionHistory": true
-  },
-  "skills": [
-    {
-      "id": "specify.feature",
-      "name": "Create Feature Specification",
-      "description": "Generate a feature specification from a natural language description",
-      "tags": ["specification", "planning"],
-      "inputModes": ["text"],
-      "outputModes": ["text", "file"]
-    },
-    {
-      "id": "specify.plan",
-      "name": "Create Implementation Plan",
-      "description": "Generate an implementation plan from a specification",
-      "tags": ["planning", "architecture"],
-      "inputModes": ["text", "file"],
-      "outputModes": ["text", "file"]
-    },
-    {
-      "id": "specify.tasks",
-      "name": "Generate Task List",
-      "description": "Generate actionable tasks from a plan",
-      "tags": ["tasks", "planning"],
-      "inputModes": ["text", "file"],
-      "outputModes": ["text", "file"]
-    }
-  ],
-  "defaultInputModes": ["text"],
-  "defaultOutputModes": ["text"],
-  "authentication": {
-    "schemes": ["bearer"]
-  }
-}
-```
-
-**A2A Protocol Compliance:**
-
-| A2A Feature | Support |
-|-------------|---------|
-| JSON-RPC 2.0 | Yes |
-| Agent discovery (`/.well-known/agent.json`) | Yes |
-| Task lifecycle states | Yes (`submitted`, `working`, `input-required`, `completed`, `failed`) |
-| SSE streaming | Yes (via `tasks/sendSubscribe`) |
-| Push notifications | Future |
-| gRPC | Future |
-
-### 2.3 Versioning Strategy
-
-**Per-agent semantic versioning with Git tags:**
-
-```
-baron@1.0.0
-baron@1.1.0
-baron@2.0.0
-duc@1.0.0
-duc@1.5.0
-marie@1.2.0
-```
-
-**Tag discovery via GitHub API:**
-
-```python
-def get_agent_versions(agent_name: str, limit: int = 5) -> list[str]:
-    """Fetch last N versions for an agent from GitHub tags."""
-    tags = github.list_tags(pattern=f"{agent_name}@*")
-    return sorted(tags, key=semver_key, reverse=True)[:limit]
-```
-
-### 2.4 SDK Abstraction Layer
-
-We use the **Claude Agent SDK** (`claude_agent_sdk` package), which leverages Claude Code's
-built-in OAuth authentication. **No API key is required** — authentication is handled
-via Claude Pro/Max subscription login.
-
-> **IMPORTANT:** Do NOT use the `anthropic` Python package with API keys. The Claude Agent
-> SDK provides a higher-level abstraction with built-in tools and MCP server support.
-> See `../sdk-agent-poc` for a working reference implementation.
-
-**Claude Agent SDK Pattern:**
-
-```python
-from claude_agent_sdk import (
-    ClaudeSDKClient,
-    ClaudeAgentOptions,
-    AssistantMessage,
-    ResultMessage,
-    TextBlock,
-    ToolUseBlock,
-    tool,
-    create_sdk_mcp_server,
-)
-
-# No API key needed — uses Claude Code's built-in OAuth authentication
-options = ClaudeAgentOptions(
-    allowed_tools=[
-        # Built-in tools
-        "Read", "Write", "Edit", "Glob", "Grep",  # File operations
-        "Bash",                                     # Shell commands
-        "WebSearch",                                # Web search
-        # Custom MCP tools
-        "mcp__custom-tools__my_tool",
-    ],
-    permission_mode="acceptEdits",
-    mcp_servers={"custom-tools": custom_tools_server},
-    system_prompt=AGENT_SYSTEM_PROMPT,
-    cwd="/path/to/worktree",
-)
-
-async with ClaudeSDKClient(options=options) as client:
-    await client.query("Your prompt here")
-    async for message in client.receive_response():
-        if isinstance(message, AssistantMessage):
-            for block in message.content:
-                if isinstance(block, TextBlock):
-                    print(block.text)
-                elif isinstance(block, ToolUseBlock):
-                    print(f"Using tool: {block.name}")
-```
-
-**Custom Tools via MCP:**
-
-```python
-from claude_agent_sdk import tool, create_sdk_mcp_server
-
-@tool("extract_confidence", "Extract confidence score from response", {"response": str})
-async def extract_confidence(args: dict) -> dict:
-    # Custom logic to determine confidence
-    confidence = analyze_confidence(args["response"])
-    return {"content": [{"type": "text", "text": str(confidence)}]}
-
-custom_tools_server = create_sdk_mcp_server(
-    name="agent-tools",
-    version="1.0.0",
-    tools=[extract_confidence, ...]
-)
-```
-
-**Abstraction for Future Providers:**
-
-```python
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-
-@dataclass
-class AgentResponse:
-    content: str
-    confidence: int  # 0-100
-    artifacts: list[dict]
-    status: str  # "completed", "input-required", "failed"
-
-class AgentRuntime(ABC):
-    """Abstract base for agent runtimes. Swap implementations without changing agents."""
-
-    @abstractmethod
-    async def invoke(self, prompt: str, context: dict, session_id: str) -> AgentResponse:
-        pass
-
-class ClaudeAgentRuntime(AgentRuntime):
-    """Implementation using Claude Agent SDK (OAuth, not API key)."""
-
-    def __init__(self, agent_config: dict, worktree_path: str):
-        self.config = agent_config
-        self.worktree_path = worktree_path
-        self.options = ClaudeAgentOptions(
-            allowed_tools=agent_config.get("allowed_tools", []),
-            system_prompt=agent_config.get("system_prompt", ""),
-            cwd=worktree_path,
-        )
-
-    async def invoke(self, prompt: str, context: dict, session_id: str) -> AgentResponse:
-        async with ClaudeSDKClient(options=self.options) as client:
-            await client.query(prompt)
-            # Process response and extract confidence...
-
-class FutureProviderRuntime(AgentRuntime):
-    """Future: OpenAI, Gemini, local models (would need API keys)."""
-    pass
-```
-
-### 2.5 Agent Pod Architecture
-
-**Pod-per-agent-per-issue (operator-injected):**
-
-The Kubernetes Operator (Section 4.3) spawns agent pods for each feature with a specific
-version defined in environment variables. Each pod loads only that version at startup—no
-multi-version caching or hot-reload complexity.
-
-**v1 Pod Lifecycle:**
-- Pods stay alive for the **entire feature duration** (including human escalation waits)
-- Pods terminate only when the issue workflow completes (success or failure)
-- Simple polling model for human input (see Section 6.1)
-
-**Future Enhancement:**
-- Stop-and-go pattern (Section 11.2) where pods checkpoint and exit during human waits
-- More resource-efficient but requires webhook infrastructure
-
-**Why pod-per-issue (not shared pools)?**
-
-| Shared Pools (rejected) | Pod-per-Feature (adopted) |
-|-------------------------|---------------------------|
-| Complex routing/affinity | Simple: one pod = one feature |
-| Session context leakage risk | Natural isolation via worktree |
-| Memory pressure from many sessions | Clean pod lifecycle |
-| Harder to debug | Clear lineage per issue |
-
-We considered shared agent pools for efficiency but chose pod-per-issue for v1 because:
-
-1. **Simplicity**: No complex routing or session affinity
-2. **Isolation**: Natural process + filesystem isolation via worktree
-3. **Cost**: EKS pods are cheap, and they're ephemeral (die on completion)
-4. **Debugging**: One pod = one feature = easy to trace
-
-> **Future Optimization:** If costs become significant at scale, migrate to shared
-> pools with worktree-based process isolation.
-
-```
-Namespace: fc-issue-auth-123/        # Ephemeral namespace per issue
-└── Pod: baron                        # Simple name within namespace
-    ├── Environment:
-    │   AGENT_NAME=baron
-    │   AGENT_VERSION=2.0.0
-    │   WORKTREE_PATH=/volumes/worktrees/issue-auth-123
-    │
-    ├── Startup:
-    │   1. Fetch baron@2.0.0 config from GitHub (single version)
-    │   2. Load config to /agent/config/
-    │   3. Ready to serve
-    │
-    └── Request handling:
-        POST /invoke (http://baron:8002 within namespace)
-        → Load config from /agent/config/ (pre-loaded at startup)
-        → Execute via SDK abstraction
-        → Return response with confidence score
-```
-
-**Why single-version pods?**
-
-| Multi-Version (rejected) | Single-Version (adopted) |
-|--------------------------|--------------------------|
-| Complex version routing | Simple: one pod = one version |
-| Memory overhead for cached versions | Minimal footprint |
-| Race conditions on refresh | Immutable after startup |
-| Harder to debug | Clear lineage per issue |
-
-**Pod lifecycle:**
-
-```python
-class AgentPod:
-    """Agent pod loads a single version at startup."""
-
-    def __init__(self):
-        self.agent_name = os.environ["AGENT_NAME"]
-        self.agent_version = os.environ["AGENT_VERSION"]
-        self.worktree_path = os.environ["WORKTREE_PATH"]
-        self.config = None
-
-    async def startup(self):
-        """Load agent config once at startup."""
-        self.config = await fetch_agent_config(
-            agent=self.agent_name,
-            version=self.agent_version,
-        )
-        # Claude Agent SDK uses OAuth from Claude Code — no API key needed
-        self.runtime = ClaudeAgentRuntime(
-            agent_config=self.config,
-            worktree_path=self.worktree_path,
-        )
-
-    @app.post("/invoke")
-    async def invoke(self, request: InvokeRequest, session_id: str = Header(...)):
-        """Invoke agent with pre-loaded config."""
-        return await self.runtime.invoke(
-            prompt=request.prompt,
-            context=request.context,
-            session_id=session_id,
-        )
-```
-
-When a new agent version is needed, the Operator terminates the old pod and spawns
-a new one with the updated `AGENT_VERSION` environment variable.
+| Aspect | Ephemeral (Farmer Code) | Permanent (Chat Portal) |
+|--------|------------------------|------------------------|
+| Namespace | `fc-{issue-id}` | `ai-agents` |
+| Lifecycle | Created/destroyed per issue | Always running |
+| Replicas | Scale-to-zero | Always 1+ |
+| Escalation | Enabled | Disabled |
+| Worktree | Mounted | None |
 
 ---
 
 ## 3. Farmer Code (SDLC App)
+
+> **Note:** Agent definitions, A2A protocol details, and SDK abstraction are in
+> [agents-proposal.md](./agents-proposal.md). This section focuses on the Farmer Code
+> workflow system that uses those agents.
 
 ### 3.1 Overview
 
@@ -4444,162 +4127,7 @@ async def invoke_agent(agent: str, version: str, prompt: str):
 
 ---
 
-## 17. Future: Chat Portal
-
-A separate application for direct human-agent interaction:
-
-### 17.1 Purpose
-
-- **Backlog refinement**: Chat with agents to refine issues before they're READY
-- **Issue creation**: Help humans articulate feature requests or bug reports
-- Chat with any agent (not just SDLC agents)
-- Update agent KB and prompts
-- Review/approve KB changes (commits to GitHub)
-- No worktree needed (not tied to issues)
-
-### 17.2 Backlog Refinement Flow
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                        Chat Portal: Backlog Refinement                           │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│  Human: "I want users to be able to reset their passwords"                       │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Chat Portal → Veuve (Product Owner)                                             │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Veuve: "Should this include email verification? What about SMS as fallback?"   │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Human: "Yes email, no SMS for now"                                              │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Veuve creates/updates GitHub Issue #123 with refined description               │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Human reviews issue, adds "READY" label when satisfied                          │
-│       │                                                                          │
-│       ▼                                                                          │
-│  Farmer Code workflow starts automatically                                       │
-│                                                                                  │
-└─────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 17.3 Architecture Differences
-
-| Aspect | Farmer Code | Chat Portal |
-|--------|-------------|-------------|
-| Namespace | `fc-{issue-id}` (ephemeral) | `ai-agents` (permanent) |
-| Agents | SDLC workflow agents | All agents (Veuve, Duc, future HR, FinOps) |
-| Pods | Ephemeral (per issue, deleted on completion) | Permanent (always running, shared) |
-| Escalation | Enabled | Disabled (human is already present) |
-| Worktree | Required | Not needed |
-| Context | Issue-scoped | User session-scoped |
-| Purpose | Execute workflow | Refine backlog, update KB, brainstorm, roadmap |
-
-**Same Image, Different Config:**
-
-Agents in both namespaces use the **same container image** (`ghcr.io/farmer1st/agent-runtime`).
-The only differences are environment variables:
-
-| Variable | Workflow (`fc-*`) | Chat Portal (`ai-agents`) |
-|----------|-------------------|---------------------------|
-| `ESCALATION_ENABLED` | `true` | `false` |
-| `WORKTREE_PATH` | `/volumes/worktrees/{issue}` | Not set |
-| `ISSUE_ID` | `{issue-id}` | Not set |
-
-**Why Duplicate Instead of Share?**
-
-| Option | Pros | Cons |
-|--------|------|------|
-| **Shared pools** | Lower cost (fewer pods) | Complex routing, session affinity, context leakage risk |
-| **Duplicate pods** | Simple isolation, no routing | Higher cost (more pods) |
-
-We choose **duplication for simplicity**. Cost optimization via shared pools can be
-explored later when scale justifies the added complexity. For now:
-
-- Each workflow gets its own isolated agent pods
-- Chat Portal has its own permanent agent pods
-- No cross-namespace communication needed
-- Easy to debug and reason about
-
-### 17.4 Permanent Agent Deployment
-
-Chat Portal agents live in the `ai-agents` namespace and are always running:
-
-```yaml
-# apps/chat-portal-agents.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: baron
-  namespace: ai-agents
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      agent: baron
-  template:
-    metadata:
-      labels:
-        agent: baron
-        app: chat-portal
-    spec:
-      containers:
-        - name: agent
-          image: ghcr.io/farmer1st/agent-runtime:latest
-          env:
-            - name: AGENT_NAME
-              value: baron
-            - name: AGENT_VERSION
-              value: "2.0.0"
-            - name: ESCALATION_ENABLED
-              value: "false"  # Human is present in chat
-          ports:
-            - containerPort: 8002
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: baron
-  namespace: ai-agents
-spec:
-  selector:
-    agent: baron
-  ports:
-    - port: 8002
-```
-
-**Service discovery:** Chat Portal backend (in `ai-agents` namespace) calls agents via simple names: `http://baron:8002` (see Section 5.5)
-
-### 17.5 MkDocs Integration (Concept)
-
-Custom MkDocs plugin for KB editing via chat:
-
-```
-User: "Update Baron's knowledge about our new API versioning strategy"
-       │
-       ▼
-Chat Portal → Baron agent (no escalation mode)
-       │
-       ▼
-Baron generates updated KB content
-       │
-       ▼
-Plugin creates PR to farmer1st-ai-agents repo
-       │
-       ▼
-User reviews/approves PR
-       │
-       ▼
-Merged → Agent picks up new version on next refresh
-```
-
----
-
-## 18. Open Questions
+## 17. Open Questions
 
 | # | Question | Options | Decision |
 |---|----------|---------|----------|
