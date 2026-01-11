@@ -1,0 +1,78 @@
+# GitHub Actions workflow for the echo middleware pattern
+# Deploy this to: farmer1st/farmer-code-tests/.github/workflows/middleware-echo.yml
+
+name: Middleware Echo
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  echo:
+    # Only run on issues with the 'middleware' label
+    if: contains(github.event.issue.labels.*.name, 'middleware')
+
+    runs-on: self-hosted
+
+    steps:
+      - name: Parse comment
+        id: parse
+        run: |
+          # Extract the comment body
+          COMMENT_BODY='${{ github.event.comment.body }}'
+
+          # Check if it's a JSON code block
+          if echo "$COMMENT_BODY" | grep -q '```json'; then
+            # Extract JSON from code block
+            JSON=$(echo "$COMMENT_BODY" | sed -n '/```json/,/```/p' | sed '1d;$d')
+          else
+            echo "Comment is not a JSON message, skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Parse the service field to check for loop prevention
+          SERVICE=$(echo "$JSON" | python3 -c "import sys, json; print(json.load(sys.stdin).get('service', ''))")
+
+          if [ "$SERVICE" = "responder" ]; then
+            echo "Message is from responder, skipping to prevent loop"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check message type
+          TYPE=$(echo "$JSON" | python3 -c "import sys, json; print(json.load(sys.stdin).get('type', ''))")
+
+          if [ "$TYPE" != "request" ]; then
+            echo "Message is not a request, skipping"
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Valid request message from sender, proceeding..."
+          echo "skip=false" >> $GITHUB_OUTPUT
+
+          # Store the JSON for the next step
+          echo "json<<EOF" >> $GITHUB_OUTPUT
+          echo "$JSON" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Call Responder Service
+        if: steps.parse.outputs.skip != 'true'
+        run: |
+          echo "Calling responder service..."
+
+          # Call the local responder service
+          RESPONSE=$(curl -s -X POST http://localhost:8002/echo \
+            -H "Content-Type: application/json" \
+            -d '${{ steps.parse.outputs.json }}')
+
+          echo "Response from responder: $RESPONSE"
+
+          # Check if successful
+          if echo "$RESPONSE" | grep -q '"status":"echoed"'; then
+            echo "Echo successful!"
+          else
+            echo "Echo failed: $RESPONSE"
+            exit 1
+          fi
